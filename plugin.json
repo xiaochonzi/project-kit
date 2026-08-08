@@ -1,0 +1,17 @@
+{
+  "name": "project-kit",
+  "version": "0.1.0",
+  "description": "Project Kit 多 skill 插件,用于管理大型项目从文档初始化、需求拆解、计划、执行、验收到变更与状态维护的完整生命周期。",
+  "skills": [
+    "skills/init/SKILL.md",
+    "skills/constitution/SKILL.md",
+    "skills/brief/SKILL.md",
+    "skills/refine/SKILL.md",
+    "skills/plan/SKILL.md",
+    "skills/execute-plan/SKILL.md",
+    "skills/verify-plan/SKILL.md",
+    "skills/change/SKILL.md",
+    "skills/bug/SKILL.md",
+    "skills/status/SKILL.md"
+  ]
+}
