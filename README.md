@@ -2,45 +2,53 @@
 
 Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,用于把大型项目意图逐层转化为边界明确、可追踪、可实施、可验证的工作单元。
 
-## 适用场景
+## 设计原则
 
-- 初始化项目文档结构
-- 接收并拆解大型原始需求
-- 细化当前阶段或功能规格
-- 为已批准功能制定计划
-- 执行计划并记录实施事实
-- 独立验收已实现功能
-- 接收后续新增需求
-- 诊断并修复违反已批准 Spec 的缺陷
-- 汇总项目状态与下一动作
+- **技能自包含**:每个技能写全可独立执行的流程(前置条件、步骤、校验清单、停止条件),触发即用,不依赖共享文档
+- **围绕 docs 约定**:所有技能围绕统一的项目文档结构工作(`init` 技能创建,脚本校验)
+- **渐进式**:每个技能只负责生命周期中的一环,通过 Handoff Rule 交接下一技能
+- **脚本承载机械门禁**:`scripts/project-docs.cjs` 负责确定性操作与校验,不替 AI 做语义判断
 
 ## 安装
 
-团队内部使用 Claude Code plugin 方式安装本仓库。插件核心由 `plugin.json`、`skills/`、`shared/` 与 `scripts/project-docs.cjs` 组成。
+团队内部使用 Claude Code plugin 方式安装本仓库。插件由 `plugin.json`、`skills/`、`assets/templates/` 与 `scripts/project-docs.cjs` 组成。
 
 ## 可用技能
 
 | 技能 | 何时使用 |
 |---|---|
-| `project-init` | 初始化项目文档目录 |
-| `project-constitution` | 制定稳定开发准则 |
-| `project-brief` | 接收并拆解大型原始需求 |
-| `project-refine` | 细化阶段或功能 |
-| `project-plan` | 为已批准功能制定计划 |
-| `project-execute-plan` | 执行已批准计划 |
-| `project-verify-plan` | 独立验收已实现功能 |
-| `project-change` | 接收后续新增需求 |
-| `project-bug` | 诊断并直接修复缺陷 |
-| `project-status` | 查看项目状态与下一动作 |
+| `init` | 初始化项目 `docs/` 目录结构 |
+| `constitution` | 制定稳定开发准则 |
+| `brief` | 接收并拆解大型原始需求 |
+| `refine` | 细化 Milestone / Feature Spec |
+| `plan` | 为已批准 Feature 制定实现计划 |
+| `execute-plan` | 按计划实施并记录执行事实 |
+| `verify-plan` | 用新鲜证据独立验收 |
+| `change` | 接收后续新增需求 |
+| `bug` | 诊断并修复违反已批准 Spec 的缺陷 |
+| `status` | 只读查看项目状态与下一动作 |
 
-## 单一事实来源
+## docs/ 目录约定
 
-- `shared/overview.md` — 总览与导航
-- `shared/workflows/` — 10 个流程正文
-- `shared/rules/` — 规则正文
-- `shared/templates/` — 文档模板
-
-规则正文只保留在 `shared/` 下。各技能应引用 `shared/`, 不复制长规则正文。
+```text
+<项目根>/docs/
+├── constitution.md      # 稳定开发准则
+├── requirements.md      # 原子需求(REQ-###)
+├── blueprint.md         # 系统边界与能力地图
+├── roadmap.md           # 交付顺序
+├── STATE.md             # 当前焦点与下一动作
+├── briefs/              # BRIEF-###
+├── capabilities/        # C-###
+├── milestones/          # M# + M#-CONTEXT.md
+├── specs/<M#>/          # F-M#-##
+├── plans/               # F-M#-##-plan.md
+├── executions/          # F-M#-##-execution.md
+├── verifications/       # F-M#-##-verification.md
+├── changes/             # CR-###
+├── fixes/               # BUG-###
+├── decisions/           # ADR-###
+└── research/
+```
 
 ## 常用命令
 
@@ -53,25 +61,17 @@ node scripts/project-docs.cjs coverage --root <project>
 node scripts/project-docs.cjs next --root <project>
 ```
 
-## 当前命名约定
-
-第一轮多 skill 迁移期间,目标项目仍以以下命名为权威:
-
-- `docs/blueprint.md`
-- `docs/fixes/`
-
-`system-design.md`、`fix/` 与 `reference/` 不在本轮迁移范围内。
-
 ## 不支持的能力
 
-本插件当前明确不引入:
+本插件明确不引入:
 
 - `capability.json` 多平台运行时适配
 - hooks 强制注入
 - eval 门禁
 - YAML/JSON 状态事实源
+- 技能间共享文档目录(技能自包含)
 
-## 验证
+## 验证与测试
 
 ```bash
 node scripts/project-docs.cjs validate-plugin --root .

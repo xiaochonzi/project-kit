@@ -1,11 +1,10 @@
 # 架构说明
 
-Project Kit 采用方案 A:中央共享、技能薄壳。
+Project Kit 采用**自包含技能 + docs 目录约定**的架构(参考 superpowers / spec-superflow 的形式):
 
-- `skills/` 提供 10 个生命周期技能入口
-- `shared/workflows/` 提供流程正文
-- `shared/rules/` 提供规则正文
-- `shared/templates/` 提供模板
-- `scripts/project-docs.cjs` 提供确定性操作与机械门禁
+- `skills/<name>/SKILL.md` — 10 个自包含技能,每个写全可独立执行的流程
+- `assets/templates/` — 文档模板(由 `project-docs.cjs` 的 init/new 命令使用)
+- `scripts/project-docs.cjs` — 确定性操作与机械门禁校验器
+- `plugin.json` — Claude Code 插件清单
 
-这种结构让规则保持单一事实来源,同时让技能触发更精确。
+技能之间不共享文档;协作通过统一的项目 `docs/` 目录约定与 Handoff Rule 完成。

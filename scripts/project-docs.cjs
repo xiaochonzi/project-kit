@@ -6,9 +6,7 @@ const path = require('node:path');
 const process = require('node:process');
 
 const SKILL_ROOT = path.resolve(__dirname, '..');
-const TEMPLATE_ROOT = fs.existsSync(path.join(SKILL_ROOT, 'shared', 'templates'))
-  ? path.join(SKILL_ROOT, 'shared', 'templates')
-  : path.join(SKILL_ROOT, 'assets', 'templates');
+const TEMPLATE_ROOT = path.join(SKILL_ROOT, 'assets', 'templates');
 const PLUGIN_SKILLS = [
   'init',
   'constitution',
@@ -23,16 +21,7 @@ const PLUGIN_SKILLS = [
 ];
 const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'hooks', 'eval', '.claude-plugin', '.codex-plugin'];
 const REQUIRED_PLUGIN_FILES = ['plugin.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md'];
-const SHARED_DIRS = {
-  workflows: 'shared/workflows',
-  rules: 'shared/rules',
-  templates: 'shared/templates'
-};
-const SHARED_EXPECTED_COUNTS = {
-  workflows: 10,
-  rules: 11,
-  templates: 16
-};
+const TEMPLATE_EXPECTED_COUNT = 16;
 const DOC_LINK_PATTERN = /\[[^\]]+\]\(([^)]+)\)/g;
 const MANAGED_DIRECTORIES = [
   'briefs',
@@ -897,20 +886,16 @@ function validatePlugin(root, jsonOutput) {
     if (fs.existsSync(path.join(root, relativePath))) errors.push(`存在禁止的插件路径: ${relativePath}`);
   }
 
-  const sharedCounts = {};
-  for (const [key, relativePath] of Object.entries(SHARED_DIRS)) {
-    const files = listMarkdownFiles(path.join(root, relativePath));
-    sharedCounts[key] = files.length;
-    if (files.length !== SHARED_EXPECTED_COUNTS[key]) {
-      errors.push(`shared/${key} 数量错误: 期望 ${SHARED_EXPECTED_COUNTS[key]}，实际 ${files.length}`);
-    }
-    for (const filePath of files) validateMarkdownLinks(filePath, root, errors);
+  const templateFiles = listMarkdownFiles(path.join(root, 'assets', 'templates'));
+  if (templateFiles.length !== TEMPLATE_EXPECTED_COUNT) {
+    errors.push(`assets/templates 数量错误: 期望 ${TEMPLATE_EXPECTED_COUNT}，实际 ${templateFiles.length}`);
   }
+  for (const filePath of templateFiles) validateMarkdownLinks(filePath, root, errors);
 
-  if (!fs.existsSync(path.join(root, 'shared', 'overview.md'))) {
-    errors.push('缺少 shared/overview.md');
+  if (!fs.existsSync(path.join(root, 'SKILL.md'))) {
+    errors.push('缺少根 SKILL.md');
   } else {
-    validateMarkdownLinks(path.join(root, 'shared', 'overview.md'), root, errors);
+    validateMarkdownLinks(path.join(root, 'SKILL.md'), root, errors);
   }
 
   const skillEntries = collectSkillFiles(root);
@@ -931,6 +916,8 @@ function validatePlugin(root, jsonOutput) {
     const metadata = parseFrontmatter(fs.readFileSync(entry.filePath, 'utf8'));
     if (typeof metadata.name !== 'string' || metadata.name.trim() === '') {
       errors.push(`技能缺少 name: ${path.relative(root, entry.filePath)}`);
+    } else if (metadata.name !== entry.name) {
+      errors.push(`技能名与目录名不一致: ${metadata.name} vs ${entry.name}`);
     } else if (skillNames.has(metadata.name)) {
       errors.push(`重复技能名: ${metadata.name}`);
     } else {
@@ -940,9 +927,12 @@ function validatePlugin(root, jsonOutput) {
       errors.push(`技能缺少 description: ${path.relative(root, entry.filePath)}`);
     }
     const skillContent = fs.readFileSync(entry.filePath, 'utf8');
-    if (!skillContent.includes('shared/workflows/')) errors.push(`技能未引用 shared/workflows: ${path.relative(root, entry.filePath)}`);
-    if (!skillContent.includes('shared/rules/') && entry.name !== 'status') warnings.push(`技能未显式引用 shared/rules: ${path.relative(root, entry.filePath)}`);
-    if (/references\/|assets\/templates\//.test(skillContent)) errors.push(`技能仍引用旧路径: ${path.relative(root, entry.filePath)}`);
+    if (/shared\/|references\/|workflows\/|assets\/templates\//.test(skillContent)) {
+      errors.push(`技能仍引用共享/旧路径: ${path.relative(root, entry.filePath)}`);
+    }
+    if (!skillContent.includes('docs/')) {
+      errors.push(`技能未围绕 docs/ 约定: ${path.relative(root, entry.filePath)}`);
+    }
   }
 
   const pluginPath = path.join(root, 'plugin.json');
@@ -964,13 +954,11 @@ function validatePlugin(root, jsonOutput) {
     errors,
     warnings,
     skillCount: actualSkillDirs.length,
-    sharedWorkflowCount: sharedCounts.workflows || 0,
-    sharedRuleCount: sharedCounts.rules || 0,
-    sharedTemplateCount: sharedCounts.templates || 0
+    templateCount: templateFiles.length
   };
   if (jsonOutput) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else {
-    process.stdout.write(`Plugin 校验\n技能数: ${result.skillCount}\nshared/workflows: ${result.sharedWorkflowCount}\nshared/rules: ${result.sharedRuleCount}\nshared/templates: ${result.sharedTemplateCount}\n错误: ${errors.length}\n`);
+    process.stdout.write(`Plugin 校验\n技能数: ${result.skillCount}\n模板数: ${result.templateCount}\n错误: ${errors.length}\n`);
     for (const error of errors) process.stdout.write(`  - ${error}\n`);
     process.stdout.write(`提醒: ${warnings.length}\n`);
     for (const warning of warnings) process.stdout.write(`  - ${warning}\n`);

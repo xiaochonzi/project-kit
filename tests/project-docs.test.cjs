@@ -20,9 +20,7 @@ test('validate-plugin passes for current plugin', () => {
   const result = JSON.parse(output);
   assert.equal(result.valid, true);
   assert.equal(result.skillCount, 10);
-  assert.equal(result.sharedWorkflowCount, 10);
-  assert.equal(result.sharedRuleCount, 11);
-  assert.equal(result.sharedTemplateCount, 16);
+  assert.equal(result.templateCount, 16);
 });
 
 test('validate passes for minimal example', () => {
