@@ -41,6 +41,8 @@ project-kit 当前是单一 skill(`SKILL.md` 入口 + 内部 10 模式路由 + �
 | 5 | 组织形态 | 方案 A:中央共享,技能薄壳(gsd-core 与 spec-superflow 双重背书) |
 | 6 | 写法移植 | 薄壳 SKILL.md 吸收 Validation Checklist(spec-superflow)+ 防跳步写法(superpowers) |
 | 7 | 脚本 | 扩展为机械门禁校验器;文档仍是唯一事实源,不引入 yaml 状态 |
+| 8 | 目标项目 docs 命名 | 第一轮保留 `blueprint.md`、`fixes/`; `reference/` 可选,不阻塞迁移 |
+| 9 | 根入口 | 第一轮保留根 `SKILL.md` 作为总览兼容入口,待 plugin 结构稳定后再考虑删除 |
 
 ## 4. 目标目录结构
 
@@ -65,8 +67,8 @@ project-kit/                          # Claude Code plugin
 │   └── status/SKILL.md
 ├── shared/                           # 中央事实层(唯一一份)
 │   ├── lifecycle.md                  # project-lifecycle.md 总纲(保留全文)
-│   ├── workflows/                    # 11 个流程(流程唯一位置)
-│   ├── rules/                        # 13 个规则(原 references/)
+│   ├── workflows/                    # 10 个流程(流程唯一位置)
+│   ├── rules/                        # 11 个规则(原 references/)
 │   └── templates/                    # 16 个模板(原 assets/templates/)
 ├── scripts/project-docs.cjs          # 扩展机械门禁校验;模板读取路径改 shared/templates/
 ├── agents/openai.yaml                # 保留(轻量多平台适配)
@@ -79,15 +81,31 @@ project-kit/                          # Claude Code plugin
 
 ### 4.2 目标项目侧(init 技能产物)
 
-`project-lifecycle.md` 第 13 节已定义的目录,不变:
+第一轮沿用当前脚本和模板约定,以 `references/document-schema.md` 为准:
 
 ```text
 <project>/
 ├── AGENTS.md
 └── docs/
-    ├── README.md  STATE.md  system-design.md  roadmap.md  requirements.md
-    ├── briefs/  changes/  milestones/  specs/  plans/  fix/  research/  reference/
+    ├── constitution.md
+    ├── requirements.md
+    ├── blueprint.md
+    ├── roadmap.md
+    ├── STATE.md
+    ├── briefs/
+    ├── capabilities/
+    ├── milestones/
+    ├── specs/
+    ├── plans/
+    ├── executions/
+    ├── verifications/
+    ├── changes/
+    ├── fixes/
+    ├── decisions/
+    └── research/
 ```
+
+`reference/` 可在后续变更中补入,但不阻塞本次迁移。`system-design.md` 与 `fix/` 这套命名在本次不采用,以减少对现有脚本和模板的破坏性改动。
 
 ## 5. 技能 SKILL.md 写法规范(薄壳模板)
 
@@ -143,12 +161,12 @@ description: <触发时机 + 路由;只写触发条件,不写流程;Use when…>
 
 | 来源 | 迁往 | 引用更新 |
 |---|---|---|
-| `workflows/*.md`(11) | `shared/workflows/` | `../references/x.md` → `../rules/x.md` |
-| `references/*.md`(13) | `shared/rules/` | 相互引用改 `../rules/` |
+| `workflows/*.md`(10) | `shared/workflows/` | `references/x.md` / `../references/x.md` → `../rules/x.md`; `assets/templates/x.md` → `../templates/x.md` |
+| `references/*.md`(11) | `shared/rules/` | 相互引用改 `../rules/` 或保留同目录相对链接 |
 | `assets/templates/*.md`(16) | `shared/templates/` | 无内部引用 |
-| `project-lifecycle.md` | `shared/lifecycle.md` | 无仓库内引用 |
+| `project-lifecycle.md` | `shared/lifecycle.md` | 修正对 `references/state-model.md` 的引用 |
 | `agents/openai.yaml` | 原地保留 | — |
-| 根 `SKILL.md` | 删除,内容分布到 10 技能 + README | 模式路由表 → 各技能 description |
+| 根 `SKILL.md` | 第一轮降级为总览兼容入口 | 模式路由表 → 各技能 description |
 | `scripts/project-docs.cjs` | 原地 | 模板路径改 `shared/templates/` |
 
 ## 7. 脚本混合门禁
@@ -209,7 +227,7 @@ description: <触发时机 + 路由;只写触发条件,不写流程;Use when…>
 
 1. 创建 `shared/` 三目录,迁移 assets/templates、references、workflows,更新内部相对链接。
 2. 迁移 `project-lifecycle.md` → `shared/lifecycle.md`。
-3. 删除根 `SKILL.md`,写 `README.md`(安装说明 + 技能导航)。
+3. 根 `SKILL.md` 降级为总览兼容入口,并写 `README.md`(安装说明 + 技能导航)。
 4. 写 10 个技能 `SKILL.md`(按第 5 节模板;description、HARD-GATE、必读、流程要点、Validation Checklist、停止条件、Rationalizations、REQUIRED SUB-SKILL)。
 5. 扩展 `scripts/project-docs.cjs`:模板路径 + validate 新维度(链接、frontmatter、依赖环、Plan↔Spec 映射)。
 6. 创建 `plugin.json`、`CHANGELOG.md`、`AGENTS.md`。

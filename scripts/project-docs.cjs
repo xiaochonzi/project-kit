@@ -6,7 +6,34 @@ const path = require('node:path');
 const process = require('node:process');
 
 const SKILL_ROOT = path.resolve(__dirname, '..');
-const TEMPLATE_ROOT = path.join(SKILL_ROOT, 'assets', 'templates');
+const TEMPLATE_ROOT = fs.existsSync(path.join(SKILL_ROOT, 'shared', 'templates'))
+  ? path.join(SKILL_ROOT, 'shared', 'templates')
+  : path.join(SKILL_ROOT, 'assets', 'templates');
+const PLUGIN_SKILLS = [
+  'init',
+  'constitution',
+  'brief',
+  'refine',
+  'plan',
+  'execute-plan',
+  'verify-plan',
+  'change',
+  'bug',
+  'status'
+];
+const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'hooks', 'eval', '.claude-plugin', '.codex-plugin'];
+const REQUIRED_PLUGIN_FILES = ['plugin.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md'];
+const SHARED_DIRS = {
+  workflows: 'shared/workflows',
+  rules: 'shared/rules',
+  templates: 'shared/templates'
+};
+const SHARED_EXPECTED_COUNTS = {
+  workflows: 10,
+  rules: 11,
+  templates: 16
+};
+const DOC_LINK_PATTERN = /\[[^\]]+\]\(([^)]+)\)/g;
 const MANAGED_DIRECTORIES = [
   'briefs',
   'capabilities',
@@ -824,6 +851,133 @@ function projectStatus(root, jsonOutput) {
   }
 }
 
+function listFiles(directory) {
+  if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) return [];
+  return fs.readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function collectSkillFiles(root) {
+  const skillsRoot = path.join(root, 'skills');
+  if (!fs.existsSync(skillsRoot)) return [];
+  return fs.readdirSync(skillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({
+      name: entry.name,
+      filePath: path.join(skillsRoot, entry.name, 'SKILL.md')
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function validateMarkdownLinks(filePath, root, errors) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  for (const match of content.matchAll(DOC_LINK_PATTERN)) {
+    const target = match[1].trim();
+    if (!target || target.startsWith('http://') || target.startsWith('https://') || target.startsWith('#') || target.startsWith('mailto:')) continue;
+    const cleanTarget = target.split('#')[0];
+    if (!cleanTarget) continue;
+    const resolved = path.resolve(path.dirname(filePath), cleanTarget);
+    if (!fs.existsSync(resolved)) {
+      errors.push(`失效链接 ${target}: ${path.relative(root, filePath)}`);
+    }
+  }
+}
+
+function validatePlugin(root, jsonOutput) {
+  const errors = [];
+  const warnings = [];
+
+  for (const relativePath of REQUIRED_PLUGIN_FILES) {
+    if (!fs.existsSync(path.join(root, relativePath))) errors.push(`缺少插件根文件: ${relativePath}`);
+  }
+
+  for (const relativePath of FORBIDDEN_PLUGIN_PATHS) {
+    if (fs.existsSync(path.join(root, relativePath))) errors.push(`存在禁止的插件路径: ${relativePath}`);
+  }
+
+  const sharedCounts = {};
+  for (const [key, relativePath] of Object.entries(SHARED_DIRS)) {
+    const files = listMarkdownFiles(path.join(root, relativePath));
+    sharedCounts[key] = files.length;
+    if (files.length !== SHARED_EXPECTED_COUNTS[key]) {
+      errors.push(`shared/${key} 数量错误: 期望 ${SHARED_EXPECTED_COUNTS[key]}，实际 ${files.length}`);
+    }
+    for (const filePath of files) validateMarkdownLinks(filePath, root, errors);
+  }
+
+  if (!fs.existsSync(path.join(root, 'shared', 'overview.md'))) {
+    errors.push('缺少 shared/overview.md');
+  } else {
+    validateMarkdownLinks(path.join(root, 'shared', 'overview.md'), root, errors);
+  }
+
+  const skillEntries = collectSkillFiles(root);
+  const skillNames = new Set();
+  const actualSkillDirs = skillEntries.map((entry) => entry.name);
+  if (actualSkillDirs.length !== PLUGIN_SKILLS.length) {
+    errors.push(`skills 数量错误: 期望 ${PLUGIN_SKILLS.length}，实际 ${actualSkillDirs.length}`);
+  }
+  for (const skillName of PLUGIN_SKILLS) {
+    if (!actualSkillDirs.includes(skillName)) errors.push(`缺少 skill 目录: skills/${skillName}`);
+  }
+  for (const entry of skillEntries) {
+    if (!fs.existsSync(entry.filePath)) {
+      errors.push(`缺少技能文件: ${path.relative(root, entry.filePath)}`);
+      continue;
+    }
+    validateMarkdownLinks(entry.filePath, root, errors);
+    const metadata = parseFrontmatter(fs.readFileSync(entry.filePath, 'utf8'));
+    if (typeof metadata.name !== 'string' || metadata.name.trim() === '') {
+      errors.push(`技能缺少 name: ${path.relative(root, entry.filePath)}`);
+    } else if (skillNames.has(metadata.name)) {
+      errors.push(`重复技能名: ${metadata.name}`);
+    } else {
+      skillNames.add(metadata.name);
+    }
+    if (typeof metadata.description !== 'string' || metadata.description.trim() === '') {
+      errors.push(`技能缺少 description: ${path.relative(root, entry.filePath)}`);
+    }
+    const skillContent = fs.readFileSync(entry.filePath, 'utf8');
+    if (!skillContent.includes('shared/workflows/')) errors.push(`技能未引用 shared/workflows: ${path.relative(root, entry.filePath)}`);
+    if (!skillContent.includes('shared/rules/') && entry.name !== 'status') warnings.push(`技能未显式引用 shared/rules: ${path.relative(root, entry.filePath)}`);
+    if (/references\/|assets\/templates\//.test(skillContent)) errors.push(`技能仍引用旧路径: ${path.relative(root, entry.filePath)}`);
+  }
+
+  const pluginPath = path.join(root, 'plugin.json');
+  if (fs.existsSync(pluginPath)) {
+    try {
+      JSON.parse(fs.readFileSync(pluginPath, 'utf8'));
+    } catch (error) {
+      errors.push(`plugin.json 不是合法 JSON: ${error.message}`);
+    }
+  }
+
+  for (const docPath of ['README.md', 'CHANGELOG.md', 'AGENTS.md']) {
+    const fullPath = path.join(root, docPath);
+    if (fs.existsSync(fullPath)) validateMarkdownLinks(fullPath, root, errors);
+  }
+
+  const result = {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    skillCount: actualSkillDirs.length,
+    sharedWorkflowCount: sharedCounts.workflows || 0,
+    sharedRuleCount: sharedCounts.rules || 0,
+    sharedTemplateCount: sharedCounts.templates || 0
+  };
+  if (jsonOutput) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  else {
+    process.stdout.write(`Plugin 校验\n技能数: ${result.skillCount}\nshared/workflows: ${result.sharedWorkflowCount}\nshared/rules: ${result.sharedRuleCount}\nshared/templates: ${result.sharedTemplateCount}\n错误: ${errors.length}\n`);
+    for (const error of errors) process.stdout.write(`  - ${error}\n`);
+    process.stdout.write(`提醒: ${warnings.length}\n`);
+    for (const warning of warnings) process.stdout.write(`  - ${warning}\n`);
+  }
+  return result.valid;
+}
+
 function nextAction(root, jsonOutput) {
   const documents = collectDocuments(root);
   const coverage = calculateCoverage(parseRequirements(root), documents);
@@ -850,7 +1004,7 @@ function nextAction(root, jsonOutput) {
 }
 
 function printHelp() {
-  process.stdout.write(`Project Kit document helper\n\nUsage:\n`);
+  process.stdout.write(`Project Kit document helper\n\nCurrent conventions: docs/blueprint.md and docs/fixes/ remain the first-round canonical names during multi-skill migration.\n\nUsage:\n`);
   process.stdout.write(`  node project-docs.cjs init --root <project>\n`);
   process.stdout.write(`  node project-docs.cjs new <brief|capability|milestone|context|feature|plan|execution|verification|change|fix|adr> [options]\n`);
   process.stdout.write(`  node project-docs.cjs context <mode> [--target <id>] --root <project> [--json]\n`);
@@ -858,6 +1012,7 @@ function printHelp() {
   process.stdout.write(`  node project-docs.cjs transition <id> --to <status> [--kind <kind>] --root <project>\n`);
   process.stdout.write(`  node project-docs.cjs next --root <project> [--json]\n`);
   process.stdout.write(`  node project-docs.cjs validate --root <project> [--json]\n`);
+  process.stdout.write(`  node project-docs.cjs validate-plugin --root <plugin> [--json]\n`);
   process.stdout.write(`  node project-docs.cjs status --root <project> [--json]\n`);
 }
 
@@ -886,6 +1041,10 @@ function main() {
   if (command === 'next') return nextAction(root, options.json === true);
   if (command === 'validate') {
     if (!validateProject(root, options.json === true)) process.exitCode = 1;
+    return;
+  }
+  if (command === 'validate-plugin') {
+    if (!validatePlugin(root, options.json === true)) process.exitCode = 1;
     return;
   }
   if (command === 'status') return projectStatus(root, options.json === true);
