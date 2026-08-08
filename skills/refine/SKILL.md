@@ -75,7 +75,15 @@ node scripts/project-docs.cjs new feature --milestone <M#> --title <功能名> -
 ## 6. 需求追踪      ← requirements: [REQ-###]
 ```
 
-Frontmatter 必须包含:`id: F-M#-##`、`milestone: M#`、`status: draft`、`requirements: [...]`。
+Frontmatter 必须包含:`id: F-M#-##`、`milestone: M#`、`status: draft`、`requirements`。
+
+> **frontmatter 数组必须用逐行格式**(脚本解析器契约):
+> ```markdown
+> requirements:
+>   - REQ-001
+>   - REQ-002
+> ```
+> 禁止内联 `requirements: [REQ-001, REQ-002]` —— 脚本会把它解析成单个字符串,导致 coverage 误报"缺少双向映射"。
 
 **验收标准必须可验证**(命令输出、可观察行为、数据断言),禁止"工作正常""体验好"。
 

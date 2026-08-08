@@ -46,7 +46,7 @@ node scripts/project-docs.cjs context execute-plan --target <F-<M#>-<NN>> --root
 
 ```bash
 node scripts/project-docs.cjs transition F-<M#>-<NN> --to in-progress --root <项目根>   # 预期:成功
-node scripts/project-docs.cjs transition F-<M#>-<NN>-plan --to in-progress --kind plan --root <项目根>  # 预期:成功
+node scripts/project-docs.cjs transition F-<M#>-<NN> --to in-progress --kind plan  # 用 feature id --root <项目根>  # 预期:成功
 ```
 
 如果 `transition` 报"非法迁移",说明前置状态不对,停止并向用户报告,不要绕过。
@@ -65,7 +65,7 @@ node scripts/project-docs.cjs transition F-<M#>-<NN>-plan --to in-progress --kin
 ### 3. 状态推进
 
 ```bash
-node scripts/project-docs.cjs transition <plan-id> --to in-progress --kind plan --root <项目根>
+node scripts/project-docs.cjs transition <feature-id> --to in-progress --kind plan  # 用 feature id(plan 无独立 id) --root <项目根>
 node scripts/project-docs.cjs transition <feature-id> --to in-progress --root <项目根>
 ```
 
@@ -126,7 +126,7 @@ node scripts/project-docs.cjs new execution --feature <F-<M#>-<NN>> --root <项�
 ### 8. 状态收口
 
 ```bash
-node scripts/project-docs.cjs transition <plan-id> --to completed --kind plan --root <项目根>
+node scripts/project-docs.cjs transition <feature-id> --to completed --kind plan  # 用 feature id --root <项目根>
 node scripts/project-docs.cjs transition <feature-id> --to implemented --root <项目根>
 ```
 

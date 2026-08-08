@@ -62,9 +62,7 @@ node scripts/project-docs.cjs new fix --title <问题标题> --root <项目根>
 
 记录:现象与复现条件、预期行为及对应 Spec、根因、最小修复、回归风险、验证证据。
 
-```bash
-node scripts/project-docs.cjs transition BUG-### --to resolved --root <项目根>
-```
+> 说明: `fix` 文档在脚本中无合法状态迁移路径,直接在 frontmatter 把 `status` 改为 `resolved` 即可(文档是事实源)。
 
 ## Stop Conditions
 

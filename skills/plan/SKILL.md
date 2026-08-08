@@ -58,8 +58,13 @@ spec_version: 1
 status: draft
 wave: <执行波次>
 requirements: [REQ-###]
-files_modified: [<相对路径>, ...]
+files_modified:
+  - <相对路径>
+requirements:
+  - REQ-###
 ---
+
+> frontmatter 数组字段(requirements/files_modified/depends_on)一律用逐行格式,禁止内联 `[a, b]`(脚本解析契约,见 refine 技能)。
 
 # F-<M#>-<NN> 实现计划
 
@@ -106,7 +111,7 @@ files_modified: [<相对路径>, ...]
 
 - 把 Plan 完整展示给用户,说明方案与影响
 - 用户批准后:
-  - `transition F-<M#>-<NN>-plan --to approved --kind plan`
+  - `transition F-<M#>-<NN> --to approved --kind plan  # 用 feature id(plan 文档无独立 id)`
   - `transition F-<M#>-<NN> --to ready`(脚本要求 Plan approved 才能 ready)
 
 ## Stop Conditions
