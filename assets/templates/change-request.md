@@ -4,6 +4,7 @@ title: {{TITLE}}
 status: proposed
 created_at: {{DATE}}
 affects: []
+requirements: []
 ---
 
 # {{TITLE}}
@@ -18,8 +19,14 @@ affects: []
 
 ## 影响范围
 
-## 初步规模
+## 分类与规模
 
-## 建议去向
+## 接入方案与取舍
+
+## 决定
+
+## 新增 Requirements
+
+## 文档更新
 
 ## 未决问题

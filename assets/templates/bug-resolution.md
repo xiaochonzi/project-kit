@@ -4,15 +4,18 @@ title: {{TITLE}}
 status: resolved
 resolved_at: {{DATE}}
 related_specs: []
+requirements: []
 ---
 
 # {{TITLE}}
 
-## 现象
+## 现象与期望
 
 ## 复现方式
 
-## 根因
+## 被违反的 Spec
+
+## 根因证据
 
 ## 影响范围
 
@@ -20,8 +23,8 @@ related_specs: []
 
 ## 修改文件
 
-## 验证结果
+## 回归测试
 
-## 关联 Spec
+## 新鲜验证结果
 
 ## 遗留问题

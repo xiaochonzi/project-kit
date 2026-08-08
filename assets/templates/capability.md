@@ -3,6 +3,7 @@ id: {{ID}}
 title: {{TITLE}}
 status: proposed
 source: []
+requirements: []
 depends_on: []
 ---
 
@@ -14,12 +15,14 @@ depends_on: []
 
 ## 能力边界
 
-## 不包含
+### 包含
+
+### 不包含
 
 ## Milestones
 
 ## 全局完成标准
 
-## 关键风险
+## 关键风险与约束
 
 ## 未决问题

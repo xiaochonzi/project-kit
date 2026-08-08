@@ -2,23 +2,41 @@
 title: {{TITLE}}
 status: draft
 feature: {{FEATURE}}
+wave: 1
 depends_on: []
+files_modified: []
+requirements: []
 ---
 
 # {{TITLE}}
 
-## 实现方案
+## 实现策略
 
-## 影响范围
+## Must-haves
 
-## 数据流
+### Truths
 
-## 实现步骤
+### Artifacts
+
+### Key Links
+
+## 影响与风险
+
+## 数据与调用流
+
+## Tasks
+
+### Task 1: 待定义
+
+- files:
+- read_first:
+- action:
+- verify:
+- acceptance:
+- done:
 
 ## 验收标准映射
 
-## 测试与验证
+## 最终验证
 
-## 执行记录
-
-## 验证结果
+## 非目标

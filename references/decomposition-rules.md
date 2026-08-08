@@ -1,77 +1,71 @@
-# 项目拆解规则
+# 拆解规则
 
-## 目录
+## 1. 层级职责
 
-1. 文档层级
-2. Milestone 规则
-3. Feature 规则
-4. 多迭代 Capability
-5. 依赖与顺序
-6. 细化深度
+| 层级 | 回答的问题 | 不应包含 |
+|---|---|---|
+| Brief | 用户最初说了什么 | 后续改写后的权威设计 |
+| Requirements | 必须满足哪些原子需求 | 模糊复合需求、实现步骤 |
+| Blueprint | 系统是什么、边界在哪里 | 迭代排期、文件级实现 |
+| Roadmap | 以什么顺序交付 | 远期代码细节 |
+| Capability | 跨多个阶段最终获得什么能力 | 单阶段即可完成的 Feature |
+| Milestone | 这个阶段结束时系统能做什么 | 后端/前端/测试等技术层切片 |
+| Feature Spec | 一个独立用户结果的契约是什么 | 代码任务清单 |
+| Plan | 如何在现有代码中实现已批准 Spec | 新产品需求 |
 
-## 1. 文档层级
+## 2. Milestone：纵向价值切片
+
+每个 Milestone 必须同时满足：
+
+- 产生可运行、可演示或可验证的系统状态；
+- 用户或系统能力相对上一阶段真实增加；
+- 明确包含、不包含、前置依赖和退出标准；
+- 拥有 Feature Map；
+- 可以在该阶段结束后暂停项目，而不是留下半套技术层。
+
+错误拆法：数据库阶段、后端阶段、UI 阶段、测试阶段。
+
+正确拆法示例：
 
 ```text
-Brief → Blueprint → Roadmap → Milestone → Feature Spec → Implementation Plan
-                          ↘ Capability（仅用于跨多个 Milestone 的能力）
-Change Request → Feature / Capability / ADR
-Bug → Fix → Bug Resolution
+M1：用户可以手动创建并运行一个子 Agent
+M2：主 Agent 可以委派多个任务并汇总结果
+M3：用户可以观察、中断和恢复运行
 ```
 
-- Brief 保存原始讨论，不承担当前权威设计。
-- Blueprint 说明系统目标、能力和边界。
-- Roadmap 说明交付顺序。
-- Milestone 定义一个可验证的系统状态。
-- Feature Spec 定义一个独立能力的边界。
-- Plan 说明如何实现一个已批准 Feature。
+## 3. Feature：单一可验收结果
 
-## 2. Milestone 规则
+Feature 应具有单一主要目标、清晰输入输出、明确系统边界和独立验收方式。出现以下任一信号时继续拆分：
 
-使用纵向价值切片，不按数据库、后端、前端、测试等技术层分阶段。每个 Milestone 必须：
-
-- 产生可运行、可演示或可验证的结果；
-- 明确包含和不包含；
-- 列出前置依赖；
-- 包含 Feature Map；
-- 定义退出标准。
-
-## 3. Feature 规则
-
-一个 Feature 应有单一主要目标、明确输入输出、清晰系统边界、独立验收方式。出现以下情况时继续拆分：
-
-- 包含多个不同用户结果；
-- 存在两个可以独立验收的流程；
+- 标题或目标中出现两个独立动词结果；
+- 存在两条可以独立上线和验收的用户流程；
 - 横跨无关业务域；
-- 具有明显不同的失败条件；
-- 必须分多次交付才能安全完成。
+- 失败模型明显不同；
+- 需要分多次交付才能安全完成；
+- 一部分完成后仍可独立产生价值。
 
-按钮、单个 IPC、数据库表或类型通常是 Plan 任务，不是 Feature。
+按钮、IPC、数据库表、类型、单个 API 通常是 Plan 任务，不是 Feature，除非它本身就是对外可交付契约。
 
-## 4. 多迭代 Capability
+## 4. Capability：多个迭代的共同终点
 
-只有需求确实跨多个 Milestones 时创建 Capability。按逐步增加的可用能力拆分，例如：
+仅当一个业务能力必须经过多个可独立验收的 Milestones 才创建 Capability。Capability 负责最终目标、全局边界和阶段关系，不替代每阶段的 Feature Specs。
 
-```text
-M10：用户可以手动创建并运行一个子 Agent
-M11：主 Agent 可以并行委派并汇总任务
-M12：用户可以观察、中断和恢复执行
-```
+## 5. 依赖排序
 
-不要用“后端阶段、前端阶段、测试阶段”。每个阶段都应形成闭环，并允许项目在该阶段暂停。
+- 只记录交付前置条件，不把团队偏好写成依赖。
+- 优先关闭最高风险假设与最小端到端闭环。
+- 基础设施必须服务于当前明确用户结果。
+- 不允许循环依赖；发现循环时重新定义边界或合并不可分割单元。
+- 使用 `depends_on` 表示前置，`extends` 表示兼容扩展，`supersedes` 表示替代。
 
-## 5. 依赖与顺序
+## 6. 渐进细化
 
-- 只记录真实的交付依赖，不把偏好写成依赖。
-- 优先处理高风险假设和基础闭环，但基础设施必须服务于明确用户结果。
-- 避免循环依赖；发现循环时重新划分边界。
-- 新 Spec 通过 `depends_on`、`extends` 或 `supersedes` 关联旧能力。
+| 时间距离 | 细化程度 |
+|---|---|
+| 整个项目 | Blueprint 与 Requirements 完整 |
+| 所有阶段 | Roadmap、Milestone 目标和 Feature Map 粗粒度完整 |
+| Active Milestone | Milestone 与 Feature Specs 详细 |
+| 即将开发 Feature | Implementation Plan 文件级详细 |
+| Later | 不预测文件、接口或实现步骤 |
 
-## 6. 细化深度
-
-- 整个项目：维护 Blueprint。
-- 所有阶段：维护粗粒度 Roadmap。
-- 下一个阶段：维护完整 Milestone。
-- 当前阶段：维护详细 Feature Specs。
-- 即将开发的 Feature：维护 Implementation Plan。
-
-远期功能只保留目标、边界、依赖和退出标准，不预测文件名或代码步骤。
+细化的目标是减少当前决策歧义，不是提前锁死远期实现。

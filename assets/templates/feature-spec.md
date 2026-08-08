@@ -4,6 +4,7 @@ title: {{TITLE}}
 status: draft
 milestone: {{MILESTONE}}
 source: []
+requirements: []
 depends_on: []
 extends: []
 supersedes: []
@@ -11,7 +12,7 @@ supersedes: []
 
 # {{TITLE}}
 
-## 问题
+## 问题与依据
 
 ## 目标
 
@@ -31,6 +32,10 @@ supersedes: []
 
 ## 失败与边界情况
 
+## 非功能约束
+
 ## 验收标准
+
+## 需求追踪
 
 ## 未决问题

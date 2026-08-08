@@ -3,12 +3,13 @@ id: {{ID}}
 title: {{TITLE}}
 status: proposed
 created_at: {{DATE}}
+source: []
 supersedes: []
 ---
 
 # {{TITLE}}
 
-## 背景
+## 背景与约束
 
 ## 决策
 
@@ -18,4 +19,6 @@ supersedes: []
 
 ## 未采用方案
 
-## 后续工作
+## 迁移与后续工作
+
+## 验证方式
