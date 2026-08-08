@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Kit"
+  short_description: "管理大型项目从原始需求拆解到开发执行、验证与持续变更"
+  default_prompt: "使用 $project-kit 初始化并维护当前项目的需求、阶段、功能、计划和变更。"
