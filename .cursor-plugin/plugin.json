@@ -1,0 +1,23 @@
+{
+  "name": "project-kit",
+  "version": "0.2.0",
+  "description": "Project Kit: 10 个自包含技能,管理大型项目从初始化、需求拆解、蓝图规划、执行计划、实施、验收到变更与缺陷处理的完整生命周期。",
+  "source": "./",
+  "author": {
+    "name": "Project Kit Team"
+  },
+  "license": "MIT",
+  "keywords": ["workflow","skills","lifecycle","spec-driven","project-management"],
+  "skills": [
+    "skills/init",
+    "skills/constitution",
+    "skills/brief",
+    "skills/refine",
+    "skills/plan",
+    "skills/execute-plan",
+    "skills/verify-plan",
+    "skills/change",
+    "skills/bug",
+    "skills/status"
+  ]
+}

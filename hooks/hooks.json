@@ -1,0 +1,15 @@
+{
+  "description": "project-kit session start hook — injects plugin overview with skills list and docs convention",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start\""
+          }
+        ]
+      }
+    ]
+  }
+}

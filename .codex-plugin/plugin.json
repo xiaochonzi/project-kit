@@ -1,0 +1,10 @@
+{
+  "name": "project-kit",
+  "version": "0.2.0",
+  "description": "Project Kit: 项目管理全生命周期技能插件——从原始想法到可验收交付,10 个自包含技能,围绕统一 docs/ 目录约定。",
+  "author": {
+    "name": "Project Kit Team"
+  },
+  "license": "MIT",
+  "keywords": ["workflow","skills","lifecycle","spec-driven","project-management"]
+}

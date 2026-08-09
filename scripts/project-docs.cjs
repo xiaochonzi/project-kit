@@ -19,7 +19,7 @@ const PLUGIN_SKILLS = [
   'bug',
   'status'
 ];
-const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'hooks', 'eval', '.claude-plugin', '.codex-plugin'];
+const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'eval'];
 const REQUIRED_PLUGIN_FILES = ['plugin.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md'];
 const TEMPLATE_EXPECTED_COUNT = 16;
 const DOC_LINK_PATTERN = /\[[^\]]+\]\(([^)]+)\)/g;
@@ -927,7 +927,7 @@ function validatePlugin(root, jsonOutput) {
       errors.push(`技能缺少 description: ${path.relative(root, entry.filePath)}`);
     }
     const skillContent = fs.readFileSync(entry.filePath, 'utf8');
-    if (/shared\/|references\/|workflows\/|assets\/templates\//.test(skillContent)) {
+    if (/shared\/|references\/|workflows\//.test(skillContent)) {
       errors.push(`技能仍引用共享/旧路径: ${path.relative(root, entry.filePath)}`);
     }
     if (!skillContent.includes('docs/')) {
