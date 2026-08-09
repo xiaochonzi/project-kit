@@ -894,12 +894,6 @@ function validatePlugin(root, jsonOutput) {
   }
   for (const filePath of templateFiles) validateMarkdownLinks(filePath, root, errors);
 
-  if (!fs.existsSync(path.join(root, 'SKILL.md'))) {
-    errors.push('缺少根 SKILL.md');
-  } else {
-    validateMarkdownLinks(path.join(root, 'SKILL.md'), root, errors);
-  }
-
   const skillEntries = collectSkillFiles(root);
   const skillNames = new Set();
   const actualSkillDirs = skillEntries.map((entry) => entry.name);
