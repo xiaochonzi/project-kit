@@ -11,9 +11,13 @@ description: Use when asking what the project state is — current milestone, fe
 
 **开始前宣布:** "我正在使用 status 技能查看项目状态。"
 
-<HARD-GATE>
-只读。禁止修改、创建、删除任何项目文档或代码。
-</HARD-GATE>
+## The Iron Law
+
+```
+READ ONLY — NO MODIFICATIONS TO PROJECT FILES
+```
+
+**Violating the letter of this rule is violating the spirit of status reporting.** 报告现状,不是改变现状。发现不一致→列出,不擅自修改。
 
 ## Process
 

@@ -15,9 +15,13 @@ description: Use when you have accepted REQs that need a system architecture —
 
 **开始前宣布:** "我正在使用 blueprint 技能和您一起设计系统架构。"
 
-<HARD-GATE>
-不基于未确认的 REQ 建架构。没有 accepted REQ → 路由回 brief。Blueprint 不写文件级实现、不写功能验收标准、不写交付顺序。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO ARCHITECTURE FROM UNVERIFIED REQUIREMENTS
+```
+
+**Violating the letter of this rule is violating the spirit of system design.** 没有 accepted REQ→路由回 brief,不基于未确认需求建架构。Blueprint 不写实现细节,不写交付顺序。
 
 ## Required Inputs(不满足即停止)
 

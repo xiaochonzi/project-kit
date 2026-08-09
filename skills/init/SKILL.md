@@ -9,15 +9,13 @@ description: Use when initializing a new project's documentation structure, or w
 
 为目标项目创建 Project Kit 标准 `docs/` 目录结构。初始化之后,后续 9 个技能(brief / refine / plan / execute-plan / verify-plan / change / bug / status / constitution)有统一的落盘与读取位置。
 
-**分工边界(本技能的硬约束):**
+## The Iron Law
 
-| 脚本(`project-docs.cjs`)负责 | AI(本技能)负责 |
-|---|---|
-| 创建目录与根文档、渲染模板 | 探测现状、按场景路由、核对产物、报告冲突 |
-| 状态迁移、结构校验 | 向用户提问并等待决策 |
-| — | **禁止**:手动 mkdir、手动 Write 根文档、手动改 frontmatter |
+```
+SCRIPT CREATES — AI DETECTS, ROUTES, AND VERIFIES
+```
 
-脚本是唯一事实源——AI 手工建的目录或文件无法保证与模板一致,后续 `validate` 会因格式偏差报错。
+**Violating the letter of this rule is violating the spirit of initialization discipline.** AI 禁止手建目录或根文档。脚本是唯一事实源——AI 手工建的目录/文件无法保证与模板一致,后续 `validate` 必报错。
 
 ## Process
 

@@ -15,9 +15,13 @@ description: Use when refining the current milestone into a Feature Map and Feat
 
 **开始前宣布:** "我正在使用 refine 技能细化当前阶段的功能规格。"
 
-<HARD-GATE>
-只为当前或下一个 Milestone 生成 Feature Map 和 Specs。不细化远期(Later)。Feature Spec 只写"必须实现什么",不写"怎么实现"。
-</HARD-GATE>
+## The Iron Law
+
+```
+ONLY REFINE THE ACTIVE MILESTONE — SPECS DEFINE WHAT, NOT HOW
+```
+
+**Violating the letter of this rule is violating the spirit of feature specification.** 只为 Active/Next Milestone 生成 Specs。Feature Spec 写"必须实现什么",不写"怎么实现"。按钮、DB 表、IPC channel 是 Plan 任务,不是 Feature。
 
 ## Required Inputs(不满足即停止)
 

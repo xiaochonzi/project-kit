@@ -15,9 +15,13 @@ description: Use when you have a confirmed Blueprint and need to define the deli
 
 **开始前宣布:** "我正在使用 roadmap 技能和您一起规划交付顺序。"
 
-<HARD-GATE>
-不按技术层横向拆分。不写 Feature 验收标准。不做远期阶段的详细设计。
-</HARD-GATE>
+## The Iron Law
+
+```
+VERTICAL SLICING ONLY — NO TECHNICAL-LAYER PHASES
+```
+
+**Violating the letter of this rule is violating the spirit of delivery planning.** 不按技术层横向拆分。不写 Feature 验收标准。不做远期详细设计。
 
 ## Required Inputs(不满足即停止)
 

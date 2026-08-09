@@ -9,7 +9,15 @@ description: Use when a project needs stable development rules established or up
 
 通过和用户对话,为项目制定长期稳定的开发准则,写入 `docs/constitution.md`。
 
-**constitution 定义"怎么做",不定义"做什么"。** 它是 plan(影响分析)、execute(编码门禁)、verify(验收边界)、bug(回归标准)的统一约束来源。新加入的 AI 读到 constitution,就知道这个项目的质量门槛——不需要从代码里猜。
+**## The Iron Law
+
+```
+NO RULES WITHOUT USER CONFIRMATION — NO FABRICATED FACTS
+```
+
+**Violating the letter of this rule is violating the spirit of establishing project discipline.** 每条规则必须有来源(代码事实或用户明确确认)。无用户对话确认的规则不写入。AI 禁止臆造仓库事实。
+
+constitution 定义"怎么做",不定义"做什么"。** 它是 plan(影响分析)、execute(编码门禁)、verify(验收边界)、bug(回归标准)的统一约束来源。新加入的 AI 读到 constitution,就知道这个项目的质量门槛——不需要从代码里猜。
 
 **开始前宣布:** "我正在使用 constitution 技能和您一起制定开发准则。"
 

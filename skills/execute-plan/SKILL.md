@@ -13,9 +13,26 @@ description: Use when you have an approved Implementation Plan to execute — im
 
 **开始前宣布:** "我正在使用 execute-plan 技能执行此计划。"
 
-<HARD-GATE>
-没有 `status: approved` 的 Plan,或者 Plan 与代码现实冲突——禁止开始修改任何文件。Feature 最多推进到 `implemented`,**禁止标记 `verified`**。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
+```
+
+**Violating the letter of this rule is violating the spirit of execution discipline.** 没有 approved Plan 或 Plan 与代码现实冲突→禁止修改任何文件。Plan 过期→回 plan 修订,不边执行边改。Feature 最多到 `implemented`,禁止标记 `verified`。
+
+## When to Use ESPECIALLY
+
+- Plan 有 5+ 任务、涉及多个文件时
+- 执行过程中发现了 Plan 没提到的问题时
+- 想"顺手把这个也改了"时
+- 测试失败了,想注释掉继续时
+
+## Don't Skip When
+
+- "这个任务很简单,不用 TDD"——每个任务遵守 RED→GREEN→CHECK
+- "只改一行,不用记录"——每步都记录执行事实
+- "功能差不多了,标 verified"——verified 只能来自 verify-plan
 
 ## Required Inputs(不满足即停止,逐项核对)
 

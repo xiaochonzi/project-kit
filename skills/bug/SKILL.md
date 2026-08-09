@@ -11,9 +11,26 @@ description: Use when diagnosing and fixing a defect — an implementation that 
 
 **开始前宣布:** "我正在使用 bug 技能修复缺陷。"
 
-<HARD-GATE>
-先找到根因再修改。未定位根因的"试试看"修复会重复引入同类问题。不是违反 Spec 的→转 change。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+```
+
+**Violating the letter of this rule is violating the spirit of debugging.** 症状修复是失败。如果没完成 Phase 1(根因调查),就不能提出任何修复。不是违反 Spec 的→转 change。
+
+## When to Use ESPECIALLY
+
+- 有时间压力时(紧急情况下最容易想"试试看")
+- "就改一行"看起来很明显时
+- 已经试了好几个修复都没用时
+- 不太确定问题出在哪时
+
+## Don't Skip When
+
+- 问题"看起来很简单"——简单的 bug 也有根因
+- 你很急——系统化调试比反复试错快
+- 有人催你马上修——先定位根因再动手才是最快的
 
 ## 确认是 Bug 还是新需求
 

@@ -13,9 +13,33 @@ description: Use when a Feature is implemented and needs independent acceptance 
 
 **开始前宣布:** "我正在使用 verify-plan 技能进行独立验收。"
 
-<HARD-GATE>
-每条验收标准必须在本技能执行期间重新运行证据命令。不得引用 execute 阶段的旧输出,不得凭"看起来正确"宣称通过。验收失败不得通过修改验收标准来掩盖。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+**Violating the letter of this rule is violating the spirit of verification.** 如果你没有在此轮消息中重新运行验证命令,就不能声称它通过。不得引用 execute 阶段的旧输出、不得凭"看起来正确"宣称通过、不得通过修改验收标准来掩盖失败。
+
+## Red Flags — STOP immediately
+
+在声明任何结果前,如果出现以下信号,**立刻停止,不要继续**:
+
+- 想说"应该没问题"、"看起来正确"、"之前测过了"
+- 想表达满意("Perfect!"、"Done!")但没跑过验证命令
+- 相信 execute 阶段的测试输出("那次是通过的")——那次不是这次
+- 验收标准失败了,但想把它写成"限制"或"已知问题"来过关
+- 想顺手修个范围外的 bug 再回来验收
+- **任何在没有运行证据命令的情况下暗示通过的措辞**
+
+## Common Failures
+
+| 声明 | 必须要 | 不算数 |
+|---|---|---|
+| 测试通过 | 本轮 `node --test` 输出:0 failures | 上一轮通过、"应该能过" |
+| Spec 验收满足 | 逐条 AC 证据命令+本轮输出 | "代码看起来实现了" |
+| 没有越界修改 | `git diff --stat` vs Plan files_modified | "感觉没改别的" |
+| Feature 可标记 verified | 全部 AC pass + verification passed | "差不多了,标 verified 吧" |
 
 ## Required Inputs(不满足即停止)
 

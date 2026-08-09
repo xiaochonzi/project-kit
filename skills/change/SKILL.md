@@ -11,9 +11,13 @@ description: Use when receiving a new requirement, scope change, or enhancement 
 
 **开始前宣布:** "我正在使用 change 技能处理变更请求。"
 
-<HARD-GATE>
-不清不楚的需求不创建 Plan。不静默修改已 verified 的 Spec 语义。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO PLAN FROM UNCLEAR REQUIREMENTS — NO SILENT SPEC CHANGES
+```
+
+**Violating the letter of this rule is violating the spirit of change management.** 不清不楚的需求不创建 Plan。不静默修改已 verified 的 Spec 语义。
 
 ## 需求分类(先判断再处理)
 

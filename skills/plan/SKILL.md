@@ -13,9 +13,13 @@ description: Use when you have an approved Feature Spec that needs an implementa
 
 **开始前宣布:** "我正在使用 plan 技能制定实现计划。"
 
-<HARD-GATE>
-没有 `status: approved` 的 Feature Spec,不制定计划。发现 Spec 有歧义或矛盾 → 停止,回 refine 修订。Plan 不得引入 Spec 没有要求的新能力,不得包含未授权的重构或顺手优化。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO PLAN WITHOUT AN APPROVED FEATURE SPEC
+```
+
+**Violating the letter of this rule is violating the spirit of planning discipline.** 没有 approved Spec→不制定计划。Spec 有歧义或矛盾→停止,回 refine 修订。Plan 不得引入 Spec 没有的新能力,不得包含未授权的重构。
 
 ## Required Inputs(不满足即停止)
 

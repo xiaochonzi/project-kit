@@ -14,9 +14,20 @@ description: Use when receiving a fuzzy idea, raw requirement, or design discuss
 
 **不产出**:Blueprint、Roadmap、Feature Spec、Implementation Plan——这些是后续技能的职责。
 
-<HARD-GATE>
-本技能不写任何代码,不生成任何实现计划,不替用户做产品决定。遇到会改变目标、范围、用户行为或数据边界的未决问题——暂停,让用户决定。
-</HARD-GATE>
+## The Iron Law
+
+```
+NO IMPLEMENTATION PLANS FROM UNVERIFIED REQUIREMENTS
+```
+
+**Violating the letter of this rule is violating the spirit of requirements gathering.** 本技能不写代码、不生成实现计划、不替用户做产品决定。遇到会改变目标/范围/用户行为/数据边界的未决问题→暂停,让用户决定。
+
+## Don't Skip When
+
+- 需求"看起来很清楚了"——没被检视过的假设是返工的根源
+- "就一个小功能,不用走流程"——小功能也有边界、约束和验收方式
+- "用户口头说了,直接写下来"——口头的也要逐条确认,标注来源
+- 想一次把所有问题都问完——逐话题,一次一个
 
 ## Anti-Pattern: "这个需求很清楚,直接写代码吧"
 
@@ -29,11 +40,12 @@ description: Use when receiving a fuzzy idea, raw requirement, or design discuss
 1. **探查项目上下文** — 检查已有 `docs/`、现有 Blueprint、Roadmap
 2. **范围检查** — 多独立系统?立刻提出拆分,不追问细节
 3. **对话展开** — 一次一个问题,理解目的/约束/成功标准
-4. **固化 Brief** — 写入 `docs/briefs/BRIEF-###.md`,区分事实/假设/候选/未决
-5. **结构化审计** — 分 9 类,识别重复、矛盾、模糊、缺失
-6. **逐条 REQ 确认** — 每条 REQ 和用户确认优先级与范围
-7. **Brief 自审** — 占位符、一致性、范围、歧义(修复后重审)
-8. **用户审阅 Brief** — 用户确认后再进入下一步
+4. **Validate Before Concluding** — 复述确认,纠正后再进入固化
+5. **固化 Brief** — 写入 `docs/briefs/BRIEF-###.md`,区分事实/假设/候选/未决
+6. **结构化审计** — 分 9 类,识别重复、矛盾、模糊、缺失
+7. **逐条 REQ 确认** — 每条 REQ 和用户确认优先级与范围
+8. **Brief 自审** — 占位符、一致性、范围、歧义(修复后重审)
+9. **用户审阅 Brief** — 用户确认后再进入下一步
 
 ## Process
 
@@ -53,9 +65,9 @@ description: Use when receiving a fuzzy idea, raw requirement, or design discuss
 
 不要在需要拆分的问题上花时间追问细节。每个子系统独立 brief → blueprint → roadmap → refine。
 
-### 3. 对话展开(一次一个问题)
+### 3. 对话展开(一次一个问题 + 方案对比)
 
-一次只问一个问题,倾向给选项:
+一次只问一个问题,倾向给选项。当存在多种合理方向时,**提出 2-3 个方案对比**:每个方案一句话+利弊+适合什么场景,然后**推荐一个**并解释原因。不要只给一条路——至少提一个替代方案。
 
 > 好的——不是"你有什么需求?"。
 
@@ -72,7 +84,22 @@ description: Use when receiving a fuzzy idea, raw requirement, or design discuss
 | **假设** | 尚未验证的前提 |
 | **未决** | 需要用户决定的问题 |
 
-### 4. 固化 Brief
+### 4. Validate Before Concluding(固化前复述确认)
+
+在和用户得出结论之前,**先复述你听到的内容**:
+
+> 让我确认一下我的理解:
+> - 问题:[复述]
+> - 目标用户:[复述]
+> - 核心能力:[复述]
+> - 明确不做:[复述]
+> - 还有这些未决问题:[列出]
+>
+> 这样对吗?有需要纠正的吗?
+
+用户纠正后重新复述,直到确认一致。然后进入固化。
+
+### 5. 固化 Brief
 
 讨论收敛后(用户意图清楚,不再是纯发散),创建 Brief:
 
