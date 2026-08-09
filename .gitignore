@@ -1,14 +1,3 @@
 .reference/
 /.claude/
-init-workspace/
-init-workspace-v2/
-constitution-workspace/
-brief-workspace/
-brief2-workspace/
-blueprint-workspace/
-roadmap-workspace/
-refine-workspace/
-plan-workspace/
-exec-workspace/
-verify-workspace/
-final-workspace/
+*-workspace/
