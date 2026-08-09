@@ -1,0 +1,51 @@
+{
+  "skill_name": "init",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "A-clean-project",
+      "prompt": "帮我初始化 /tmp/pk-eval-v2/clean 这个新项目的文档结构,它还没有 docs/ 目录,只有一个 package.json",
+      "expected_output": "识别为场景A;运行 init;5根文档+11子目录;validate 0错误;标准成功Handoff",
+      "assertions": [
+        {"text": "正确识别场景A并运行init","check":"scenario-A-routing"},
+        {"text": "5个根文档全部创建","check":"root-docs-created"},
+        {"text": "validate输出错误0","check":"validate-pass"},
+        {"text": "使用标准成功Handoff格式报告","check":"handoff-format"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "B-ready-project",
+      "prompt": "/tmp/pk-eval-v2/ready 这个项目帮我看看文档结构怎么样了,如果完整就不需要重新初始化",
+      "expected_output": "识别为场景B;不运行init;报告'已就绪';validate 0错误;给出next action",
+      "assertions": [
+        {"text": "正确识别场景B且不运行init","check":"scenario-B-routing"},
+        {"text": "报告'已就绪'且给出下一步","check":"skip-report"},
+        {"text": "未重复创建/覆盖任何文件","check":"no-duplicate-work"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "C-partial-project",
+      "prompt": "/tmp/pk-eval-v2/partial 项目里已经有 docs/requirements.md 了,但还缺其他根文档和子目录,帮我补齐",
+      "expected_output": "识别为场景C;先报告缺失清单;获得确认后init;已有文件不覆盖;validate 0错误",
+      "assertions": [
+        {"text": "正确识别场景C并报告缺失清单","check":"scenario-C-routing"},
+        {"text": "已有requirements.md未被覆盖","check":"existing-file-preserved"},
+        {"text": "缺失项补齐后validate通过","check":"validate-pass"}
+      ]
+    },
+    {
+      "id": 4,
+      "eval_name": "D-conflict-project",
+      "prompt": "/tmp/pk-eval-v2/conflict 项目已有一个 docs/ 目录,里面有 notes.txt(非标准文件),帮我初始化",
+      "expected_output": "识别为场景D;不运行init;列出冲突文件;提供A/B/C选项让用户决定;不静默删除/覆盖",
+      "assertions": [
+        {"text": "正确识别场景D且停止等待决策","check":"scenario-D-routing"},
+        {"text": "notes.txt未被删除","check":"conflict-file-preserved"},
+        {"text": "提供A迁移/B重建/C保留选项","check":"options-offered"},
+        {"text": "给出阻塞Handoff报告","check":"blocked-handoff"}
+      ]
+    }
+  ]
+}
