@@ -1,8 +1,31 @@
 ---
 description: 为一个模糊想法或原始需求启动 Brief 需求梳理流程
-argument-hint: "[idea-file-or-description]"
+argument-hint: "[idea-file]"
 ---
 
-如果 `$ARGUMENTS` 提供了文件路径,读取作为原始需求;否则询问用户想讨论什么想法。
+如果 `$ARGUMENTS` 提供了文件路径且文件存在,读取作为原始需求。否则给用户两个选择:提供原始需求文件,或直接描述想法(本 command 会将对话记录作为 Brief 素材)。
 
-声明"我正在使用 brief 技能梳理需求",然后按技能流程执行:范围检查→对话展开(一次一个问题)→固化 Brief→审计→逐条 REQ 确认→自审→用户审阅。
+**第一步:保存原始输入**
+
+```bash
+node scripts/project-docs.cjs new brief --title <标题> --source <原始需求文件> --root <项目根>
+```
+
+创建 `docs/briefs/BRIEF-###.md`,包含原始输入——确认后正文不再改写。
+
+**第二步:结构化审计**
+
+把 Brief 内容归类为 9 类(产品目标/用户场景/功能能力/业务规则/数据约束/非功能要求/假设/未决问题/不做)。识别重复、矛盾、模糊、缺失。阻断性问题→暂停让用户决定。
+
+**第三步:逐条 REQ 确认**
+
+在 `docs/requirements.md` 中逐条写入 REQ(REQ-### 格式)。每条让用户确认:是否真的需要?优先级 must/should/later?第一版含吗?如何判断满足?**未确认的不得标 accepted。**
+
+**第四步:校验**
+
+```bash
+node scripts/project-docs.cjs validate --root <项目根>
+node scripts/project-docs.cjs coverage --root <项目根>
+```
+
+validate 0 错误 + accepted REQ 均有来源(Brief 或用户确认标注)。不写 Blueprint、不写 Roadmap、不写 Plan——那些是 blueprint/roadmap 技能的事。

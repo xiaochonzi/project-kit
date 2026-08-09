@@ -3,12 +3,25 @@ description: 创建 Project Kit 生命周期文档(brief/milestone/feature/plan/
 argument-hint: "<type> --title <title> [options]"
 ---
 
-`$ARGUMENTS` 必须提供文档类型和必需参数。运行:
+`$ARGUMENTS` 必须提供文档类型和必需参数。解析参数,信息不足时先询问一次。
+
+运行:
 
 ```bash
-node scripts/project-docs.cjs new <type> <options> --root <项目根>
+node scripts/project-docs.cjs new <type> [options] --root <项目根>
 ```
 
-类型:`brief`(需 `--source`)、`milestone`(需 `--title`)、`feature`(需 `--milestone`、`--title`)、`plan`(需 `--feature`)、`execution`(需 `--feature`)、`verification`(需 `--feature`)、`change`(需 `--title`)、`fix`(需 `--title`)、`adr`(需 `--title`)
+各类型必需参数:
 
-报告创建的文档路径和下一步(填写内容、推进状态)。
+- `brief` — 需要 `--title` 和 `--source <原始需求文件>`
+- `milestone` — 需要 `--title`
+- `feature` — 需要 `--milestone <M#>` 和 `--title`
+- `plan` — 需要 `--feature <F-M#-##>`
+- `execution` — 需要 `--feature <F-M#-##>`
+- `verification` — 需要 `--feature <F-M#-##>`
+- `change` — 需要 `--title`
+- `fix` — 需要 `--title`
+- `adr` — 需要 `--title`
+- `context` — 需要 `--milestone <M#>`
+
+报告:创建的文档路径 + 文件命名(ID 由脚本分配)。然后提示:下一步是填写文档内容(对应技能的职责)。
