@@ -19,7 +19,7 @@ test('validate-plugin passes for current plugin', () => {
   const output = run(['validate-plugin', '--root', '.', '--json']);
   const result = JSON.parse(output);
   assert.equal(result.valid, true);
-  assert.equal(result.skillCount, 10);
+  assert.equal(result.skillCount, 12);
   assert.equal(result.templateCount, 16);
 });
 

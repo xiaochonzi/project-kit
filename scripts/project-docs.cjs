@@ -11,6 +11,8 @@ const PLUGIN_SKILLS = [
   'init',
   'constitution',
   'brief',
+  'blueprint',
+  'roadmap',
   'refine',
   'plan',
   'execute-plan',
