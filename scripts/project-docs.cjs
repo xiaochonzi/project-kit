@@ -47,23 +47,18 @@ const DOCUMENT_TYPES = {
 };
 const ALLOWED_STATUSES = {
   brief: new Set(['captured']),
-  change: new Set(['proposed', 'accepted', 'completed', 'deferred', 'rejected']),
-  proposal: new Set(['draft', 'approved']),
+  proposal: new Set(['proposed', 'accepted', 'completed', 'deferred', 'rejected']),
   spec: new Set(['draft', 'approved', 'verified']),
   plan: new Set(['draft', 'approved', 'completed', 'blocked']),
   adr: new Set(['proposed', 'accepted', 'superseded', 'rejected'])
 };
 const TRANSITIONS = {
-  change: {
+  proposal: {
     proposed: ['accepted', 'deferred', 'rejected'],
     accepted: ['completed', 'deferred'],
     deferred: ['accepted', 'rejected'],
     completed: [],
     rejected: []
-  },
-  proposal: {
-    draft: ['approved'],
-    approved: []
   },
   spec: {
     draft: ['approved'],
@@ -87,7 +82,6 @@ const REFERENCE_FIELDS = [
   'source', 'depends_on', 'extends', 'supersedes', 'superseded_by', 'affects'
 ];
 const ID_PATTERN = /^(?:BRIEF-\d{3}|CR-\d{3}|ADR-\d{3})$/;
-const REQ_PATTERN = /^REQ-\d{3}$/;
 const REQUIRED_SECTIONS = {
   proposal: ['背景与问题', '期望结果', '包含', '不包含', '影响范围'],
   spec: ['问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '验收标准'],
@@ -99,7 +93,7 @@ const REQUIRED_SECTIONS = {
 const CONTENT_GATES = {
   spec: { statuses: ['approved', 'verified'], sections: ['问题与依据', '目标', '范围', '验收标准'] },
   plan: { statuses: ['approved', 'completed'], sections: ['实现策略', 'Tasks', '验收标准映射', '最终验证'] },
-  change: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] },
+  proposal: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] },
   adr: { statuses: ['accepted'], sections: ['背景与约束', '决策', '理由', '影响', '验证方式'] }
 };
 
@@ -239,28 +233,6 @@ function collectDocuments(root) {
     const metadata = parseFrontmatter(content);
     const relativePath = path.relative(docsRoot, filePath);
     return { filePath, relativePath, content, metadata, kind: documentKind(relativePath, metadata) };
-  });
-}
-
-function parseRequirements(root) {
-  const filePath = path.join(root, 'docs', 'requirements.md');
-  if (!fs.existsSync(filePath)) return [];
-  const content = fs.readFileSync(filePath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
-  const matches = [...content.matchAll(/^###\s+(REQ-\d{3})(?:\s*:\s*(.+))?\r?\n([\s\S]*?)(?=^###\s+REQ-|(?![\s\S]))/gm)];
-  return matches.map((match) => {
-    const fields = {};
-    for (const fieldMatch of match[3].matchAll(/^-\s+([a-z_]+):\s*(.*)$/gm)) {
-      fields[fieldMatch[1]] = fieldMatch[2].trim();
-    }
-    const splitIds = (value, pattern) => (value || '').split(',').map((item) => item.trim()).filter((item) => pattern.test(item));
-    return {
-      id: match[1],
-      title: (match[2] || '').trim(),
-      status: fields.status || 'proposed',
-      source: splitIds(fields.source, ID_PATTERN),
-      milestones: splitIds(fields.milestones, /^M\d+$/),
-      features: splitIds(fields.features, /^F-M\d+-\d{2}$/)
-    };
   });
 }
 
@@ -423,7 +395,7 @@ function validatePlanTasks(document, errors, warnings) {
 }
 
 function validateFileConflicts(documents, warnings) {
-  const activePlans = documents.filter((document) => document.kind === 'plan' && ['approved', 'in-progress'].includes(document.metadata.status));
+  const activePlans = documents.filter((document) => document.kind === 'plan' && document.metadata.status === 'approved');
   for (let left = 0; left < activePlans.length; left += 1) {
     for (let right = left + 1; right < activePlans.length; right += 1) {
       if (activePlans[left].metadata.wave !== activePlans[right].metadata.wave) continue;
@@ -436,30 +408,45 @@ function validateFileConflicts(documents, warnings) {
   }
 }
 
+function validateChangeDirectories(root, errors) {
+  const changesRoot = path.join(root, 'docs', 'changes');
+  if (!fs.existsSync(changesRoot)) return;
+  for (const entry of fs.readdirSync(changesRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !/^CR-\d{3}-.+/.test(entry.name)) continue;
+    for (const required of ['proposal.md', 'spec.md', 'plan.md']) {
+      if (!fs.existsSync(path.join(changesRoot, entry.name, required))) {
+        errors.push(`Full 变更缺少 ${required}: docs/changes/${entry.name}/`);
+      }
+    }
+  }
+}
+
 function validateProject(root, jsonOutput) {
   const docsRoot = path.join(root, 'docs');
   const documents = collectDocuments(root);
-  const requirements = parseRequirements(root);
   const errors = [];
   const warnings = [];
   const ids = new Map();
-  const requirementIds = new Set(requirements.map((requirement) => requirement.id));
 
   for (const fileName of Object.keys(INITIAL_FILES)) {
     if (!fs.existsSync(path.join(docsRoot, fileName))) errors.push(`缺少根文档: docs/${fileName}`);
   }
 
+  validateChangeDirectories(root, errors);
+
   for (const document of documents) {
     const { id, status } = document.metadata;
     if (document.kind && !status) errors.push(`缺少 status: ${document.relativePath}`);
-    if (document.kind && !['plan', 'execution', 'verification'].includes(document.kind) && typeof id !== 'string') {
+    if (document.kind && !['spec', 'plan'].includes(document.kind) && typeof id !== 'string') {
       errors.push(`缺少 id: ${document.relativePath}`);
     }
     if (typeof id === 'string') {
       if (!ID_PATTERN.test(id)) errors.push(`非法 ID ${id}: ${document.relativePath}`);
       if (ids.has(id)) errors.push(`重复 ID ${id}: ${ids.get(id)} 与 ${document.relativePath}`);
       ids.set(id, document.relativePath);
-      if (!path.basename(document.filePath).startsWith(`${id}-`) && path.basename(document.filePath) !== `${id}.md`) {
+      if (!['proposal', 'spec', 'plan'].includes(document.kind)
+        && !path.basename(document.filePath).startsWith(`${id}-`)
+        && path.basename(document.filePath) !== `${id}.md`) {
         errors.push(`文件名与 ID 不一致: ${document.relativePath} (${id})`);
       }
     }
@@ -476,121 +463,50 @@ function validateProject(root, jsonOutput) {
       const empty = emptySections(document, gate.sections);
       if (empty.length > 0) errors.push(`状态 ${status} 仍有空章节 ${empty.join('、')}: ${document.relativePath}`);
     }
-    if (document.kind === 'plan') validatePlanTasks(document, errors, warnings);
-  }
-
-  for (const requirement of requirements) {
-    if (!['proposed', 'accepted', 'blocked', 'deferred', 'rejected', 'delivered'].includes(requirement.status)) {
-      errors.push(`Requirement 非法状态 ${requirement.status}: ${requirement.id}`);
+    if (document.kind === 'plan') {
+      validatePlanTasks(document, errors, warnings);
+      if (document.metadata.status === 'completed' && /^- \[ \] /m.test(document.content)) {
+        errors.push(`completed Plan 仍有未勾选任务: ${document.relativePath}`);
+      }
     }
-    for (const source of requirement.source) if (!ids.has(source)) errors.push(`Requirement 来源无效 ${source}: ${requirement.id}`);
   }
 
   for (const document of documents) {
     for (const field of REFERENCE_FIELDS) {
       for (const reference of asArray(document.metadata[field])) {
         if (typeof reference !== 'string') continue;
-        if (REQ_PATTERN.test(reference) && !requirementIds.has(reference)) {
-          errors.push(`无效 Requirement 引用 ${reference}: ${document.relativePath} 字段 ${field}`);
-        } else if (ID_PATTERN.test(reference) && !ids.has(reference)) {
+        if (ID_PATTERN.test(reference) && !ids.has(reference)) {
           errors.push(`无效引用 ${reference}: ${document.relativePath} 字段 ${field}`);
         }
       }
     }
-    if (document.kind === 'feature' && typeof document.metadata.milestone === 'string') {
-      const expectedDirectory = path.join('specs', document.metadata.milestone);
-      if (!document.relativePath.startsWith(`${expectedDirectory}${path.sep}`)) {
-        errors.push(`Feature 目录与 milestone 不一致: ${document.relativePath}`);
-      }
-    }
-    if (document.kind === 'plan') {
-      const feature = findFeature(documents, document.metadata.feature);
-      if (!feature) errors.push(`Plan 对应 Feature 不存在: ${document.relativePath}`);
-      if (feature && document.metadata.status !== 'draft') {
-        const missing = asArray(feature.metadata.requirements).filter((id) => !asArray(document.metadata.requirements).includes(id));
-        if (missing.length > 0) errors.push(`Plan 缺少 Feature Requirements ${missing.join(', ')}: ${document.relativePath}`);
-      }
-    }
-    if (document.kind === 'feature' && document.metadata.status === 'implemented') {
-      warnings.push(`已实现但尚未验证: ${document.metadata.id}`);
-    }
-    if (document.kind === 'feature' && document.metadata.status === 'verified') {
-      const verification = documents.find((item) => item.kind === 'verification' && item.metadata.feature === document.metadata.id);
-      if (!verification || verification.metadata.status !== 'passed') {
-        errors.push(`verified Feature 缺少 passed Verification: ${document.metadata.id}`);
-      } else if (verification.metadata.spec_hash !== contentHash(document.content)) {
-        errors.push(`verified Feature 在验收后发生变化: ${document.metadata.id}`);
-      }
-    }
-    if (document.kind === 'verification' && document.metadata.status === 'passed') {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(document.metadata.verified_at || '')) {
-        errors.push(`passed Verification 缺少 verified_at: ${document.relativePath}`);
-      }
-      if (!document.metadata.spec_hash || document.metadata.spec_hash === 'null') {
-        errors.push(`passed Verification 缺少 spec_hash: ${document.relativePath}`);
-      }
-      if (!document.metadata.implementation_ref || document.metadata.implementation_ref === 'null') {
-        errors.push(`passed Verification 缺少 implementation_ref: ${document.relativePath}`);
+    if (document.kind === 'spec' && document.metadata.status === 'verified') {
+      const hash = document.metadata.spec_hash;
+      if (!hash || hash === 'null' || hash !== contentHash(document.content)) {
+        errors.push(`verified Spec 缺少或已偏离 spec_hash: ${document.relativePath}`);
       }
     }
   }
 
   detectDependencyCycles(documents, errors);
   validateFileConflicts(documents, warnings);
-  const coverage = calculateCoverage(requirements, documents);
-  for (const item of coverage.uncovered) errors.push(`accepted Requirement 未完整覆盖 ${item.id}: 缺少 ${item.missing.join('、')}`);
 
   const result = {
     valid: errors.length === 0,
     errors,
     warnings,
     documentCount: documents.length,
-    requirementCount: requirements.length,
-    acceptedRequirementCoverage: coverage.percentage
+    changeCount: documents.filter((document) => document.kind === 'proposal').length
   };
   if (jsonOutput) {
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } else {
-    process.stdout.write(`文档数: ${documents.length}\nRequirements: ${requirements.length}\n`);
-    process.stdout.write(`Accepted REQ 覆盖率: ${coverage.percentage}%\n错误: ${errors.length}\n`);
+    process.stdout.write(`文档数: ${documents.length}\nChanges: ${result.changeCount}\n错误: ${errors.length}\n`);
     for (const error of errors) process.stdout.write(`  - ${error}\n`);
     process.stdout.write(`提醒: ${warnings.length}\n`);
     for (const warning of warnings) process.stdout.write(`  - ${warning}\n`);
   }
   return result.valid;
-}
-
-function calculateCoverage(requirements, documents) {
-  const byId = new Map(documents.map((document) => [document.metadata.id, document]).filter(([id]) => id));
-  const accepted = requirements.filter((requirement) => requirement.status === 'accepted');
-  const uncovered = [];
-  for (const requirement of accepted) {
-    const missing = [];
-    if (
-      requirement.milestones.length === 0
-      || requirement.milestones.some((id) => !byId.has(id) || !asArray(byId.get(id).metadata.requirements).includes(requirement.id))
-    ) missing.push('Milestone 双向映射');
-    if (
-      requirement.features.length === 0
-      || requirement.features.some((id) => !byId.has(id) || !asArray(byId.get(id).metadata.requirements).includes(requirement.id))
-    ) missing.push('Feature 双向映射');
-    if (missing.length > 0) uncovered.push({ id: requirement.id, missing });
-  }
-  const covered = accepted.length - uncovered.length;
-  const percentage = accepted.length === 0 ? 100 : Math.round((covered / accepted.length) * 100);
-  return { accepted: accepted.length, covered, percentage, uncovered };
-}
-
-function reportCoverage(root, jsonOutput) {
-  const result = calculateCoverage(parseRequirements(root), collectDocuments(root));
-  if (jsonOutput) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-    return result.uncovered.length === 0;
-  }
-  process.stdout.write(`Accepted Requirements: ${result.accepted}\n`);
-  process.stdout.write(`完整覆盖: ${result.covered}\n覆盖率: ${result.percentage}%\n`);
-  for (const item of result.uncovered) process.stdout.write(`  - ${item.id}: 缺少 ${item.missing.join('、')}\n`);
-  return result.uncovered.length === 0;
 }
 
 function findTarget(documents, target, kind) {
@@ -862,23 +778,26 @@ function validatePlugin(root, jsonOutput) {
 
 function nextAction(root, jsonOutput) {
   const documents = collectDocuments(root);
-  const coverage = calculateCoverage(parseRequirements(root), documents);
+  const statePath = path.join(root, 'docs', 'STATE.md');
+  let nextActionField = null;
+  if (fs.existsSync(statePath)) {
+    const stateMetadata = parseFrontmatter(fs.readFileSync(statePath, 'utf8'));
+    nextActionField = typeof stateMetadata.next_action === 'string' && stateMetadata.next_action !== '' && stateMetadata.next_action !== 'null'
+      ? stateMetadata.next_action
+      : null;
+  }
   let result;
-  if (coverage.uncovered.length > 0) {
-    result = { mode: 'brief', target: null, reason: `${coverage.uncovered.length} 个 accepted Requirement 未完整覆盖` };
+  if (nextActionField) {
+    result = { mode: 'next', target: nextActionField, reason: 'STATE.md 记录的下一动作' };
   } else {
-    const failed = documents.find((item) => item.kind === 'verification' && ['failed', 'blocked'].includes(item.metadata.status));
-    const implemented = documents.find((item) => item.kind === 'feature' && item.metadata.status === 'implemented');
-    const inProgress = documents.find((item) => item.kind === 'feature' && item.metadata.status === 'in-progress');
-    const approved = documents.find((item) => item.kind === 'feature' && item.metadata.status === 'approved');
-    const draft = documents.find((item) => item.kind === 'feature' && ['idea', 'draft', 'reviewed'].includes(item.metadata.status));
-    const activeMilestone = documents.find((item) => item.kind === 'milestone' && item.metadata.status === 'active');
-    if (failed) result = { mode: 'execute-plan', target: failed.metadata.feature, reason: 'Verification 尚未通过' };
-    else if (implemented) result = { mode: 'verify-plan', target: implemented.metadata.id, reason: 'Feature 已实现但尚未独立验收' };
-    else if (inProgress) result = { mode: 'execute-plan', target: inProgress.metadata.id, reason: 'Feature 正在执行' };
-    else if (approved) result = { mode: 'plan', target: approved.metadata.id, reason: 'Feature 已批准但尚无可执行状态' };
-    else if (draft) result = { mode: 'refine', target: draft.metadata.id, reason: 'Feature 尚未批准' };
-    else if (activeMilestone) result = { mode: 'refine', target: activeMilestone.metadata.id, reason: 'Active Milestone 尚无可推进 Feature' };
+    const draftProposal = documents.find((item) => item.kind === 'proposal' && item.metadata.status === 'proposed');
+    const acceptedProposal = documents.find((item) => item.kind === 'proposal' && item.metadata.status === 'accepted');
+    const specDraft = documents.find((item) => item.kind === 'spec' && item.metadata.status === 'draft');
+    const planDraft = documents.find((item) => item.kind === 'plan' && item.metadata.status === 'draft');
+    if (draftProposal) result = { mode: 'change', target: draftProposal.metadata.id, reason: 'Proposal 待用户确认范围' };
+    else if (specDraft) result = { mode: 'change', target: specDraft.metadata.change, reason: 'Spec 待填写契约与验收标准' };
+    else if (acceptedProposal) result = { mode: 'change', target: acceptedProposal.metadata.id, reason: 'Change 已接受，待创建 Spec' };
+    else if (planDraft) result = { mode: 'plan', target: planDraft.metadata.change, reason: 'Plan 待编写或批准' };
     else result = { mode: 'status', target: null, reason: '没有机械可推导的待办，请检查 Roadmap 与 STATE' };
   }
   if (jsonOutput) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -886,11 +805,10 @@ function nextAction(root, jsonOutput) {
 }
 
 function printHelp() {
-  process.stdout.write(`Project Kit document helper\n\nCurrent conventions: docs/blueprint.md and docs/fixes/ remain the first-round canonical names during multi-skill migration.\n\nUsage:\n`);
+  process.stdout.write(`Project Kit document helper\n\nUsage:\n`);
   process.stdout.write(`  node project-docs.cjs init --root <project>\n`);
-  process.stdout.write(`  node project-docs.cjs new <brief|capability|milestone|context|feature|plan|execution|verification|change|fix|adr> [options]\n`);
+  process.stdout.write(`  node project-docs.cjs new <change|proposal|spec|plan|brief|adr> [options]\n`);
   process.stdout.write(`  node project-docs.cjs context <mode> [--target <id>] --root <project> [--json]\n`);
-  process.stdout.write(`  node project-docs.cjs coverage --root <project> [--json]\n`);
   process.stdout.write(`  node project-docs.cjs transition <id> --to <status> [--kind <kind>] --root <project>\n`);
   process.stdout.write(`  node project-docs.cjs next --root <project> [--json]\n`);
   process.stdout.write(`  node project-docs.cjs validate --root <project> [--json]\n`);
@@ -914,10 +832,6 @@ function main() {
   if (command === 'context') {
     if (!positional[1]) throw new Error('context 需要模式');
     return contextForMode(root, positional[1], typeof options.target === 'string' ? options.target : null, options.json === true);
-  }
-  if (command === 'coverage') {
-    if (!reportCoverage(root, options.json === true)) process.exitCode = 1;
-    return;
   }
   if (command === 'transition') return transitionDocument(root, positional[1], options.to, options.kind);
   if (command === 'next') return nextAction(root, options.json === true);
