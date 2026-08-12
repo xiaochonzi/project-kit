@@ -1,8 +1,8 @@
 ---
 updated_at: {{DATE}}
-active_milestone: null
-active_feature: null
+active_change: null
 mode: init
+next_action: null
 ---
 
 # Project State
