@@ -1,24 +1,24 @@
 ---
-description: 创建 Project Kit 生命周期文档（change/proposal/spec/plan/brief）
-argument-hint: "<type> --title <title> [options]"
+description: 创建一个新的 Full 变更（change 目录 + proposal 骨架）
+argument-hint: "<title>"
 ---
 
-`$ARGUMENTS` 必须提供文档类型和必需参数。解析参数，信息不足时先询问一次。
+`$ARGUMENTS` 必须提供变更标题。
 
-运行:
+**Quick 变更不需要本命令**——小改动（不触碰契约/API/数据模型/权限，边界清晰）直接实现 + git commit + STATE 一行，零文档。
+
+**Full 变更入口:**
 
 ```bash
-node scripts/project-docs.cjs new <type> [options] --root <项目根>
+node scripts/project-docs.cjs new change --title <变更标题> --root <项目根>
 ```
 
-各类型必需参数:
+创建 `docs/changes/CR-###-<slug>/proposal.md`（ID 由脚本分配）。
 
-- `change` — 需要 `--title`（创建 `changes/CR-###-<slug>/` 目录 + proposal.md）
-- `proposal` — 需要 `--change <CR-###>`（change 目录已存在时补文件）
-- `spec` — 需要 `--change <CR-###>`
-- `plan` — 需要 `--change <CR-###>`
-- `brief` — 需要 `--title` 和 `--source <原始需求文件>`
+然后:
 
-报告:创建的文档路径 + 文件命名（ID 由脚本分配）。然后提示:下一步是填写文档内容（对应技能的职责）。
+1. 填写 proposal（背景与问题/期望结果/包含/不包含/影响范围/决定/未决问题）
+2. 用户确认 → `transition CR-### --to accepted`
+3. 流程内创建并填写 spec、plan（由 change / plan 技能驱动，不需要手动调用）
 
-**注意:Quick 变更（小改动）不需要创建任何文档——直接实现 + git commit + STATE 一行。**
+报告:创建的目录与 proposal 路径，下一步填写 proposal 内容并请用户确认范围。
