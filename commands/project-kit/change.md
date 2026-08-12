@@ -1,5 +1,5 @@
 ---
-description: 创建一个新的 Full 变更（change 目录 + proposal 骨架）
+description: 新需求入口——Quick 零文档直接实现，或 Full 创建 change 目录 + proposal 骨架
 argument-hint: "<title>"
 ---
 
