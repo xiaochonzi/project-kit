@@ -1,5 +1,5 @@
 ---
-description: 创建 Project Kit 生命周期文档（change/proposal/spec/plan/brief/adr）
+description: 创建 Project Kit 生命周期文档（change/proposal/spec/plan/brief）
 argument-hint: "<type> --title <title> [options]"
 ---
 
@@ -18,7 +18,6 @@ node scripts/project-docs.cjs new <type> [options] --root <项目根>
 - `spec` — 需要 `--change <CR-###>`
 - `plan` — 需要 `--change <CR-###>`
 - `brief` — 需要 `--title` 和 `--source <原始需求文件>`
-- `adr` — 需要 `--title`
 
 报告:创建的文档路径 + 文件命名（ID 由脚本分配）。然后提示:下一步是填写文档内容（对应技能的职责）。
 

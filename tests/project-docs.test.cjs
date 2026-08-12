@@ -34,7 +34,7 @@ test('validate-plugin passes for current plugin', () => {
   const result = JSON.parse(output);
   assert.equal(result.valid, true);
   assert.equal(result.skillCount, 11);
-  assert.equal(result.templateCount, 9);
+  assert.equal(result.templateCount, 8);
 });
 
 test('validate passes for minimal example', () => {

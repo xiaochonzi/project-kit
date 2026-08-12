@@ -165,7 +165,7 @@ init 产出的结构,也是后续 10 个技能的读写契约:
 ├── briefs/              # BRIEF-###-<slug>.md(原始讨论存档)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更三件套)
 ├── research/            # 自由研究材料
-└── (decisions/ capabilities/ 保留兼容,不预建)
+└── (capabilities/ 保留兼容,不预建)
 ```
 
 **Quick 变更不落盘**——记录 = git commit + STATE 一行。只有 Full 变更才在 `changes/` 下创建目录。

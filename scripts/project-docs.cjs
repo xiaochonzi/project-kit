@@ -22,13 +22,12 @@ const PLUGIN_SKILLS = [
 ];
 const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'eval'];
 const REQUIRED_PLUGIN_FILES = ['plugin.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md'];
-const TEMPLATE_EXPECTED_COUNT = 9;
+const TEMPLATE_EXPECTED_COUNT = 8;
 const DOC_LINK_PATTERN = /\[[^\]]+\]\(([^)]+)\)/g;
 const MANAGED_DIRECTORIES = [
   'briefs',
   'changes',
   'research',
-  'decisions',
   'capabilities'
 ];
 const INITIAL_FILES = {
@@ -42,15 +41,13 @@ const DOCUMENT_TYPES = {
   change: { directory: 'changes', prefix: 'CR', template: 'proposal.md' },
   proposal: { directory: null, template: 'proposal.md' },
   spec: { directory: null, template: 'spec.md' },
-  plan: { directory: null, template: 'plan.md' },
-  adr: { directory: 'decisions', prefix: 'ADR', template: 'adr.md' }
+  plan: { directory: null, template: 'plan.md' }
 };
 const ALLOWED_STATUSES = {
   brief: new Set(['captured']),
   proposal: new Set(['proposed', 'accepted', 'completed', 'deferred', 'rejected']),
   spec: new Set(['draft', 'approved', 'verified']),
-  plan: new Set(['draft', 'approved', 'completed', 'blocked']),
-  adr: new Set(['proposed', 'accepted', 'superseded', 'rejected'])
+  plan: new Set(['draft', 'approved', 'completed', 'blocked'])
 };
 const TRANSITIONS = {
   proposal: {
@@ -70,31 +67,23 @@ const TRANSITIONS = {
     approved: ['completed', 'blocked'],
     blocked: ['draft', 'approved'],
     completed: []
-  },
-  adr: {
-    proposed: ['accepted', 'rejected'],
-    accepted: ['superseded'],
-    superseded: [],
-    rejected: []
   }
 };
 const REFERENCE_FIELDS = [
   'source', 'depends_on', 'extends', 'supersedes', 'superseded_by', 'affects'
 ];
-const ID_PATTERN = /^(?:BRIEF-\d{3}|CR-\d{3}|ADR-\d{3})$/;
+const ID_PATTERN = /^(?:BRIEF-\d{3}|CR-\d{3})$/;
 const REQUIRED_SECTIONS = {
   proposal: ['背景与问题', '期望结果', '包含', '不包含', '影响范围'],
   spec: ['问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '验收标准'],
   plan: ['实现策略', 'Tasks', '验收标准映射', '最终验证'],
   change: ['背景与问题', '期望结果', '决定'],
-  brief: ['背景', '想解决的问题', '目标用户与场景'],
-  adr: ['背景与约束', '决策', '理由', '影响', '验证方式']
+  brief: ['背景', '想解决的问题', '目标用户与场景']
 };
 const CONTENT_GATES = {
   spec: { statuses: ['approved', 'verified'], sections: ['问题与依据', '目标', '范围', '验收标准'] },
   plan: { statuses: ['approved', 'completed'], sections: ['实现策略', 'Tasks', '验收标准映射', '最终验证'] },
-  proposal: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] },
-  adr: { statuses: ['accepted'], sections: ['背景与约束', '决策', '理由', '影响', '验证方式'] }
+  proposal: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] }
 };
 
 function parseArguments(argv) {
@@ -215,7 +204,7 @@ function asArray(value) {
 function documentKind(relativePath, metadata) {
   const segments = relativePath.split(path.sep);
   const firstDirectory = segments[0];
-  const directoryKinds = { briefs: 'brief', changes: 'change', decisions: 'adr' };
+  const directoryKinds = { briefs: 'brief', changes: 'change' };
   if (firstDirectory === 'changes' && segments.length === 3) {
     if (segments[2] === 'proposal.md') return 'proposal';
     if (segments[2] === 'spec.md') return 'spec';
@@ -785,7 +774,7 @@ function nextAction(root, jsonOutput) {
 function printHelp() {
   process.stdout.write(`Project Kit document helper\n\nUsage:\n`);
   process.stdout.write(`  node project-docs.cjs init --root <project>\n`);
-  process.stdout.write(`  node project-docs.cjs new <change|proposal|spec|plan|brief|adr> [options]\n`);
+  process.stdout.write(`  node project-docs.cjs new <change|proposal|spec|plan|brief> [options]\n`);
   process.stdout.write(`  node project-docs.cjs context <mode> [--target <id>] --root <project> [--json]\n`);
   process.stdout.write(`  node project-docs.cjs transition <id> --to <status> [--kind <kind>] --root <project>\n`);
   process.stdout.write(`  node project-docs.cjs next --root <project> [--json]\n`);

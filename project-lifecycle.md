@@ -182,7 +182,6 @@ Plan:            draft → approved → completed
                           ↘ blocked
 Milestone(roadmap 分组): Active → Completed / Deferred
 Brief:           captured
-ADR:             proposed → accepted → superseded / rejected
 ```
 
 | 状态 | 含义 |

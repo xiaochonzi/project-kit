@@ -158,7 +158,7 @@ node scripts/project-docs.cjs validate --root <项目根>
 |---|---|
 | **Spec 未 approved** | 路由到 change |
 | **Spec 与代码现实冲突** | 停止,报告具体冲突,不改 Spec |
-| **影响分析发现需要新 ADR 或 Change** | 停止,先走 change 或 ADR |
+| **影响分析发现需要新的 Change 或 blueprint 调整** | 停止,先走 change |
 | **无法给出真实文件路径或可执行验证命令** | 停止,不猜测 |
 
 ## 脚本/AI 分工
