@@ -219,15 +219,16 @@ function asArray(value) {
 }
 
 function documentKind(relativePath, metadata) {
-  const firstDirectory = relativePath.split(path.sep)[0];
-  const directoryKinds = {
-    briefs: 'brief', capabilities: 'capability', milestones: 'milestone', specs: 'feature',
-    plans: 'plan', executions: 'execution', verifications: 'verification', changes: 'change',
-    fixes: 'fix', decisions: 'adr'
-  };
-  if (firstDirectory === 'milestones' && relativePath.endsWith('-CONTEXT.md')) return null;
+  const segments = relativePath.split(path.sep);
+  const firstDirectory = segments[0];
+  const directoryKinds = { briefs: 'brief', changes: 'change', decisions: 'adr' };
+  if (firstDirectory === 'changes' && segments.length === 3) {
+    if (segments[2] === 'proposal.md') return 'proposal';
+    if (segments[2] === 'spec.md') return 'spec';
+    if (segments[2] === 'plan.md') return 'plan';
+    return null;
+  }
   if (directoryKinds[firstDirectory]) return directoryKinds[firstDirectory];
-  if (typeof metadata.feature === 'string') return 'plan';
   return null;
 }
 
@@ -275,26 +276,6 @@ function nextSequentialId(documents, prefix, width = 3) {
   return `${prefix}-${String(next).padStart(width, '0')}`;
 }
 
-function nextMilestoneId(documents) {
-  const numbers = documents
-    .map((document) => document.metadata.id)
-    .filter((id) => typeof id === 'string' && /^M\d+$/.test(id))
-    .map((id) => Number(id.slice(1)));
-  return `M${numbers.length === 0 ? 1 : Math.max(...numbers) + 1}`;
-}
-
-function nextFeatureId(documents, milestone) {
-  const pattern = new RegExp(`^F-${milestone}-(\\d+)$`);
-  const numbers = documents
-    .map((document) => document.metadata.id)
-    .filter((id) => typeof id === 'string')
-    .map((id) => id.match(pattern))
-    .filter(Boolean)
-    .map((match) => Number(match[1]));
-  const next = numbers.length === 0 ? 1 : Math.max(...numbers) + 1;
-  return `F-${milestone}-${String(next).padStart(2, '0')}`;
-}
-
 function initializeProject(root) {
   const docsRoot = path.join(root, 'docs');
   fs.mkdirSync(docsRoot, { recursive: true });
@@ -314,21 +295,19 @@ function findFeature(documents, featureId) {
   return documents.find((document) => document.kind === 'feature' && document.metadata.id === featureId);
 }
 
-function createFeatureArtifact(root, type, options, documents) {
-  if (typeof options.feature !== 'string') throw new Error(`new ${type} 需要 --feature`);
-  const feature = findFeature(documents, options.feature);
-  if (!feature) throw new Error(`Feature 不存在: ${options.feature}`);
-  const definitions = {
-    plan: { suffix: 'plan', title: '实现计划' },
-    execution: { suffix: 'execution', title: '执行记录' },
-    verification: { suffix: 'verification', title: '验收记录' }
-  };
-  const definition = definitions[type];
-  const outputPath = path.join(root, 'docs', DOCUMENT_TYPES[type].directory, `${options.feature}-${definition.suffix}.md`);
-  const featureTitle = typeof feature.metadata.title === 'string' ? feature.metadata.title : options.feature;
-  writeNewFile(outputPath, renderTemplate(DOCUMENT_TYPES[type].template, {
-    TITLE: `${featureTitle} ${definition.title}`,
-    FEATURE: options.feature,
+function createChangeArtifact(root, type, options, documents) {
+  if (typeof options.change !== 'string' || !/^CR-\d{3}$/.test(options.change)) {
+    throw new Error(`new ${type} 需要 --change <CR-###>`);
+  }
+  const proposal = documents.find(
+    (document) => document.kind === 'proposal' && document.metadata.id === options.change
+  );
+  if (!proposal) throw new Error(`Change 不存在: ${options.change}`);
+  const outputPath = path.join(path.dirname(proposal.filePath), `${type}.md`);
+  const proposalTitle = typeof proposal.metadata.title === 'string' ? proposal.metadata.title : options.change;
+  writeNewFile(outputPath, renderTemplate(`${type}.md`, {
+    CHANGE: options.change,
+    TITLE: typeof options.title === 'string' && options.title.trim() !== '' ? options.title.trim() : proposalTitle,
     DATE: currentDate()
   }));
   process.stdout.write(`${outputPath}\n`);
@@ -341,20 +320,20 @@ function createDocument(root, type, options) {
   if (!fs.existsSync(docsRoot)) throw new Error('尚未初始化 docs 目录，请先运行 init');
   const documents = collectDocuments(root);
 
-  if (['plan', 'execution', 'verification'].includes(type)) {
-    createFeatureArtifact(root, type, options, documents);
+  if (['proposal', 'spec', 'plan'].includes(type)) {
+    createChangeArtifact(root, type, options, documents);
     return;
   }
 
-  if (type === 'context') {
-    if (typeof options.milestone !== 'string' || !/^M\d+$/.test(options.milestone)) {
-      throw new Error('new context 需要有效的 --milestone，例如 M2');
+  if (type === 'change') {
+    if (typeof options.title !== 'string' || options.title.trim() === '') {
+      throw new Error('new change 需要 --title');
     }
-    if (!documents.some((document) => document.kind === 'milestone' && document.metadata.id === options.milestone)) {
-      throw new Error(`Milestone 不存在: ${options.milestone}`);
-    }
-    const outputPath = path.join(docsRoot, 'milestones', `${options.milestone}-CONTEXT.md`);
-    writeNewFile(outputPath, renderTemplate(definition.template, { MILESTONE: options.milestone, DATE: currentDate() }));
+    const id = nextSequentialId(documents, 'CR');
+    const directory = path.join(docsRoot, 'changes', `${id}-${slugify(options.title.trim())}`);
+    fs.mkdirSync(directory, { recursive: true });
+    const outputPath = path.join(directory, 'proposal.md');
+    writeNewFile(outputPath, renderTemplate('proposal.md', { ID: id, TITLE: options.title.trim(), DATE: currentDate() }));
     process.stdout.write(`${outputPath}\n`);
     return;
   }
@@ -363,37 +342,20 @@ function createDocument(root, type, options) {
     throw new Error(`new ${type} 需要 --title`);
   }
 
-  let id;
-  let outputDirectory = path.join(docsRoot, definition.directory);
+  const outputDirectory = path.join(docsRoot, definition.directory);
   const values = { TITLE: options.title.trim(), DATE: currentDate(), SOURCE_CONTENT: '' };
-  if (type === 'milestone') {
-    id = nextMilestoneId(documents);
-  } else if (type === 'feature') {
-    if (typeof options.milestone !== 'string' || !/^M\d+$/.test(options.milestone)) {
-      throw new Error('new feature 需要有效的 --milestone，例如 M2');
-    }
-    if (!documents.some((document) => document.kind === 'milestone' && document.metadata.id === options.milestone)) {
-      throw new Error(`Milestone 不存在: ${options.milestone}`);
-    }
-    id = nextFeatureId(documents, options.milestone);
-    outputDirectory = path.join(outputDirectory, options.milestone);
-    values.MILESTONE = options.milestone;
-  } else {
-    id = nextSequentialId(documents, definition.prefix);
-  }
-
-  if (type === 'brief' && typeof options.source !== 'string') {
-    throw new Error('new brief 需要 --source <原始需求文件>');
-  }
   if (type === 'brief') {
+    if (typeof options.source !== 'string') {
+      throw new Error('new brief 需要 --source <原始需求文件>');
+    }
     const sourcePath = path.resolve(options.source);
     if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
       throw new Error(`原始需求文件不存在: ${sourcePath}`);
     }
     values.SOURCE_CONTENT = fs.readFileSync(sourcePath, 'utf8').trim();
   }
-  values.ID = id;
-  const outputPath = path.join(outputDirectory, `${id}-${slugify(options.title)}.md`);
+  values.ID = nextSequentialId(documents, definition.prefix);
+  const outputPath = path.join(outputDirectory, `${values.ID}-${slugify(options.title)}.md`);
   writeNewFile(outputPath, renderTemplate(definition.template, values));
   process.stdout.write(`${outputPath}\n`);
 }
