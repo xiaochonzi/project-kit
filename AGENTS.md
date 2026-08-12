@@ -17,13 +17,19 @@
 `scripts/project-docs.cjs` 只负责确定性操作和机械门禁校验:
 
 - 初始化目录与模板
-- 分配稳定 ID 并创建文档
+- 分配稳定 ID 并创建 change 目录与三件套
 - 输出上下文
-- 校验结构、状态、引用、覆盖与依赖环
-- 状态迁移
+- 校验结构、状态、引用与依赖环(只校验 Full 变更完整性,Quick 零文档不校验)
+- 状态迁移(spec_hash 防篡改、plan 勾选门禁)
 - 插件结构校验(`validate-plugin`)
 
 它不替用户做产品决定,不生成需求正文,不引入 YAML/JSON 状态源。
+
+## 两档路径
+
+- **Quick**(小改动):零文档,记录 = git commit + STATE 一行。
+- **Full**(复杂改动):`docs/changes/CR-###-<slug>/{proposal,spec,plan}.md` 三件套。
+- 判定:是否触碰既有契约文档(blueprint/spec)、API、数据模型、权限;改动是否小、边界是否清晰。拿不准 → 问用户。
 
 ## 变更纪律
 
