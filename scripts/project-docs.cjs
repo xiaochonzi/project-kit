@@ -348,7 +348,9 @@ function emptySections(document, sections) {
 }
 
 function contentHash(content) {
-  const stableContent = content.replace(/^status:[^\r\n]*$/m, 'status: <lifecycle>');
+  const stableContent = content
+    .replace(/^status:[^\r\n]*$/m, 'status: <lifecycle>')
+    .replace(/^spec_hash:[^\r\n]*$/m, 'spec_hash: <hash>');
   return crypto.createHash('sha256').update(stableContent).digest('hex');
 }
 
@@ -510,14 +512,12 @@ function validateProject(root, jsonOutput) {
 }
 
 function findTarget(documents, target, kind) {
+  if (kind && !['proposal', 'spec', 'plan'].includes(kind)) throw new Error(`不支持的 kind: ${kind}`);
   const matches = documents.filter((document) => {
-    if (kind && document.kind !== kind) return false;
-    return document.metadata.id === target || document.metadata.feature === target;
+    if (kind) return document.kind === kind && document.metadata.change === target;
+    return document.kind === 'proposal' && document.metadata.id === target;
   });
   if (matches.length === 0) throw new Error(`找不到目标文档: ${target}${kind ? ` (${kind})` : ''}`);
-  const exact = matches.find((document) => document.metadata.id === target);
-  if (exact && !kind) return exact;
-  if (matches.length > 1) throw new Error(`目标不唯一，请使用 --kind: ${matches.map((item) => item.kind).join(', ')}`);
   return matches[0];
 }
 
@@ -531,65 +531,49 @@ function transitionDocument(root, target, nextStatus, kind) {
     throw new Error(`非法迁移 ${document.kind}: ${currentStatus} -> ${nextStatus}`);
   }
 
-  if (document.kind === 'feature' && nextStatus === 'ready') {
-    const plan = documents.find((item) => item.kind === 'plan' && item.metadata.feature === target);
-    if (!plan || plan.metadata.status !== 'approved') throw new Error(`${target} 进入 ready 前需要 approved Plan`);
+  if (document.kind === 'proposal' && nextStatus === 'accepted') {
+    const empty = emptySections(document, ['背景与问题', '期望结果', '决定']);
+    if (empty.length > 0) throw new Error(`${target} 进入 accepted 前必须填写: ${empty.join('、')}`);
   }
-  if (document.kind === 'feature' && ['reviewed', 'approved'].includes(nextStatus)) {
-    const empty = emptySections(document, ['问题与依据', '目标', '范围', '验收标准', '需求追踪']);
-    if (empty.length > 0) throw new Error(`${target} 进入 ${nextStatus} 前必须填写: ${empty.join('、')}`);
+  if (document.kind === 'proposal' && nextStatus === 'completed') {
+    const spec = documents.find((item) => item.kind === 'spec' && item.metadata.change === target);
+    const plan = documents.find((item) => item.kind === 'plan' && item.metadata.change === target);
+    if (!spec || spec.metadata.status !== 'verified') throw new Error(`${target} 进入 completed 前 Spec 必须为 verified`);
+    if (!plan || plan.metadata.status !== 'completed') throw new Error(`${target} 进入 completed 前 Plan 必须为 completed`);
+  }
+  if (document.kind === 'spec' && nextStatus === 'approved') {
+    const proposal = documents.find((item) => item.kind === 'proposal' && item.metadata.id === document.metadata.change);
+    if (!proposal || proposal.metadata.status !== 'accepted') throw new Error('Spec approved 前 Change 必须为 accepted');
+    const empty = emptySections(document, ['问题与依据', '目标', '范围', '验收标准']);
+    if (empty.length > 0) throw new Error(`Spec 批准前必须填写: ${empty.join('、')}`);
+  }
+  if (document.kind === 'spec' && nextStatus === 'verified') {
+    const hash = document.metadata.spec_hash;
+    if (!hash || hash === 'null' || hash !== contentHash(document.content)) {
+      throw new Error('Spec verified 前 spec_hash 缺失或 Spec 内容已变化，请重新批准');
+    }
+    const plan = documents.find((item) => item.kind === 'plan' && item.metadata.change === document.metadata.change);
+    if (!plan || plan.metadata.status !== 'completed') throw new Error('Spec verified 前 Plan 必须为 completed');
   }
   if (document.kind === 'plan' && nextStatus === 'approved') {
-    const feature = findFeature(documents, document.metadata.feature);
-    if (!feature || feature.metadata.status !== 'approved') throw new Error('Plan approved 前 Feature 必须为 approved');
+    const spec = documents.find((item) => item.kind === 'spec' && item.metadata.change === document.metadata.change);
+    if (!spec || spec.metadata.status !== 'approved') throw new Error('Plan approved 前 Spec 必须为 approved');
     const taskErrors = [];
     validatePlanTasks(document, taskErrors, []);
     if (taskErrors.length > 0) throw new Error(taskErrors.join('\n'));
-    const empty = emptySections(document, ['实现策略', 'Must-haves', '验收标准映射', '最终验证']);
+    const empty = emptySections(document, ['实现策略', 'Tasks', '验收标准映射', '最终验证']);
     if (empty.length > 0) throw new Error(`Plan 批准前必须填写: ${empty.join('、')}`);
   }
-  if (document.kind === 'feature' && nextStatus === 'implemented') {
-    const plan = documents.find((item) => item.kind === 'plan' && item.metadata.feature === target);
-    const execution = documents.find((item) => item.kind === 'execution' && item.metadata.feature === target);
-    if (!plan || plan.metadata.status !== 'completed' || !execution || execution.metadata.status !== 'completed') {
-      throw new Error(`${target} 进入 implemented 前需要 completed Plan 和 Execution`);
-    }
-  }
-  if (document.kind === 'verification' && nextStatus === 'passed') {
-    const feature = findFeature(documents, document.metadata.feature);
-    if (!feature || feature.metadata.status !== 'implemented') throw new Error('Verification passed 前 Feature 必须为 implemented');
-    const empty = emptySections(document, ['验证环境', '验收证据', '回归与边界检查', '结论']);
-    if (empty.length > 0) throw new Error(`Verification passed 前必须填写: ${empty.join('、')}`);
-    if (!document.metadata.implementation_ref || document.metadata.implementation_ref === 'null') {
-      throw new Error('Verification passed 前必须填写 implementation_ref');
-    }
-  }
-  if (document.kind === 'execution' && nextStatus === 'completed') {
-    const feature = findFeature(documents, document.metadata.feature);
-    const plan = documents.find((item) => item.kind === 'plan' && item.metadata.feature === document.metadata.feature);
-    if (!feature || feature.metadata.status !== 'in-progress' || !plan || plan.metadata.status !== 'completed') {
-      throw new Error('Execution completed 前 Feature 必须为 in-progress 且 Plan 必须为 completed');
-    }
-    const empty = emptySections(document, ['Task Results', '实际修改文件', '验证记录', '最终结果']);
-    if (empty.length > 0) throw new Error(`Execution completed 前必须填写: ${empty.join('、')}`);
-  }
-  if (document.kind === 'milestone' && nextStatus === 'completed') {
-    const unfinished = documents.filter((item) => item.kind === 'feature' && item.metadata.milestone === target && item.metadata.status !== 'verified');
-    if (unfinished.length > 0) throw new Error(`Milestone completed 前仍有未验证 Feature: ${unfinished.map((item) => item.metadata.id).join(', ')}`);
-  }
-  if (document.kind === 'feature' && nextStatus === 'verified') {
-    const verification = documents.find((item) => item.kind === 'verification' && item.metadata.feature === target);
-    if (!verification || verification.metadata.status !== 'passed') throw new Error(`${target} 进入 verified 前需要 passed Verification`);
+  if (document.kind === 'plan' && nextStatus === 'completed') {
+    if (/^- \[ \] /m.test(document.content)) throw new Error('Plan completed 前必须勾选全部任务');
   }
 
   let content = replaceFrontmatterField(document.content, 'status', nextStatus);
-  if (document.kind === 'execution' && nextStatus === 'completed') {
-    content = replaceFrontmatterField(content, 'completed_at', currentDate());
+  if (document.kind === 'spec' && nextStatus === 'approved') {
+    content = replaceFrontmatterField(content, 'spec_hash', contentHash(content));
   }
-  if (document.kind === 'verification' && nextStatus === 'passed') {
-    const feature = findFeature(documents, document.metadata.feature);
-    content = replaceFrontmatterField(content, 'verified_at', currentDate());
-    content = replaceFrontmatterField(content, 'spec_hash', contentHash(feature.content));
+  if (document.kind === 'spec' && !['approved', 'verified'].includes(nextStatus)) {
+    content = replaceFrontmatterField(content, 'spec_hash', 'null');
   }
   fs.writeFileSync(document.filePath, content, 'utf8');
   process.stdout.write(`${document.relativePath}: ${currentStatus} -> ${nextStatus}\n`);
