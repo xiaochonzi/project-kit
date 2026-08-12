@@ -44,7 +44,8 @@ description: 定义项目从初始讨论、蓝图拆解到变更与 AI 接力的
 | 功能契约、验收标准 | Full:spec |
 | 如何实现、步骤 | Full:plan |
 | 是否完成、证据 | plan 勾选 + STATE |
-| 交付顺序、阶段状态 | roadmap 分组 |
+| 阶段规划、任务清单与完成情况 | roadmap |
+| 当前焦点、下一动作(动态状态) | STATE |
 | 当前焦点、下一动作、接力 | STATE.md |
 | 系统边界 | blueprint |
 | 原始意图 | brief(一次性) |
@@ -72,7 +73,7 @@ description: 定义项目从初始讨论、蓝图拆解到变更与 AI 接力的
 docs/
 ├── constitution.md      # 开发准则
 ├── blueprint.md         # 系统边界:能力地图/模块职责/数据流/明确不做
-├── roadmap.md           # 阶段分组(Active/Next/Later/Completed/Deferred)+ 链接
+├── roadmap.md           # 阶段规划 + 任务清单(checkbox 完成情况)
 ├── STATE.md             # 当前焦点/下一动作/阻塞(接力入口)
 ├── briefs/              # BRIEF-### 原始讨论存档(一次性,不重写)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更)
@@ -170,7 +171,7 @@ accepted 前必须填写「背景与问题/期望结果/决定」;completed 前 
 
 ### 4.4 多迭代能力
 
-一项需求需要多个可独立发布阶段时,在 roadmap 列出每个阶段(一行摘要 + 状态),每个阶段由一个或多个 change 承接。只细化当前阶段,远期保持粗粒度,避免过早细化制造大量失效文档。
+一项需求需要多个可独立发布阶段时,在 roadmap 列出每个阶段(阶段名 + 任务清单),每个任务由一个 change 承接。只细化当前阶段,远期保持粗粒度,避免过早细化制造大量失效文档。动态状态(当前做哪个阶段/任务)归 STATE.md。
 
 ## 5. 状态模型
 
@@ -180,9 +181,10 @@ Change(proposal): proposed → accepted → completed
 Spec:            draft → approved → verified
 Plan:            draft → approved → completed
                           ↘ blocked
-Milestone(roadmap 分组): Active → Completed / Deferred
 Brief:           captured
 ```
+
+**roadmap 无状态机**——它是静态规划文档,任务完成情况用 checkbox 就地标记;进行中的状态(active/next)在 STATE.md。
 
 | 状态 | 含义 |
 | --- | --- |
@@ -204,7 +206,7 @@ Brief:           captured
 
 1. 仓库 `AGENTS.md`:稳定开发约束。
 2. `docs/STATE.md`:当前焦点、阻塞和下一动作。
-3. `docs/roadmap.md`:当前阶段和优先级(按需)。
+3. `docs/roadmap.md`:阶段规划与任务清单(按需)。
 4. 当前 change 目录:`changes/CR-###-<slug>/` 三件套(如进行中)。
 5. 与当前任务直接相关的 blueprint 章节和代码。
 
@@ -245,7 +247,7 @@ AI 开始行动前必须复述:当前目标、包含范围、不包含范围、�
 按需:
 - blueprint 相关章节
 - 直接相关代码和测试
-- roadmap 阶段状态
+- roadmap 任务清单
 
 不默认读取:
 - 已完成 change 的全部文档
@@ -278,7 +280,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 
 每个 change 完成或开始新 change 前检查:
 
-- Roadmap 阶段状态是否与 change 状态一致。
+- Roadmap 任务 checkbox 是否与 change 完成情况一致。
 - 是否存在已完成 change 仍有阻断性未决问题。
 - 是否存在失效 plan 仍标记为 approved。
 - `STATE.md` 是否指向真实的当前工作。
@@ -325,7 +327,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 
 - [ ] 原始讨论已保存为 Brief(如需)。
 - [ ] Blueprint 已说明能力、模块和数据边界(如需)。
-- [ ] Roadmap 按可交付结果拆分(多迭代项目)。
+- [ ] Roadmap 按阶段 + 任务清单拆分(多迭代项目)。
 - [ ] STATE 已初始化。
 
 ### 9.2 Quick 变更
@@ -343,7 +345,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 - [ ] 每个关键步骤有测试和验收映射。
 - [ ] plan 全部任务勾选,最终验证记录在 plan。
 - [ ] 独立验收重跑全部验收标准,spec verified + change completed。
-- [ ] STATE 与 roadmap 已更新。
+- [ ] STATE 已更新,roadmap 任务已勾选。
 
 ### 9.4 新需求进入时
 

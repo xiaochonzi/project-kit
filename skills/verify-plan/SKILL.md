@@ -11,7 +11,7 @@ description: Use when a Full change is implemented and needs independent accepta
 
 **"执行者说完成了"不是证据。** 本技能独立于 execute-plan,不信任实现者的自述。
 
-**不产出独立验收文档**——验收证据写回 `plan.md` 的「最终验证」区,结论同步 STATE.md 与 roadmap。
+**不产出独立验收文档**——验收证据写回 `plan.md` 的「最终验证」区,结论同步 STATE.md,并勾选 roadmap 中对应任务。
 
 **开始前宣布:** "我正在使用 verify-plan 技能进行独立验收。"
 
@@ -92,7 +92,7 @@ node scripts/project-docs.cjs transition CR-### --to completed --root <项目根
 
 脚本要求:spec verified 前 `spec_hash` 与 Spec 内容一致(防静默修改契约)、Plan 必须 completed;change completed 前 Spec verified 且 Plan completed。
 
-更新 `docs/roadmap.md` 阶段状态与 `docs/STATE.md`(完成记录、下一动作)。
+勾选 `docs/roadmap.md` 中该 change 对应的任务(`- [ ]` → `- [x]`),更新 `docs/STATE.md`(完成记录、下一动作)。
 
 **任一必需标准 fail**:不标记完成。给出最小下一动作(回 execute-plan 修复 / 转 bug)。
 
@@ -118,7 +118,7 @@ node scripts/project-docs.cjs transition CR-### --to completed --root <项目根
 | 场景 | 处理 |
 |---|---|
 | **Plan 未 completed** | 路由到 execute-plan |
-| **全部 pass** | spec verified → change completed;更新 roadmap |
+| **全部 pass** | spec verified → change completed;勾选 roadmap 任务,更新 STATE |
 | **任一必需标准 fail** | 记录,回 execute-plan 修复或转 bug |
 | **Spec 本身错误** | 停止,重新评审需求,不通过修改验收标准掩盖 |
 | **验收中发现新期望行为** | 创建新 Change(走 change 技能),不混入当前验收 |

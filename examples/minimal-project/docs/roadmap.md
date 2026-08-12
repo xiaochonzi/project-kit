@@ -1,6 +1,5 @@
 ---
-version: 0.1
-status: draft
+version: 0.2
 updated_at: 2026-08-12
 ---
 
@@ -8,15 +7,11 @@ updated_at: 2026-08-12
 
 ## 排序原则
 
-## Active
+## 阶段一：<阶段名称>
 
-## Next
+### 任务
 
-## Later
-
-## Completed
-
-## Deferred
+- [ ] <任务描述>（规划中，change 创建后补充 CR-###）
 
 ## 依赖与风险
 

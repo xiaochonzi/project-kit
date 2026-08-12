@@ -50,7 +50,7 @@ claude plugin install github:xiaochonzi/project-kit
 <项目根>/docs/
 ├── constitution.md      # 稳定开发准则
 ├── blueprint.md         # 系统边界与能力地图
-├── roadmap.md           # 交付顺序(一行一阶段 + 链接)
+├── roadmap.md           # 阶段规划 + 任务清单(checkbox 完成情况)
 ├── STATE.md             # 当前焦点与下一动作(AI 接力入口)
 ├── briefs/              # BRIEF-###(原始讨论存档)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更三件套)

@@ -48,7 +48,7 @@ NO DOCUMENTS FOR QUICK — FULL NEEDS THE THREE ARTIFACTS
   → STATE.md 记一行(最近完成)
 ```
 
-- **禁止**:创建任何文档文件、更新 roadmap 阶段状态。
+- **禁止**:创建任何文档文件、勾选 roadmap 任务(那是 verify 的职责)。
 - **记录** = git commit + `docs/STATE.md` 一行(如"Quick: 修改 XX 字段,测试通过")。
 - **验证**:测试命令真实运行,结果在对话中报告。
 

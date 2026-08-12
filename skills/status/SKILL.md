@@ -32,7 +32,7 @@ cat docs/STATE.md
 ### Step 3: 按需深入
 
 - 当前 change 进行中 → 读 `docs/changes/CR-###-<slug>/` 三件套
-- 需要交付顺序 → 读 `docs/roadmap.md`(阶段分组)
+- 需要阶段规划与任务清单 → 读 `docs/roadmap.md`
 - 需要系统边界 → 读 `docs/blueprint.md` 相关章节
 - 需要开发准则 → 读 `docs/constitution.md`
 
