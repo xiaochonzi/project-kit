@@ -44,7 +44,7 @@ description: 定义项目从初始讨论、蓝图拆解到变更与 AI 接力的
 | 功能契约、验收标准 | Full:spec |
 | 如何实现、步骤 | Full:plan |
 | 是否完成、证据 | plan 勾选 + STATE |
-| 阶段规划、任务清单与完成情况 | roadmap |
+| 阶段规划、任务清单与完成情况(表格) | roadmap |
 | 当前焦点、下一动作(动态状态) | STATE |
 | 当前焦点、下一动作、接力 | STATE.md |
 | 系统边界 | blueprint |
@@ -73,7 +73,7 @@ description: 定义项目从初始讨论、蓝图拆解到变更与 AI 接力的
 docs/
 ├── constitution.md      # 开发准则
 ├── blueprint.md         # 系统边界:能力地图/模块职责/数据流/明确不做
-├── roadmap.md           # 阶段规划 + 任务清单(checkbox 完成情况)
+├── roadmap.md           # 阶段规划 + 任务表格(状态列)
 ├── STATE.md             # 当前焦点/下一动作/阻塞(接力入口)
 ├── briefs/              # BRIEF-### 原始讨论存档(一次性,不重写)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更)
@@ -280,7 +280,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 
 每个 change 完成或开始新 change 前检查:
 
-- Roadmap 任务 checkbox 是否与 change 完成情况一致。
+- Roadmap 任务状态列是否与 change 完成情况一致。
 - 是否存在已完成 change 仍有阻断性未决问题。
 - 是否存在失效 plan 仍标记为 approved。
 - `STATE.md` 是否指向真实的当前工作。
@@ -345,7 +345,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 - [ ] 每个关键步骤有测试和验收映射。
 - [ ] plan 全部任务勾选,最终验证记录在 plan。
 - [ ] 独立验收重跑全部验收标准,spec verified + change completed。
-- [ ] STATE 已更新,roadmap 任务已勾选。
+- [ ] STATE 已更新,roadmap 任务状态已更新。
 
 ### 9.4 新需求进入时
 

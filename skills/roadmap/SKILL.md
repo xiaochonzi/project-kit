@@ -34,24 +34,35 @@ ROADMAP PLANS — STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
 
 ```markdown
 ## 排序原则       ← 为什么是这个顺序(用户价值/技术依赖/风险)
-## 阶段一:<名称>   ← 每个阶段一个分区,含任务清单
-### 任务         ← 该阶段要做的任务,一行一个,checkbox 标记完成情况
+## 阶段一:<名称>   ← 每个阶段一个分区,含任务表格
+### 任务         ← 表格:任务 | 状态 | Change
 ## 阶段二:<名称>
 ### 任务
 ## 依赖与风险     ← 跨阶段的依赖和风险
 ## 修订记录       ← 每次变更的日期与来源
 ```
 
-任务行格式:
+任务表格格式:
 
-```text
-- [ ] CR-001 支持按标签筛选待办
-- [ ] (规划中) 导入来源内容     ← change 创建后补上 CR-###
+```markdown
+| 任务 | 状态 | Change |
+| --- | --- | --- |
+| 支持按标签筛选待办 | 已完成 | CR-001 |
+| 添加与列出待办 | 进行中 | CR-002 |
+| 导入来源内容 | 规划中 | — |
 ```
 
-- 任务 = 一个 change(Full 三件套或 Quick)。阶段规划时 change 可能尚未创建,先写任务描述,创建后补充 CR-###。
-- **完成情况 = checkbox**:`- [x]` 已完成(change completed),`- [ ]` 未完成。
-- **没有 Active/Next/Later 分区**——当前进行中的阶段/任务由 `STATE.md` 的 `active_change` / `next_action` 承担。
+状态列三档:
+
+| 状态 | 含义 | 何时更新 |
+| --- | --- | --- |
+| `规划中` | 任务已计划,change 尚未创建 | 初始规划 |
+| `进行中` | change 已接受,正在开发 | change accepted 时 |
+| `已完成` | change completed,验收通过 | verify 完成时 |
+
+- 任务 = 一个 change(Full 三件套或 Quick)。阶段规划时 change 可能尚未创建,状态 `规划中`,Change 列写 `—`;创建后补充 CR-###。
+- **表格状态是静态完成事实**;动态焦点(当前做哪个任务、下一步做什么)由 `STATE.md` 的 `active_change` / `next_action` 承担。
+- **没有 Active/Next/Later 分区**。
 
 ## 阶段设计原则
 
@@ -85,7 +96,7 @@ ROADMAP PLANS — STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
 ### 只细化当前
 
 - 当前阶段:具体任务清单(每项一行)
-- 后续阶段:一句话方向 + 任务占位(如"- [ ] (规划中) 待细化"),不细化——避免过早细化制造大量失效文档
+- 后续阶段:一句话方向 + 任务占位(状态 `规划中`),不细化——避免过早细化制造大量失效文档
 
 ## Process
 
@@ -110,11 +121,11 @@ ROADMAP PLANS — STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
 
 ### Step 4: 写入 roadmap.md
 
-按产物契约填写:排序原则 / 阶段分区(含任务 checkbox 清单)/ 依赖与风险 / 修订记录。任务行标注 change ID(已创建)或"(规划中)"(未创建)。
+按产物契约填写:排序原则 / 阶段分区(含任务表格)/ 依赖与风险 / 修订记录。任务行填写状态列(规划中/进行中/已完成)与 Change 列(已创建填 CR-###,未创建填 `—`)。
 
 ### Step 5: 创建当前阶段首个 change
 
-当前阶段准备开发时,通过 `change` 技能创建任务对应的 change。任务完成时(change completed)把 checkbox 标记为 `- [x]`,并在 `STATE.md` 更新 `active_change` / `next_action`。
+当前阶段准备开发时,通过 `change` 技能创建任务对应的 change,并把任务状态更新为 `进行中`。任务完成时(change completed)由 verify 技能把状态更新为 `已完成`,并在 `STATE.md` 更新 `active_change` / `next_action`。
 
 ### Step 6: 校验
 
@@ -135,7 +146,7 @@ node scripts/project-docs.cjs validate --root <项目根>
 | **无 Blueprint 或为空骨架** | 路由到 blueprint |
 | **首次排 Roadmap** | 正常流程 |
 | **调整优先级/新增阶段** | 读当前 Roadmap→确认变更→更新→修订记录 |
-| **任务完成** | 由 verify 技能勾选 checkbox,更新 STATE |
+| **任务完成** | 由 verify 技能更新状态为 `已完成`,更新 STATE |
 
 ## 脚本/AI 分工
 
