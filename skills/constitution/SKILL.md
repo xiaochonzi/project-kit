@@ -169,7 +169,7 @@ node scripts/project-docs.cjs validate --root <项目根>
 
 ## Handoff Rule
 
-准则确立后:需求未拆解 → `brief`;已有需求 → `refine`。本技能不进入功能设计。
+准则确立后:需求未拆解 → `brief`;已有需求 → `change`。本技能不进入功能设计。
 
 ## Common Rationalizations
 

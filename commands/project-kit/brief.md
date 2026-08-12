@@ -17,15 +17,10 @@ node scripts/project-docs.cjs new brief --title <标题> --source <原始需求�
 
 把 Brief 内容归类为 9 类(产品目标/用户场景/功能能力/业务规则/数据约束/非功能要求/假设/未决问题/不做)。识别重复、矛盾、模糊、缺失。阻断性问题→暂停让用户决定。
 
-**第三步:逐条 REQ 确认**
-
-在 `docs/requirements.md` 中逐条写入 REQ(REQ-### 格式)。每条让用户确认:是否真的需要?优先级 must/should/later?第一版含吗?如何判断满足?**未确认的不得标 accepted。**
-
-**第四步:校验**
+**第三步:校验**
 
 ```bash
 node scripts/project-docs.cjs validate --root <项目根>
-node scripts/project-docs.cjs coverage --root <项目根>
 ```
 
-validate 0 错误 + accepted REQ 均有来源(Brief 或用户确认标注)。不写 Blueprint、不写 Roadmap、不写 Plan——那些是 blueprint/roadmap 技能的事。
+validate 0 错误。不写 Blueprint、不写 Roadmap、不创建 change——那些是 blueprint/roadmap/change 技能的事。需求落地由 change 技能承接(每个需求一个 change)。

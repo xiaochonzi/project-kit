@@ -1,27 +1,27 @@
 ---
-description: 为已批准的 Feature Spec 制定可逐步执行的实现计划
-argument-hint: "<feature-id>"
+description: 为已批准的 Spec 制定可逐步执行的实现计划（Full 变更）
+argument-hint: "<change-id>"
 ---
 
-`$ARGUMENTS` 必须提供 Feature ID(如 F-M1-01)。
+`$ARGUMENTS` 必须提供 Change ID（如 CR-001）。
 
 **第一步:确认 Spec 已 approved**
 
 ```bash
-node scripts/project-docs.cjs context plan --target <F-M#-##> --root <项目根>
+node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 ```
 
-如果 Spec 不是 approved → 停止,告知用户先走 refine 批准 Spec。
+如果 Spec 不是 approved → 停止，告知用户先走 change 完成 Spec 批准。
 
 **第二步:创建 Plan 骨架**
 
 ```bash
-node scripts/project-docs.cjs new plan --feature <F-M#-##> --root <项目根>
+node scripts/project-docs.cjs new plan --change <CR-###> --root <项目根>
 ```
 
 **第三步:填写 Plan**
 
-读取 Spec 验收标准,按以下标准编写 `docs/plans/F-M#-##-plan.md`:
+读取 Spec 验收标准，按以下标准编写 `docs/changes/CR-###-<slug>/plan.md`:
 
 - 每个任务含 files/read_first/action/verify/acceptance/done 六字段
 - 每个任务是 2-5 分钟可完成的单一动作(写失败测试→运行确认 RED→最小实现→运行确认 GREEN)
@@ -37,8 +37,7 @@ node scripts/project-docs.cjs new plan --feature <F-M#-##> --root <项目根>
 展示 Plan 给用户。批准后:
 
 ```bash
-node scripts/project-docs.cjs transition F-M#-## --to approved --kind plan --root <项目根>
-node scripts/project-docs.cjs transition F-M#-## --to ready --root <项目根>
+node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root <项目根>
 ```
 
 报告:Plan 路径、任务数、验收映射覆盖率、下一技能(execute-plan)。

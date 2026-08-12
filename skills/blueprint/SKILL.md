@@ -1,17 +1,17 @@
 ---
 name: blueprint
-description: Use when you have accepted REQs that need a system architecture — capability map, module boundaries, data flows, cross-module constraints. Use after brief has produced confirmed requirements. If no accepted REQs exist, use brief first.
+description: Use when confirmed requirements need a system architecture — capability map, module boundaries, data flows, cross-module constraints. Use after brief has produced a confirmed Brief, or when accepted changes accumulate. If no confirmed requirements exist, use brief first.
 ---
 
 # Blueprint
 
 ## Overview
 
-根据 brief 产出的已接受 REQ,建立系统能力地图和模块边界,写入 `docs/blueprint.md`(init 已生成 12 章节骨架)。
+根据 Brief 存档与已接受 change 的 proposal,建立系统能力地图和模块边界,写入 `docs/blueprint.md`(init 已生成章节骨架)。
 
 **Blueprint 回答**:系统由哪些能力组成?模块怎么划?数据怎么流?什么明确不做?
 
-**不回答**:交付顺序(roadmap)、功能验收标准(refine)、怎么实现(plan)。
+**不回答**:交付顺序(roadmap)、功能契约(change 的 spec)、怎么实现(plan)。
 
 **开始前宣布:** "我正在使用 blueprint 技能和您一起设计系统架构。"
 
@@ -21,11 +21,11 @@ description: Use when you have accepted REQs that need a system architecture —
 NO ARCHITECTURE FROM UNVERIFIED REQUIREMENTS
 ```
 
-**Violating the letter of this rule is violating the spirit of system design.** 没有 accepted REQ→路由回 brief,不基于未确认需求建架构。Blueprint 不写实现细节,不写交付顺序。
+**Violating the letter of this rule is violating the spirit of system design.** 没有已确认需求(Brief 或 accepted change)→路由回 brief/change,不基于未确认需求建架构。Blueprint 不写实现细节,不写交付顺序。
 
 ## Required Inputs(不满足即停止)
 
-- [ ] `docs/requirements.md` 存在且含 accepted REQ。无 → 路由到 brief
+- [ ] 存在 `docs/briefs/BRIEF-###.md` 或 `docs/changes/CR-###-<slug>/proposal.md`(status: accepted)。无 → 路由到 brief 或 change
 - [ ] `docs/` 已初始化。无 → 路由到 init
 
 ## 已存在的 Blueprint
@@ -65,31 +65,31 @@ NO ARCHITECTURE FROM UNVERIFIED REQUIREMENTS
 
 ## Process
 
-### Step 1: 读 accepted REQ
+### Step 1: 读已确认需求
 
 ```bash
-node scripts/project-docs.cjs coverage --root <项目根>
+node scripts/project-docs.cjs status --root <项目根>
 ```
 
-确认 accepted REQ 均有来源(可追溯到 Brief)。只处理 `status: accepted` 的 REQ,**不碰 proposed/deferred**。
+读取 `docs/briefs/` 下的 Brief 与 `docs/changes/` 下 accepted proposal(用 status 确认状态)。只处理用户已确认的内容,**不碰 proposed/deferred**。
 
 ### Step 2: 能力地图
 
-把 accepted REQ 归入顶层能力分组。这是一个**聚合**过程——不是每条 REQ 一个能力,而是 REQ 可以归入同一个能力组:
+把 Brief 的初步能力设想与 accepted proposal 的期望结果归入顶层能力分组。这是一个**聚合**过程——不是每个需求一个能力,而是需求可以归入同一个能力组:
 
 ```text
 采集系统
-├── REQ-001 URL 采集
-├── REQ-002 微信采集
-└── REQ-003 X/Twitter 采集
+├── URL 采集(来自 BRIEF-001 / CR-001)
+├── 微信采集
+└── X/Twitter 采集
 
 知识编译
-├── REQ-004 内容标准化
-├── REQ-005 去重
-└── REQ-006 Wiki 页面生成
+├── 内容标准化
+├── 去重
+└── Wiki 页面生成
 ```
 
-和用户对话确认:**一次讨论一个能力群**。如果某个 REQ 无法归入任何现有能力群 → 可能是新能力群,或需要拆成更多 REQ。
+和用户对话确认:**一次讨论一个能力群**。如果某个需求无法归入任何现有能力群 → 可能是新能力群,或需求边界需要重新确认。
 
 ### Step 3: 模块边界
 
@@ -136,12 +136,12 @@ node scripts/project-docs.cjs validate --root <项目根>
 
 - [ ] `validate` 无 error
 - [ ] Blueprint 的 `source` 字段引用了 Brief 或 CR
-- [ ] 所有 accepted REQ 被归入至少一个能力群
+- [ ] 所有已确认需求被归入至少一个能力群
 
 **自审**(对照原文,修后不重审):
 
 1. **占位符扫描**:有 "TBD"、"TODO"、空章节?修复
-2. **与 REQ 一致性**:能力地图覆盖所有 accepted REQ 了吗?多出来的能力有 REQ 支撑吗?
+2. **与需求一致性**:能力地图覆盖 Brief 与 accepted proposal 的需求了吗?多出来的能力有需求支撑吗?
 3. **模块边界完整**:每个模块能回答职责/接口/数据所有权/失败边界吗?
 4. **歧义检查**:约束可以被两种方式理解吗?
 
@@ -149,8 +149,8 @@ node scripts/project-docs.cjs validate --root <项目根>
 
 | 场景 | 处理 |
 |---|---|
-| **无 accepted REQ** | 路由到 brief |
-| **首次建 Blueprint** | 正常 7 步流程 |
+| **无已确认需求(Brief/accepted change)** | 路由到 brief 或 change |
+| **首次建 Blueprint** | 正常流程 |
 | **更新已有 Blueprint** | 读当前版→确认变更章节→更新→修订记录注明来源 |
 | **产品/架构根本变化** | 归档旧 Blueprint(如 `blueprint-v1.md`),建新的。普通功能增加不换版本号 |
 
@@ -158,10 +158,10 @@ node scripts/project-docs.cjs validate --root <项目根>
 
 | 脚本 | AI |
 |---|---|
-| validate 校验结构+source 引用 | 读 REQ,合成能力地图 |
+| validate 校验结构+source 引用 | 读 Brief 与 accepted proposal,合成能力地图 |
 | — | 划模块边界(对话确认,用户说了算) |
 | — | 画数据流,定跨模块约束 |
-| — | **禁止**:无 accepted REQ 就写 Blueprint、写实现细节、写交付顺序 |
+| — | **禁止**:无已确认需求就写 Blueprint、写实现细节、写交付顺序 |
 
 ## Handoff Rule
 

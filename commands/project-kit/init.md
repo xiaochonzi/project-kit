@@ -25,4 +25,4 @@ node scripts/project-docs.cjs init --root <项目根>
 node scripts/project-docs.cjs validate --root <项目根>
 ```
 
-报告:新建文件列表、跳过文件列表(如有)、validate 结果(0 错误?)、下一步(constitution 或 brief)。
+报告:新建文件列表(4 根文档:constitution/blueprint/roadmap/STATE)、跳过文件列表(如有)、validate 结果(0 错误?)、下一步(constitution 或 brief)。

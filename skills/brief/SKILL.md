@@ -1,18 +1,17 @@
 ---
 name: brief
-description: Use when receiving a fuzzy idea, raw requirement, or design discussion that needs to become a structured Brief with atomic Requirements. Use even for "help me figure out what to build" or "let's clarify this idea". If the requirement is already an approved Feature Spec, use plan.
+description: Use when receiving a fuzzy idea, raw requirement, or design discussion that needs to become a structured Brief — an immutable archive of the original intent. Use even for "help me figure out what to build" or "let's clarify this idea". If the requirement is already a concrete change, use change.
 ---
 
 # Brief
 
 ## Overview
 
-通过自然协作对话,把一个模糊想法变成两份可追溯的文档:
+通过自然协作对话,把一个模糊想法固化为不可改写的存档文档:
 
-- `docs/briefs/BRIEF-###.md` — 原始输入,固化后不可改写
-- `docs/requirements.md` — 原子 REQ,每条都经过用户确认
+- `docs/briefs/BRIEF-###.md` — 原始输入,固化后正文不再改写
 
-**不产出**:Blueprint、Roadmap、Feature Spec、Implementation Plan——这些是后续技能的职责。
+**不产出**:requirements 表(已删除)、Blueprint、Roadmap、change 三件套——需求由 `change` 技能承接,蓝图由 `blueprint` 技能承接。
 
 ## The Iron Law
 
@@ -25,13 +24,8 @@ NO IMPLEMENTATION PLANS FROM UNVERIFIED REQUIREMENTS
 ## Don't Skip When
 
 - 需求"看起来很清楚了"——没被检视过的假设是返工的根源
-- "就一个小功能,不用走流程"——小功能也有边界、约束和验收方式
 - "用户口头说了,直接写下来"——口头的也要逐条确认,标注来源
 - 想一次把所有问题都问完——逐话题,一次一个
-
-## Anti-Pattern: "这个需求很清楚,直接写代码吧"
-
-即使看起来简单到不需要设计,仍然走完 Brief → REQ 流程。"简单"项目是未检视的假设造成最多返工的地方。Brief 可以短(几段话),但必须存在。
 
 ## Checklist
 
@@ -43,9 +37,8 @@ NO IMPLEMENTATION PLANS FROM UNVERIFIED REQUIREMENTS
 4. **Validate Before Concluding** — 复述确认,纠正后再进入固化
 5. **固化 Brief** — 写入 `docs/briefs/BRIEF-###.md`,区分事实/假设/候选/未决
 6. **结构化审计** — 分 9 类,识别重复、矛盾、模糊、缺失
-7. **逐条 REQ 确认** — 每条 REQ 和用户确认优先级与范围
-8. **Brief 自审** — 占位符、一致性、范围、歧义(修复后重审)
-9. **用户审阅 Brief** — 用户确认后再进入下一步
+7. **Brief 自审** — 占位符、一致性、范围、歧义(修复后重审)
+8. **用户审阅 Brief** — 用户确认后再进入下一步
 
 ## Process
 
@@ -54,8 +47,7 @@ NO IMPLEMENTATION PLANS FROM UNVERIFIED REQUIREMENTS
 先了解现状,再提问:
 
 - 读取 `docs/STATE.md`,了解当前焦点
-- 检查是否已有 `docs/blueprint.md`、`docs/roadmap.md`、`docs/requirements.md`
-- 如已有 REQ → 识别为增量追加,新 REQ 不静默改旧的
+- 检查是否已有 `docs/blueprint.md`、`docs/roadmap.md`
 
 ### 2. 范围检查(先于细节提问)
 
@@ -63,15 +55,11 @@ NO IMPLEMENTATION PLANS FROM UNVERIFIED REQUIREMENTS
 
 > 这里包含了 5 个相互独立的系统。建议每个独立做 brief,各自走后续流程。你希望先做哪个?
 
-不要在需要拆分的问题上花时间追问细节。每个子系统独立 brief → blueprint → roadmap → refine。
+不要在需要拆分的问题上花时间追问细节。
 
 ### 3. 对话展开(一次一个问题 + 方案对比)
 
 一次只问一个问题,倾向给选项。当存在多种合理方向时,**提出 2-3 个方案对比**:每个方案一句话+利弊+适合什么场景,然后**推荐一个**并解释原因。不要只给一条路——至少提一个替代方案。
-
-> 好的——不是"你有什么需求?"。
-
-> 坏的:"你要什么功能?什么技术栈?什么用户?什么约束?"
 
 理解三件事:目的(为什么做)、约束(什么不能违反)、成功标准(怎样算做好了)。
 
@@ -119,7 +107,7 @@ node scripts/project-docs.cjs new brief --title <标题> --source <整理后的�
 
 **Brief 确认后正文不再改写**——只允许修正错别字和失效链接。后续变化走 change 技能。
 
-### 5. 结构化审计
+### 6. 结构化审计
 
 把 Brief 归为 9 类,**不立即补全缺失**:
 
@@ -134,54 +122,22 @@ node scripts/project-docs.cjs new brief --title <标题> --source <整理后的�
 - **技术方案冒充需求**:"用 Redis 做缓存"vs"响应时间<100ms" → 追问用户到底要什么
 - **缺失**:只有功能列表,没有用户场景 → 标注
 
-**阻断性问题未解决→暂停,不进入 REQ。**
-
-### 6. 逐条 REQ 确认
-
-在 `docs/requirements.md` 中,每条 REQ 一个条目:
-
-```markdown
-### REQ-001: 用户可以导入微信公众号链接
-
-- statement: 单一、可验证的需求陈述
-- type: functional
-- priority: must
-- status: accepted
-- source: BRIEF-001
-- milestones: M1
-- features: F-M1-01
-- acceptance_hint: 可观察的满足方式
-```
-
-**逐条和用户确认**(一次一条,不给用户一次抛 10 条):
-
-1. 是否真的需要?
-2. 优先级:must(必须有) / should(应该有) / later(以后)?
-3. 第一版包含吗?
-4. 如何判断已满足?
-
-**规则**:
-
-- 一条 REQ 只表达一项可判断的能力或约束
-- 用"必须/可以/不得"等可验证表达,禁止"体验良好""功能完善"
-- 技术方案不是产品需求,除非它是不可变约束
-- **未确认的→ `status: proposed` 或 `deferred`,禁止以 `accepted` 进入后续**
-- accepted 的 REQ 必须能被 `coverage` 命令追踪到 Milestone/Feature(如果还没拆到那一步,先标 deferred)
+**阻断性问题未解决→暂停,不进入后续。**
 
 ### 7. Brief 自审
 
-写完 Brief + REQ 后,回头看:
+写完 Brief 后回头看:
 
 1. **占位符扫描**:有 "TBD"、"TODO"、空章节、模糊描述吗?修复
-2. **内部一致性**:有没有两个 REQ 互相矛盾?Brief 的能力设想和 REQ 的范围对得上吗?不一致→修复
-3. **范围检查**:这是一个人能在一次计划中完成的吗?还是应该继续拆?太大→回到步骤 2
-4. **歧义检查**:有没有某条 REQ 可以被理解为两种不同含义?有→明确
+2. **内部一致性**:Brief 的能力设想和约束对得上吗?不一致→修复
+3. **范围检查**:拆出的需求是否能被独立 change 承接?太大→回到步骤 2
+4. **歧义检查**:有没有内容可以被理解为两种不同含义?有→明确
 
 修复问题内联,不用重审。
 
 ### 8. 用户审阅 Brief
 
-> Brief 和 REQ 已写入 `docs/briefs/BRIEF-###.md` 和 `docs/requirements.md`。请审核一下,有任何调整告诉我,确认后我们进入下一阶段(blueprint)。
+> Brief 已写入 `docs/briefs/BRIEF-###.md`。请审核一下,有任何调整告诉我,确认后我们进入下一阶段(blueprint 或 change)。
 
 等待用户回复。如果需要修改,做完后重新自审。
 
@@ -189,42 +145,40 @@ node scripts/project-docs.cjs new brief --title <标题> --source <整理后的�
 
 ```bash
 node scripts/project-docs.cjs validate --root <项目根>
-node scripts/project-docs.cjs coverage --root <项目根>
 ```
 
 - [ ] `validate` 无 error
-- [ ] 每条 accepted REQ 有 `source`(可追溯到 Brief 或标注用户确认)
-- [ ] 无 AI 擅自 accepted 的 REQ
+- [ ] Brief 的事实/假设/候选/未决标签清晰
+- [ ] 无 AI 擅自替用户确认的"事实"
 
 ## 脚本/AI 分工
 
 | 脚本 | AI |
 |---|---|
 | `new brief` 创建 BRIEF 文档 | 对话展开,标注标签 |
-| `validate`/`coverage` | 9 类审计,识别矛盾/缺失 |
-| ID 分配、模板渲染 | 逐条 REQ 确认(用户说了算) |
-| — | **禁止**:替用户定优先级、写 Blueprint/Roadmap/Plan |
+| `validate` | 9 类审计,识别矛盾/缺失 |
+| — | **禁止**:替用户定优先级、写 Blueprint/Roadmap/Plan、创建 change |
 
 ## 场景路由
 
 | 场景 | 处理 |
 |---|---|
 | **超大/多系统** | 范围检查时立刻提出拆分,不问细节 |
-| **阻断性未决问题** | 暂停,列出问题让用户决定,不拆 REQ |
-| **已有部分 REQ/Blueprint** | 增量追加,不静默改已有 accepted |
+| **阻断性未决问题** | 暂停,列出问题让用户决定 |
+| **已有部分 Brief/Blueprint** | 增量追加,不静默改写已确认内容 |
 | **用户口头需求,无文档** | 先整理为临时文档,标注来源,再走流程 |
 | **口头和文档矛盾** | 口头视为补充,列出矛盾让用户裁决 |
+| **需求已具体到可开发** | 直接转 change(不再需要 brief) |
 
 ## Handoff Rule
 
-Brief + REQ 确认后 → `blueprint`。本技能不写 Blueprint,不写 Roadmap,不写 Plan。
+Brief 确认后 → `blueprint`(系统边界)或 `change`(直接进入需求)。本技能不写 Blueprint,不写 Roadmap,不写 Plan,不创建 change。
 
 ## Common Rationalizations
 
 | 借口 | 现实 |
 | --- | --- |
-| "需求很清楚了,直接写 plan 吧" | 没有 Brief 不可变记录+原子 REQ,plan 只是把猜测结构化 |
-| "这个功能明显需要,不用逐条确认" | 跳过确认 = AI 替用户决定优先级和范围 |
-| "10 条 REQ 一起列出来效率高" | 用户一次只能认真判断一条,批量 = 全 accept |
+| "需求很清楚了,直接写 plan 吧" | 没有 Brief 不可变记录,后续变化无法追溯原始意图 |
+| "这个功能明显需要,不用确认" | 跳过确认 = AI 替用户决定范围和边界 |
 | "技术方案就是需求" | "用 Redis"是实现手段,用户的真实需求是"响应<100ms" |
 | "阻断性问题我先猜,后面再改" | AI 不替用户做产品决定——Brief 确认前,未决问题必须暂停 |
