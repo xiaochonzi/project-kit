@@ -1,8 +1,8 @@
 ---
-updated_at: 2026-08-08
-active_milestone: null
-active_feature: null
+updated_at: 2026-08-12
+active_change: null
 mode: init
+next_action: null
 ---
 
 # Project State
