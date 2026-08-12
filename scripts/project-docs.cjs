@@ -13,7 +13,6 @@ const PLUGIN_SKILLS = [
   'brief',
   'blueprint',
   'roadmap',
-  'refine',
   'plan',
   'execute-plan',
   'verify-plan',
@@ -23,110 +22,59 @@ const PLUGIN_SKILLS = [
 ];
 const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'eval'];
 const REQUIRED_PLUGIN_FILES = ['plugin.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md'];
-const TEMPLATE_EXPECTED_COUNT = 16;
+const TEMPLATE_EXPECTED_COUNT = 9;
 const DOC_LINK_PATTERN = /\[[^\]]+\]\(([^)]+)\)/g;
 const MANAGED_DIRECTORIES = [
   'briefs',
-  'capabilities',
-  'milestones',
-  'specs',
-  'plans',
-  'executions',
-  'verifications',
   'changes',
-  'fixes',
+  'research',
   'decisions',
-  'research'
+  'capabilities'
 ];
 const INITIAL_FILES = {
   'constitution.md': 'constitution.md',
-  'requirements.md': 'requirements.md',
   'blueprint.md': 'blueprint.md',
   'roadmap.md': 'roadmap.md',
   'STATE.md': 'state.md'
 };
 const DOCUMENT_TYPES = {
   brief: { directory: 'briefs', prefix: 'BRIEF', template: 'brief.md' },
-  capability: { directory: 'capabilities', prefix: 'C', template: 'capability.md' },
-  milestone: { directory: 'milestones', prefix: 'M', template: 'milestone.md' },
-  context: { directory: 'milestones', template: 'context.md' },
-  feature: { directory: 'specs', prefix: 'F', template: 'feature-spec.md' },
-  plan: { directory: 'plans', template: 'implementation-plan.md' },
-  execution: { directory: 'executions', template: 'execution-summary.md' },
-  verification: { directory: 'verifications', template: 'verification.md' },
-  change: { directory: 'changes', prefix: 'CR', template: 'change-request.md' },
-  fix: { directory: 'fixes', prefix: 'BUG', template: 'bug-resolution.md' },
+  change: { directory: 'changes', prefix: 'CR', template: 'proposal.md' },
+  proposal: { directory: null, template: 'proposal.md' },
+  spec: { directory: null, template: 'spec.md' },
+  plan: { directory: null, template: 'plan.md' },
   adr: { directory: 'decisions', prefix: 'ADR', template: 'adr.md' }
 };
 const ALLOWED_STATUSES = {
   brief: new Set(['captured']),
-  capability: new Set(['proposed', 'active', 'completed', 'deferred', 'cancelled']),
-  milestone: new Set(['planned', 'active', 'completed', 'blocked', 'deferred', 'cancelled']),
-  feature: new Set([
-    'idea', 'draft', 'reviewed', 'approved', 'ready', 'in-progress', 'implemented', 'verified',
-    'blocked', 'deferred', 'cancelled', 'superseded'
-  ]),
-  plan: new Set(['draft', 'approved', 'in-progress', 'completed', 'blocked']),
-  execution: new Set(['in-progress', 'completed', 'blocked']),
-  verification: new Set(['pending', 'passed', 'failed', 'blocked']),
-  change: new Set(['proposed', 'accepted', 'deferred', 'rejected', 'completed']),
-  fix: new Set(['resolved', 'blocked']),
+  change: new Set(['proposed', 'accepted', 'completed', 'deferred', 'rejected']),
+  proposal: new Set(['draft', 'approved']),
+  spec: new Set(['draft', 'approved', 'verified']),
+  plan: new Set(['draft', 'approved', 'completed', 'blocked']),
   adr: new Set(['proposed', 'accepted', 'superseded', 'rejected'])
 };
 const TRANSITIONS = {
-  feature: {
-    idea: ['draft', 'deferred', 'cancelled'],
-    draft: ['reviewed', 'blocked', 'deferred', 'cancelled'],
-    reviewed: ['draft', 'approved', 'blocked', 'deferred', 'cancelled'],
-    approved: ['reviewed', 'ready', 'blocked', 'deferred', 'cancelled'],
-    ready: ['approved', 'in-progress', 'blocked', 'deferred', 'cancelled'],
-    'in-progress': ['implemented', 'blocked', 'cancelled'],
-    implemented: ['verified', 'blocked'],
-    blocked: ['draft', 'reviewed', 'approved', 'ready', 'in-progress', 'implemented', 'deferred', 'cancelled'],
-    deferred: ['draft', 'reviewed', 'approved', 'cancelled'],
-    verified: ['superseded'],
-    cancelled: [],
-    superseded: []
-  },
-  milestone: {
-    planned: ['active', 'blocked', 'deferred', 'cancelled'],
-    active: ['completed', 'blocked', 'deferred', 'cancelled'],
-    blocked: ['planned', 'active', 'deferred', 'cancelled'],
-    deferred: ['planned', 'cancelled'],
-    completed: [],
-    cancelled: []
-  },
-  capability: {
-    proposed: ['active', 'deferred', 'cancelled'],
-    active: ['completed', 'deferred', 'cancelled'],
-    deferred: ['proposed', 'cancelled'],
-    completed: [],
-    cancelled: []
-  },
-  plan: {
-    draft: ['approved', 'blocked'],
-    approved: ['in-progress', 'blocked'],
-    'in-progress': ['completed', 'blocked'],
-    blocked: ['draft', 'approved', 'in-progress'],
-    completed: []
-  },
-  execution: {
-    'in-progress': ['completed', 'blocked'],
-    blocked: ['in-progress'],
-    completed: []
-  },
-  verification: {
-    pending: ['passed', 'failed', 'blocked'],
-    failed: ['pending'],
-    blocked: ['pending'],
-    passed: []
-  },
   change: {
     proposed: ['accepted', 'deferred', 'rejected'],
     accepted: ['completed', 'deferred'],
     deferred: ['accepted', 'rejected'],
     completed: [],
     rejected: []
+  },
+  proposal: {
+    draft: ['approved'],
+    approved: []
+  },
+  spec: {
+    draft: ['approved'],
+    approved: ['verified'],
+    verified: []
+  },
+  plan: {
+    draft: ['approved', 'blocked'],
+    approved: ['completed', 'blocked'],
+    blocked: ['draft', 'approved'],
+    completed: []
   },
   adr: {
     proposed: ['accepted', 'rejected'],
@@ -136,34 +84,22 @@ const TRANSITIONS = {
   }
 };
 const REFERENCE_FIELDS = [
-  'source', 'requirements', 'milestone', 'capability', 'feature', 'depends_on', 'extends',
-  'supersedes', 'superseded_by', 'related_specs', 'affects'
+  'source', 'depends_on', 'extends', 'supersedes', 'superseded_by', 'affects'
 ];
-const ID_PATTERN = /^(?:BRIEF-\d{3}|CR-\d{3}|C-\d{3}|M\d+|F-M\d+-\d{2}|BUG-\d{3}|ADR-\d{3})$/;
+const ID_PATTERN = /^(?:BRIEF-\d{3}|CR-\d{3}|ADR-\d{3})$/;
 const REQ_PATTERN = /^REQ-\d{3}$/;
 const REQUIRED_SECTIONS = {
-  capability: ['最终目标', '能力边界', 'Milestones', '全局完成标准'],
-  milestone: ['阶段目标', '可验证系统状态', 'Feature Map', '退出标准'],
-  feature: ['问题与依据', '目标', '范围', '失败与边界情况', '验收标准', '需求追踪'],
-  plan: ['实现策略', 'Must-haves', 'Tasks', '验收标准映射', '最终验证'],
-  execution: ['Task Results', '实际修改文件', '验证记录', '最终结果'],
-  verification: ['验证环境', '验收证据', '回归与边界检查', '结论'],
-  change: ['当前问题', '期望结果', '接入方案与取舍', '决定'],
-  fix: ['现象与期望', '复现方式', '根因证据', '修复内容', '新鲜验证结果'],
+  proposal: ['背景与问题', '期望结果', '包含', '不包含', '影响范围'],
+  spec: ['问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '验收标准'],
+  plan: ['实现策略', 'Tasks', '验收标准映射', '最终验证'],
+  change: ['背景与问题', '期望结果', '决定'],
+  brief: ['背景', '想解决的问题', '目标用户与场景'],
   adr: ['背景与约束', '决策', '理由', '影响', '验证方式']
 };
 const CONTENT_GATES = {
-  capability: { statuses: ['active', 'completed'], sections: ['最终目标', '能力边界', '全局完成标准'] },
-  milestone: { statuses: ['active', 'completed'], sections: ['阶段目标', '可验证系统状态', 'Feature Map', '退出标准'] },
-  feature: {
-    statuses: ['reviewed', 'approved', 'ready', 'in-progress', 'implemented', 'verified'],
-    sections: ['问题与依据', '目标', '范围', '验收标准', '需求追踪']
-  },
-  plan: { statuses: ['approved', 'in-progress', 'completed'], sections: ['实现策略', 'Must-haves', '验收标准映射', '最终验证'] },
-  execution: { statuses: ['completed'], sections: ['Task Results', '实际修改文件', '验证记录', '最终结果'] },
-  verification: { statuses: ['passed'], sections: ['验证环境', '验收证据', '回归与边界检查', '结论'] },
-  change: { statuses: ['accepted', 'completed'], sections: ['当前问题', '期望结果', '接入方案与取舍', '决定'] },
-  fix: { statuses: ['resolved'], sections: ['现象与期望', '复现方式', '根因证据', '修复内容', '新鲜验证结果'] },
+  spec: { statuses: ['approved', 'verified'], sections: ['问题与依据', '目标', '范围', '验收标准'] },
+  plan: { statuses: ['approved', 'completed'], sections: ['实现策略', 'Tasks', '验收标准映射', '最终验证'] },
+  change: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] },
   adr: { statuses: ['accepted'], sections: ['背景与约束', '决策', '理由', '影响', '验证方式'] }
 };
 
