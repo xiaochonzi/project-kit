@@ -62,7 +62,7 @@ init 技能已经生成了 `docs/constitution.md` 的骨架,包含 12 个章节�
 ## 测试与验证原则
 - 使用 node:test 编写单元测试,覆盖数据层全部公开接口。
 - 每次变更必须运行: `node --test` 与 `node --check <file>`。
-- 修复 bug 必须先有复现测试(在 fixes/ 的 BUG-###.md 中记录)。
+- 修复 bug 必须先有复现测试,回归证据写入 git commit 与 STATE。
 ```
 
 **每条规则必须有来源**——AI 不能臆造。来源是以下两者之一:
