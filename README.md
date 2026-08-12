@@ -111,7 +111,7 @@ node scripts/project-docs.cjs next --root <project>
 | 9 | 制定实现计划 | `/project-kit/plan CR-001` | `plan.md`(怎么做,逐步验证) |
 | 10 | 按计划实施 | `execute-plan` | 代码 + 测试 + plan 勾选 |
 | 11 | 独立验收 | `verify-plan` | 重跑验收标准,写回 plan + STATE |
-| 随时 | 查看状态 / 校验 | `/project-kit/status`、`/project-kit/validate` | — |
+| 随时 | 查看状态 | `/project-kit/status` | — |
 
 ### 迭代与缺陷
 
