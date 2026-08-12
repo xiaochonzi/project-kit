@@ -263,10 +263,6 @@ function initializeProject(root) {
   }
 }
 
-function findFeature(documents, featureId) {
-  return documents.find((document) => document.kind === 'feature' && document.metadata.id === featureId);
-}
-
 function createChangeArtifact(root, type, options, documents) {
   if (typeof options.change !== 'string' || !/^CR-\d{3}$/.test(options.change)) {
     throw new Error(`new ${type} 需要 --change <CR-###>`);
@@ -586,28 +582,22 @@ function contextForMode(root, mode, target, jsonOutput) {
   const add = (relativePath) => {
     if (fs.existsSync(path.join(docsRoot, relativePath))) paths.add(relativePath);
   };
-  for (const fileName of ['constitution.md', 'requirements.md', 'blueprint.md', 'roadmap.md', 'STATE.md']) add(fileName);
+  for (const fileName of ['constitution.md', 'blueprint.md', 'roadmap.md', 'STATE.md']) add(fileName);
 
   if (mode === 'brief') for (const document of documents.filter((item) => item.kind === 'brief')) paths.add(document.relativePath);
-  if (mode === 'change') {
-    for (const document of documents.filter((item) => ['change', 'adr'].includes(item.kind))) paths.add(document.relativePath);
-  }
-  if (target) {
-    const feature = findFeature(documents, target);
-    const targetDocument = feature || documents.find((item) => item.metadata.id === target);
-    if (!targetDocument) throw new Error(`找不到上下文目标: ${target}`);
-    paths.add(targetDocument.relativePath);
-    const references = new Set();
-    for (const field of REFERENCE_FIELDS) for (const reference of asArray(targetDocument.metadata[field])) references.add(reference);
-    if (targetDocument.kind === 'feature') references.add(targetDocument.metadata.milestone);
-    for (const document of documents) {
-      if (references.has(document.metadata.id)) paths.add(document.relativePath);
-      if (document.metadata.feature === target) paths.add(document.relativePath);
+  if (mode === 'change' || mode === 'plan' || mode === 'execute-plan' || mode === 'verify-plan') {
+    if (target) {
+      const changeDir = documents
+        .filter((item) => item.kind === 'proposal' && item.metadata.id === target)
+        .map((item) => path.dirname(item.relativePath));
+      if (changeDir.length === 0) throw new Error(`找不到 Change: ${target}`);
+      for (const fileName of ['proposal.md', 'spec.md', 'plan.md']) {
+        add(path.join(changeDir[0], fileName));
+      }
+    } else {
+      for (const document of documents.filter((item) => item.kind === 'proposal')) paths.add(document.relativePath);
     }
-    const milestone = targetDocument.kind === 'milestone' ? target : targetDocument.metadata.milestone;
-    if (milestone) add(path.join('milestones', `${milestone}-CONTEXT.md`));
   }
-  if (mode === 'bug') for (const document of documents.filter((item) => item.kind === 'fix')) paths.add(document.relativePath);
   const result = { mode, target: target || null, files: [...paths].sort() };
   if (jsonOutput) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else for (const filePath of result.files) process.stdout.write(`${path.join(docsRoot, filePath)}\n`);
@@ -615,28 +605,32 @@ function contextForMode(root, mode, target, jsonOutput) {
 
 function projectStatus(root, jsonOutput) {
   const documents = collectDocuments(root);
-  const summary = {};
-  for (const document of documents) {
-    if (!document.kind || typeof document.metadata.status !== 'string') continue;
-    summary[document.kind] ??= {};
-    summary[document.kind][document.metadata.status] ??= [];
-    summary[document.kind][document.metadata.status].push({
-      id: document.metadata.id ?? document.metadata.feature ?? null,
-      title: document.metadata.title ?? path.basename(document.filePath),
-      path: document.relativePath
-    });
-  }
+  const statePath = path.join(root, 'docs', 'STATE.md');
+  let state = {};
+  if (fs.existsSync(statePath)) state = parseFrontmatter(fs.readFileSync(statePath, 'utf8'));
+  const changes = documents
+    .filter((item) => item.kind === 'proposal')
+    .map((item) => ({
+      id: item.metadata.id,
+      status: item.metadata.status,
+      title: item.metadata.title ?? path.basename(path.dirname(item.relativePath)),
+      path: item.relativePath
+    }));
+  const result = {
+    active_change: state.active_change ?? null,
+    next_action: state.next_action ?? null,
+    changes
+  };
   if (jsonOutput) {
-    process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     return;
   }
   process.stdout.write('Project Kit Status\n');
-  for (const kind of Object.keys(summary).sort()) {
-    process.stdout.write(`\n${kind}\n`);
-    for (const status of Object.keys(summary[kind]).sort()) {
-      process.stdout.write(`  ${status}: ${summary[kind][status].length}\n`);
-      for (const item of summary[kind][status]) process.stdout.write(`    - ${item.id ? `${item.id} ` : ''}${item.title}\n`);
-    }
+  process.stdout.write(`当前焦点: ${result.active_change ?? '无'}\n`);
+  process.stdout.write(`下一动作: ${result.next_action ?? '无'}\n`);
+  process.stdout.write(`\nChanges (${changes.length})\n`);
+  for (const change of changes) {
+    process.stdout.write(`  - ${change.id} [${change.status}] ${change.title}\n`);
   }
 }
 
