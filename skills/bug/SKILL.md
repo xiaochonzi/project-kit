@@ -1,90 +1,79 @@
 ---
 name: bug
-description: Use when diagnosing and fixing a defect — an implementation that violates an approved Feature Spec. If the behavior was never specified, it's a new requirement: use change.
+description: Use when there's a defect against an approved Spec — diagnose, fix minimally, and verify regression in a conversation, or route to change for Full treatment when the root cause is complex. If it's a new requirement rather than a defect, use change instead.
 ---
 
 # Bug
 
 ## Overview
 
-诊断违反已批准 Spec 的缺陷:复现→根因→最小修复→回归验证→写入 `docs/fixes/BUG-###.md`。**修复不借机加新能力,不扩大范围。**
+修复违反已批准 Spec 的缺陷。**默认走 Quick:对话内诊断+最小修复+回归验证,零文档。** 根因复杂或需架构决定 → 转 change 走 Full。
 
-**开始前宣布:** "我正在使用 bug 技能修复缺陷。"
+**"行为本就不在 Spec 里"是新增需求,不是 Bug——转 change。**
+
+**开始前宣布:** "我正在使用 bug 技能处理缺陷。"
 
 ## The Iron Law
 
 ```
-NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+MINIMAL FIX — NO SCOPE CREEP, NO SILENT SPEC CHANGES
 ```
 
-**Violating the letter of this rule is violating the spirit of debugging.** 症状修复是失败。如果没完成 Phase 1(根因调查),就不能提出任何修复。不是违反 Spec 的→转 change。
+**Violating the letter of this rule is violating the spirit of defect handling.** 只做最小修复+回归验证。不借机加功能。不改 Spec 验收标准来掩盖缺陷。修复后必须有新鲜证据(重跑测试)。
 
-## When to Use ESPECIALLY
+## 判断:是 Bug 还是新需求?
 
-- 有时间压力时(紧急情况下最容易想"试试看")
-- "就改一行"看起来很明显时
-- 已经试了好几个修复都没用时
-- 不太确定问题出在哪时
+| 情况 | 类型 | 处理 |
+|---|---|---|
+| 实现违反已批准 Spec | Bug | 本技能(Quick 或转 change Full) |
+| 原 Spec 从未要求该行为 | 新需求 | 转 change |
+| Spec 本身错误 | Spec 缺陷 | 停止,重新评审需求,不通过改代码掩盖 |
 
-## Don't Skip When
+## Quick 流程(默认,对话内完成,零文档)
 
-- 问题"看起来很简单"——简单的 bug 也有根因
-- 你很急——系统化调试比反复试错快
-- 有人催你马上修——先定位根因再动手才是最快的
-
-## 确认是 Bug 还是新需求
-
-- 实现违反已批准 Spec 的期望行为 → Bug,继续
-- Spec 从未要求该行为 → 新需求,转 change
-- 拿不准 → 问用户,不猜
-
-## Process
-
-### Step 1: 记录现象与复现
-
-- 现象、复现步骤、影响范围
-- 预期行为及对应 Spec 章节/验收标准
-
-### Step 2: 根因分析
-
-沿数据流/调用链定位根因——读相关代码、历史变更、相关 ADR。记录根因证据(代码位置、时序、数据样本)。**未定位根因→停止,不动手。**
-
-### Step 3: 最小修复
-
-- 只修改根因相关的最小范围
-- 不改 Spec、不加新能力
-- TDD:先写能复现该 Bug 的失败测试(RED),再最小实现(GREEN),确认测试通过
-
-### Step 4: 回归验证
-
-- 复现测试通过 + 受影响模块相关测试 + validate
-
-### Step 5: 创建 Bug Resolution
-
-```bash
-node scripts/project-docs.cjs new fix --title <问题标题> --root <项目根>
+```
+确认现象与预期(对照 Spec 验收标准)
+  → 定位根因(不连续试错:先复现,再找根因)
+  → 最小修复
+  → 回归验证:重跑相关测试 + 复现路径确认
+  → commit
+  → STATE.md 记一行
 ```
 
-生成 `docs/fixes/BUG-###.md`,必须包含:
+- **禁止**:创建缺陷文档文件、扩大修复范围、顺手重构。
+- **记录** = git commit + `docs/STATE.md` 一行(如"Bug: 修复 XX,回归通过")。
 
-```markdown
-## 现象与期望      ← 问题和对应Spec
-## 复现方式        ← 可复现步骤
-## 根因证据        ← 代码位置+原因
-## 修复内容        ← 最小修改
-## 新鲜验证结果    ← 重新运行测试的输出
-```
+## 转 Full 的信号(根因复杂或需架构决定)
 
-直接编辑 frontmatter `status` 为 `resolved`(fix 文档在脚本中无合法迁移路径,文档是事实源)。
+出现以下任一情况 → 停止,转 `change` 走 Full(proposal + spec + plan):
 
-## Handoff Rule
+- 根因跨越多个模块,无法确定最小修复边界
+- 修复需要数据迁移、接口契约变化或架构调整
+- 修复触及数据/权限/安全边界,影响面不可控
+- 连续 3 次修复尝试无改善(怀疑对根因的理解错误)
 
-修复完成且验证通过→`verify-plan`(回归验收)或 `status`。
+转 change 时在 proposal 的「背景与问题」中记录:现象、复现方式、已尝试的修复与失败原因。
+
+## 回归验证要求
+
+- 重跑与修改直接相关的全部测试
+- 重新执行复现路径,确认原症状消失
+- 检查相邻路径未被破坏(边界输入/异常输入)
+
+## 场景路由
+
+| 场景 | 处理 |
+|---|---|
+| **最小修复可行** | Quick:直接修复+回归+commit |
+| **根因复杂/需架构决定** | 转 change(Full) |
+| **行为不在 Spec 里** | 转 change(新需求) |
+| **Spec 本身错误** | 停止,重新评审需求 |
 
 ## Common Rationalizations
 
 | 借口 | 现实 |
 | --- | --- |
-| "先改了再找根因" | 没根因=同类问题重复出现 |
-| "顺手做小需求" | Bug 修复不是增强入口 |
-| "回归测试省掉" | 小改动一样破坏已有行为 |
+| "顺手把这个相关的问题也修了" | 扩大修复范围=借 Bug 夹带新需求 |
+| "改一下验收标准就不算 bug 了" | 静默改 Spec=掩盖缺陷,Spec 错误应重新评审 |
+| "复现不出来,猜着改吧" | 没复现=没根因,连续试错是浪费 |
+| "修好了,不用跑测试" | 无新鲜证据=未验证,回归风险留给下游 |

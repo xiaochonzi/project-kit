@@ -7,7 +7,7 @@ description: Use when initializing a new project's documentation structure, or w
 
 ## Overview
 
-为目标项目创建 Project Kit 标准 `docs/` 目录结构。初始化之后,后续 9 个技能(brief / refine / plan / execute-plan / verify-plan / change / bug / status / constitution)有统一的落盘与读取位置。
+为目标项目创建 Project Kit 标准 `docs/` 目录结构。初始化之后,后续 10 个技能(brief / blueprint / roadmap / plan / execute-plan / verify-plan / change / bug / status / constitution)有统一的落盘与读取位置。
 
 ## The Iron Law
 
@@ -65,35 +65,28 @@ test -d <项目根>/docs && find <项目根>/docs -maxdepth 1 | sort || echo "do
 node scripts/project-docs.cjs init --root <项目根>
 ```
 
-期望输出:5 个根文档全部显示"创建:",11 个子目录静默创建。没有任何"跳过已有文件"提示。
+期望输出:4 个根文档全部显示"创建:",3 个受管子目录静默创建。没有任何"跳过已有文件"提示。
 
 进入 Step 7(核对与校验)。
 
 #### 场景 B — 已就绪(docs/ 存在且结构完整)
 
-条件:5 个根文档全部存在 + 11 个子目录全部存在 + `validate` 0 错误 + 无模板变量残留 + 无非标准文件。
+条件:4 个根文档全部存在 + `validate` 0 错误 + 无模板变量残留 + 无非标准文件。
 
 **不运行 init。** 直接报告"项目文档结构已就绪",跳到 Handoff。
 
 #### 场景 C — 增量补齐(docs/ 存在但缺失部分)
 
-条件:部分根文档或子目录缺失,**没有**非标准文件(冲突)。
+条件:部分根文档缺失,**没有**非标准文件(冲突)。
 
 先报告缺失项清单:
 
 ```text
 缺失根文档: <列出>
-缺失子目录: <列出>
 已有文件(不会被覆盖): <列出>
 ```
 
-获得用户确认后运行 init:
-
-```bash
-node scripts/project-docs.cjs init --root <项目根>
-```
-
-确认输出中对应的缺失项显示"创建:",已有项显示"跳过已有文件"。进入 Step 7。
+获得用户确认后运行 init。确认输出中对应的缺失项显示"创建:",已有项显示"跳过已有文件"。进入 Step 7。
 
 #### 场景 D — 结构冲突(docs/ 存在且有非标准文件)
 
@@ -113,8 +106,8 @@ node scripts/project-docs.cjs init --root <项目根>
 
 #### 核对清单
 
-- [ ] 5 个根文档:`constitution.md`、`requirements.md`、`blueprint.md`、`roadmap.md`、`STATE.md`
-- [ ] 11 个子目录:`briefs/` `capabilities/` `milestones/` `specs/` `plans/` `executions/` `verifications/` `changes/` `fixes/` `decisions/` `research/`
+- [ ] 4 个根文档:`constitution.md`、`blueprint.md`、`roadmap.md`、`STATE.md`
+- [ ] 3 个受管子目录:`briefs/` `changes/` `research/`
 - [ ] 无模板变量残留:`grep -r "{{" docs/` 期望空输出
 - [ ] 根文档 frontmatter 无占位符(如 `{{DATE}}` 替换为实际日期)
 
@@ -126,12 +119,6 @@ node scripts/project-docs.cjs validate --root <项目根>
 
 期望:输出含"错误: 0"。
 
-```bash
-node scripts/project-docs.cjs coverage --root <项目根>
-```
-
-期望:可运行(0 个 accepted REQ 时覆盖率 100%)。
-
 **有任何一项不满足 → 修复后重跑。不把"已知问题"带进下游。**
 
 ### Step 8: 标准 Handoff
@@ -140,8 +127,8 @@ node scripts/project-docs.cjs coverage --root <项目根>
 
 ```
 已初始化: <项目根>/docs/
-- 根文档(5): constitution / requirements / blueprint / roadmap / STATE
-- 子目录(11): briefs / capabilities / milestones / specs / plans / executions / verifications / changes / fixes / decisions / research
+- 根文档(4): constitution / blueprint / roadmap / STATE
+- 子目录(3): briefs / changes / research
 - validate: 0 错误
 下一步: constitution(制定准则) 或 brief(接收需求)
 ```
@@ -167,27 +154,21 @@ docs/ 存在非标准文件,需要决定如何处理:
 
 ## 目录契约(后续所有技能的读取约定)
 
-init 产出的结构,也是后续 9 个技能的读写契约:
+init 产出的结构,也是后续 10 个技能的读写契约:
 
 ```text
 <项目根>/docs/
 ├── constitution.md      # 稳定准则 → plan/execute/verify 的约束来源
-├── requirements.md      # 原子需求(### REQ-### 条目) → brief/refine/verify 读写
 ├── blueprint.md         # 系统边界 → brief/change 读写
-├── roadmap.md           # 交付顺序 → refine/status 读写
+├── roadmap.md           # 阶段分组 + 焦点 → status 读写
 ├── STATE.md             # 当前焦点 → AI 接力的首要入口
-├── briefs/              # BRIEF-###-<slug>.md
-├── capabilities/        # C-###-<slug>.md
-├── milestones/          # M#-<slug>.md + M#-CONTEXT.md
-├── specs/<M#>/          # F-M#-##-<slug>.md
-├── plans/               # F-M#-##-plan.md
-├── executions/          # F-M#-##-execution.md
-├── verifications/       # F-M#-##-verification.md
-├── changes/             # CR-###-<slug>.md
-├── fixes/               # BUG-###-<slug>.md
-├── decisions/           # ADR-###-<slug>.md
-└── research/
+├── briefs/              # BRIEF-###-<slug>.md(原始讨论存档)
+├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更三件套)
+├── research/            # 自由研究材料
+└── (decisions/ capabilities/ 保留兼容,不预建)
 ```
+
+**Quick 变更不落盘**——记录 = git commit + STATE 一行。只有 Full 变更才在 `changes/` 下创建目录。
 
 ## Exception Handling
 
