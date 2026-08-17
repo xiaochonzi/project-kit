@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 - 2026-08-17
+
+- **OpenCode npm 插件化**:新增根 `package.json`(type: module, main: plugin.js)与根 `plugin.js`,使仓库可直接作为 npm/git 依赖被 opencode 安装(`project-kit@git+...`);`.opencode/plugins/project-kit.js` 改为 re-export 根插件,消除重复逻辑;`.opencode/INSTALL.md` 更新安装说明。
+
 ## 0.4.0 - 2026-08-12
 
 - **两档路径**:所有新需求由 `change` 技能统一入口,按风险分流——Quick(零文档,直接实现 + git + STATE 一行)或 Full(proposal/spec/plan 三件套)。
