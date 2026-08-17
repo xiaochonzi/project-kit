@@ -13,6 +13,11 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillsDir = path.join(__dirname, 'skills');
+const commandsDir = path.join(__dirname, 'commands', 'project-kit');
+const globalCommandsDir = path.join(
+  process.env.HOME || process.env.USERPROFILE,
+  '.config', 'opencode', 'commands', 'project-kit'
+);
 
 let _bootstrapCache = undefined;
 
@@ -41,7 +46,26 @@ ${content.slice(0, 2000)}
   return _bootstrapCache;
 };
 
+const syncCommands = async () => {
+  try {
+    if (!fs.existsSync(commandsDir)) return;
+    fs.mkdirSync(globalCommandsDir, { recursive: true });
+    for (const entry of fs.readdirSync(commandsDir)) {
+      if (!entry.endsWith('.md')) continue;
+      const src = fs.readFileSync(path.join(commandsDir, entry), 'utf8');
+      const stripped = src.replace(/(\n|^)argument-hint: *[^\n]*/g, '');
+      const target = path.join(globalCommandsDir, entry);
+      if (fs.existsSync(target) && fs.readFileSync(target, 'utf8') === stripped) continue;
+      fs.writeFileSync(target, stripped);
+    }
+  } catch (error) {
+    console.warn(`[project-kit] 命令同步失败(可忽略): ${error.message}`);
+  }
+};
+
 export const ProjectKitPlugin = async (_opts) => {
+  await syncCommands();
+
   return {
     config: async (config) => {
       config.skills = config.skills || {};

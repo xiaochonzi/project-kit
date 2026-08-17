@@ -19,6 +19,8 @@
 
 opencode 启动时用 Bun 自动安装并加载,技能与 slash command 在所有项目中可用。
 
+插件启动时会自动把 `commands/project-kit/*.md` 幂等同步到全局命令目录 `~/.config/opencode/commands/project-kit/`(命令名 `/project-kit/status` 等,`argument-hint` 字段自动剥离)。
+
 本地开发未推送时,可改用本地文件路径:
 
 ```json
