@@ -28,6 +28,7 @@ const getBootstrapContent = () => {
   if (!fs.existsSync(readme)) { _bootstrapCache = null; return null; }
 
   const content = fs.readFileSync(readme, 'utf8');
+  const cliPath = path.join(__dirname, 'scripts', 'project-docs.cjs');
 
   _bootstrapCache = `<EXTREMELY_IMPORTANT>
 You have Project Kit installed. It provides 12 lifecycle skills (init, constitution, brief, blueprint, roadmap, refine, plan, execute-plan, verify-plan, change, bug, status) that work around a unified docs/ directory convention.
@@ -35,6 +36,8 @@ You have Project Kit installed. It provides 12 lifecycle skills (init, constitut
 When the user asks to initialize project docs, break down requirements, create a system blueprint, plan features, execute plans with TDD, verify work with fresh evidence, or check project status — use the corresponding skill.
 
 ${content.slice(0, 2000)}
+
+**Project Kit CLI:** the skills and slash commands reference the CLI as \`node scripts/project-docs.cjs\`. This is a relative path; when executing it, replace \`scripts/project-docs.cjs\` with the absolute path \`${cliPath}\` (for example \`node ${cliPath} status --root <dir>\`). Do not run \`node scripts/project-docs.cjs\` from the current working directory unless you are inside the project-kit repository.
 
 **Tool Mapping for OpenCode:**
 - Read files → \`read\`

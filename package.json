@@ -8,6 +8,8 @@
     "plugin.js",
     "skills",
     "commands",
+    "scripts",
+    "assets",
     "README.md"
   ],
   "license": "MIT",
