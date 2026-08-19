@@ -8,5 +8,6 @@
   },
   "license": "MIT",
   "keywords": ["workflow","skills","lifecycle","spec-driven","project-management"],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks-cursor.json"
 }

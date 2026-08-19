@@ -4,6 +4,7 @@
 
 - **OpenCode npm 插件化**:新增根 `package.json`(type: module, main: plugin.js)与根 `plugin.js`,使仓库可直接作为 npm/git 依赖被 opencode 安装(`project-kit@git+...`);`.opencode/plugins/project-kit.js` 改为 re-export 根插件,消除重复逻辑;`.opencode/INSTALL.md` 更新安装说明。
 - **命令同步**:插件启动时将 `commands/project-kit/*.md` 幂等同步到 `~/.config/opencode/commands/project-kit/`(opencode 不支持插件注册命令,命令只能落地到命令目录;`argument-hint` 为 Claude Code 专用字段,同步时剥离)。
+- **Cursor Plugin 补全**:`.cursor-plugin/plugin.json` 增加 `hooks` 字段指向 `hooks/hooks-cursor.json`;新增 `hooks/hooks-cursor.json` 与 `hooks/run-hook.cmd`,使 Cursor 安装后自动注入会话引导。
 
 ## 0.4.0 - 2026-08-12
 

@@ -54,6 +54,8 @@ codex plugin install <repo-path>
 
 在 Cursor Settings → Plugins 中添加本地插件路径(指向本仓库根目录)。
 
+Cursor 加载 `.cursor-plugin/plugin.json`,自动发现 `skills/` 与 `hooks/hooks-cursor.json`;每次新会话通过 `hooks/session-start` 注入 Project Kit 引导上下文。
+
 ### 方式二:Skills 引用
 
 在项目根目录的 `.cursor/skills.json` 中添加:
