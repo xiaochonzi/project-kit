@@ -39,7 +39,7 @@ NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读 `.project-kit/state.md`(本地人员当前焦点)、`docs/constitution.md`(编码门禁)
+- [ ] 已读 `.project-kit/state.md`(本地人员当前焦点)、`docs/constitution.md`(编码门禁)；若存在 `docs/changes/CR-###-<slug>/diagrams.md`，一并读取作为数据依据
 - [ ] 目标仓库可构建、测试命令可运行
 
 ## TDD Iron Law(每任务严格执行)

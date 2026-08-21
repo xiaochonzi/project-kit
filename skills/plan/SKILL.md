@@ -35,7 +35,7 @@ NO PLAN WITHOUT AN APPROVED SPEC
 node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 ```
 
-读取该 change 目录的三件套与全局文档。
+读取该 change 目录的三件套与全局文档。**若存在 `diagrams.md`**（涉及数据模型的 change），一并读取，作为数据关系与前后端操作时机的依据。
 
 ### Step 2: 探索代码现实
 

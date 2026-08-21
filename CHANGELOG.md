@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 - 2026-08-21
+
+- **change 技能新增 diagrams 数据关系文档（可选）**：Full 变更新增可选的 `docs/changes/CR-###-<slug>/diagrams.md`，当需求涉及新数据模型设计时创建，沉淀数据模型清单、模型间关系（ER）、设计依据与前后端操作时机。生成顺序：proposal → spec → diagrams → plan。新增 `node scripts/project-docs.cjs new diagrams --change CR-###` 命令（复用 change 文档创建机制）；validate 不强制要求（非必填），diagrams 无独立状态机。
+
 ## 0.5.0 - 2026-08-21
 
 - **状态本地化(架构变更)**:删除全局 `docs/STATE.md`,新增 gitignored 的本地私有目录 `.project-kit/state.md`,每位成员各自维护个人焦点(active_change)、个人下一步(next_action)与最近一条完成记录(last_completed)。团队共享部分(blueprint / roadmap / changes)不变,需求仍是团队性产物。`status` / `next` 语义从"团队在做什么"变为"我在做什么"。init 时自动创建 `.project-kit/state.md` 并在仓库根 `.gitignore` 追加 `.project-kit/`。

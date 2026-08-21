@@ -22,7 +22,7 @@ const PLUGIN_SKILLS = [
 ];
 const FORBIDDEN_PLUGIN_PATHS = ['capability.json', 'eval'];
 const REQUIRED_PLUGIN_FILES = ['plugin.json', 'README.md', 'CHANGELOG.md', 'AGENTS.md'];
-const TEMPLATE_EXPECTED_COUNT = 8;
+const TEMPLATE_EXPECTED_COUNT = 9;
 const DOC_LINK_PATTERN = /\[[^\]]+\]\(([^)]+)\)/g;
 const MANAGED_DIRECTORIES = [
   'briefs',
@@ -40,7 +40,8 @@ const DOCUMENT_TYPES = {
   change: { directory: 'changes', prefix: 'CR', template: 'proposal.md' },
   proposal: { directory: null, template: 'proposal.md' },
   spec: { directory: null, template: 'spec.md' },
-  plan: { directory: null, template: 'plan.md' }
+  plan: { directory: null, template: 'plan.md' },
+  diagrams: { directory: null, template: 'diagrams.md' }
 };
 const ALLOWED_STATUSES = {
   brief: new Set(['captured']),
@@ -291,7 +292,7 @@ function createDocument(root, type, options) {
   if (!fs.existsSync(docsRoot)) throw new Error('尚未初始化 docs 目录，请先运行 init');
   const documents = collectDocuments(root);
 
-  if (['proposal', 'spec', 'plan'].includes(type)) {
+  if (['proposal', 'spec', 'plan', 'diagrams'].includes(type)) {
     createChangeArtifact(root, type, options, documents);
     return;
   }

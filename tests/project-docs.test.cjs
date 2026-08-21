@@ -34,7 +34,7 @@ test('validate-plugin passes for current plugin', () => {
   const result = JSON.parse(output);
   assert.equal(result.valid, true);
   assert.equal(result.skillCount, 11);
-  assert.equal(result.templateCount, 8);
+  assert.equal(result.templateCount, 9);
 });
 
 test('validate passes for minimal example', () => {
@@ -117,6 +117,62 @@ test('status degrades gracefully without .project-kit/state.md', () => {
     assert.equal(status.active_change, null);
     assert.equal(status.next_action, null);
     assert.equal(status.last_completed, null);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('new diagrams creates diagrams.md for accepted change', () => {
+  const tmp = makeTmpProject();
+  try {
+    run(['new', 'change', '--title', '数据模型变更', '--root', tmp]);
+    const changeDir = path.join(tmp, 'docs', 'changes', 'CR-001-数据模型变更');
+    fs.writeFileSync(
+      path.join(changeDir, 'proposal.md'),
+      '---\nid: CR-001\ntitle: 数据模型变更\nstatus: proposed\n---\n\n# 数据模型变更\n\n## 背景与问题\n\n背景。\n\n## 期望结果\n\n期望。\n\n## 包含\n\n包含。\n\n## 不包含\n\n不包含。\n\n## 影响范围\n\n影响。\n\n## 决定\n\n已确认。\n',
+      'utf8'
+    );
+    run(['transition', 'CR-001', '--to', 'accepted', '--root', tmp]);
+    run(['new', 'diagrams', '--change', 'CR-001', '--root', tmp]);
+    assert.ok(fs.existsSync(path.join(changeDir, 'diagrams.md')));
+    const diagrams = fs.readFileSync(path.join(changeDir, 'diagrams.md'), 'utf8');
+    assert.match(diagrams, /数据模型清单/);
+    assert.match(diagrams, /模型间关系/);
+    assert.match(diagrams, /设计依据/);
+    assert.match(diagrams, /前后端操作时机/);
+    assert.doesNotMatch(diagrams, /\{\{/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('change without diagrams validates (non-mandatory)', () => {
+  const tmp = makeTmpProject();
+  try {
+    run(['new', 'change', '--title', '无数据模型', '--root', tmp]);
+    // 走完完整三件套但无 diagrams
+    const changeDir = path.join(tmp, 'docs', 'changes', 'CR-001-无数据模型');
+    fs.writeFileSync(
+      path.join(changeDir, 'proposal.md'),
+      '---\nid: CR-001\ntitle: 无数据模型\nstatus: proposed\n---\n\n# 无数据模型\n\n## 背景与问题\n\n背景。\n\n## 期望结果\n\n期望。\n\n## 包含\n\n包含。\n\n## 不包含\n\n不包含。\n\n## 影响范围\n\n影响。\n\n## 决定\n\n已确认。\n',
+      'utf8'
+    );
+    run(['transition', 'CR-001', '--to', 'accepted', '--root', tmp]);
+    run(['new', 'spec', '--change', 'CR-001', '--root', tmp]);
+    run(['new', 'plan', '--change', 'CR-001', '--root', tmp]);
+    // 不创建 diagrams —— validate 应通过（diagrams 非强制）
+    const result = JSON.parse(run(['validate', '--root', tmp, '--json']));
+    assert.equal(result.valid, true);
+    assert.ok(!fs.existsSync(path.join(changeDir, 'diagrams.md')));
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('new diagrams requires existing proposal (order constraint)', () => {
+  const tmp = makeTmpProject();
+  try {
+    assert.throws(() => run(['new', 'diagrams', '--change', 'CR-999', '--root', tmp]));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

@@ -62,7 +62,7 @@ claude plugin install github:xiaochonzi/project-kit
 ├── blueprint.md         # 系统边界与能力地图
 ├── roadmap.md           # 阶段规划 + 任务表格(状态列)
 ├── briefs/              # BRIEF-###(原始讨论存档)
-├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更三件套)
+├── changes/             # CR-###-<slug>/{proposal,spec,plan,diagrams?}.md(Full 变更文档;diagrams 可选,涉及新数据模型时创建)
 └── research/
 
 <项目根>/.project-kit/    # 本地私有(gitignored,不提交)

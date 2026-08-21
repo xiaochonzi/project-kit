@@ -101,9 +101,26 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind spec --root
 
 脚本会记录 `spec_hash`,用于验收时防篡改核对。
 
-### Step 5: Handoff
+### Step 5: 数据关系文档(可选)
 
-Spec approved 后 → `plan` 技能(为 CR-### 编写实现计划)。
+若该 change 涉及**新的数据模型设计**，在 spec 确认后创建数据关系文档：
+
+```bash
+node scripts/project-docs.cjs new diagrams --change CR-### --root <项目根>
+```
+
+填写 `docs/changes/CR-###-<slug>/diagrams.md`：
+
+- 数据模型清单（涉及的数据模型及用途）
+- 模型间关系（ER）
+- 设计依据（为什么这么设计、取舍）
+- 前后端操作时机（谁在何时创建/读取/更新/删除）
+
+与用户确认后进入 Handoff。**不涉及新数据模型的 change 跳过本步骤**（diagrams 非强制）。
+
+### Step 6: Handoff
+
+Spec approved（且需要时 diagrams 已确认）→ `plan` 技能(为 CR-### 编写实现计划)。
 
 ## 场景路由
 
@@ -127,7 +144,7 @@ Spec approved 后 → `plan` 技能(为 CR-### 编写实现计划)。
 
 ## Handoff Rule
 
-Full:Spec approved 后 → `plan`。Quick:直接完成,更新本地 state。判断为 Bug → `bug`。
+Full:Spec approved 后 →（涉及新数据模型时先创建 diagrams）→ `plan`。Quick:直接完成,更新本地 state。判断为 Bug → `bug`。
 
 ## Common Rationalizations
 
