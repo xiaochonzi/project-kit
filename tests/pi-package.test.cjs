@@ -7,10 +7,12 @@ const { execFileSync } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 
 const root = path.resolve(__dirname, '..');
+const adapter = path.join(root, '.pi', 'extensions', 'project-kit.js');
 
 async function loadExtension(extensionPath) {
   const commands = new Map();
   const handlers = new Map();
+  const messages = [];
   const pi = {
     registerCommand(name, options) {
       commands.set(name, options);
@@ -18,10 +20,13 @@ async function loadExtension(extensionPath) {
     on(event, handler) {
       handlers.set(event, handler);
     },
+    async sendUserMessage(message) {
+      messages.push(message);
+    },
   };
   const extension = await import(`${pathToFileURL(extensionPath).href}?test=${Date.now()}`);
   extension.default(pi);
-  return { commands, handlers };
+  return { commands, handlers, messages };
 }
 
 test('package exposes Project Kit skills and extension to Pi', () => {
@@ -29,11 +34,12 @@ test('package exposes Project Kit skills and extension to Pi', () => {
 
   assert.ok(pkg.keywords.includes('pi-package'));
   assert.deepEqual(pkg.pi, {
-    extensions: ['./pi/project-kit.js'],
+    extensions: ['./.pi/extensions/project-kit.js'],
     skills: ['./skills'],
   });
-  assert.ok(pkg.files.includes('pi'));
-  assert.ok(fs.existsSync(path.join(root, 'pi', 'project-kit.js')));
+  assert.ok(pkg.files.includes('.pi'));
+  assert.ok(fs.existsSync(adapter));
+  assert.equal(fs.existsSync(path.join(root, 'pi', 'project-kit.js')), false);
 });
 
 test('platform manifests reference only existing resources', () => {
@@ -49,7 +55,7 @@ test('platform manifests reference only existing resources', () => {
 });
 
 test('Pi extension registers all Project Kit commands', async () => {
-  const { commands } = await loadExtension(path.join(root, 'pi', 'project-kit.js'));
+  const { commands } = await loadExtension(adapter);
 
   assert.deepEqual([...commands.keys()].sort(), [
     'project-kit:brief',
@@ -63,45 +69,35 @@ test('Pi extension registers all Project Kit commands', async () => {
 });
 
 test('Pi commands preserve replacement tokens and reference registered command names', async () => {
-  const { commands } = await loadExtension(path.join(root, 'pi', 'project-kit.js'));
+  const { commands, messages } = await loadExtension(adapter);
   const argument = "/tmp/project-kit/node scripts/project-docs.cjs-$&-$'-$$-tail";
 
   for (const command of commands.values()) {
-    let prompt;
-    await command.handler(argument, {
-      async sendUserMessage(message) {
-        prompt = message;
-      },
-    });
+    await command.handler(argument, {});
+    const prompt = messages.at(-1);
     assert.ok(prompt.includes(argument));
     assert.doesNotMatch(prompt, /`\/project-kit\//);
   }
 });
 
-test('Pi command executes the packaged CLI path from another project', async () => {
+test('Pi commands route to skills without shared command files', async () => {
   const installParent = fs.mkdtempSync(path.join(os.tmpdir(), 'pi install-$ARGUMENTS-$&-'));
   const installRoot = path.join(installParent, 'project-kit');
   const project = fs.mkdtempSync(path.join(os.tmpdir(), 'pi-project-$&-'));
   try {
     fs.mkdirSync(installRoot);
-    fs.mkdirSync(path.join(installRoot, 'pi'));
-    fs.copyFileSync(path.join(root, 'pi', 'project-kit.js'), path.join(installRoot, 'pi', 'project-kit.js'));
-    fs.cpSync(path.join(root, 'commands'), path.join(installRoot, 'commands'), { recursive: true });
+    fs.mkdirSync(path.join(installRoot, '.pi', 'extensions'), { recursive: true });
+    fs.copyFileSync(adapter, path.join(installRoot, '.pi', 'extensions', 'project-kit.js'));
     fs.cpSync(path.join(root, 'scripts'), path.join(installRoot, 'scripts'), { recursive: true });
 
-    const { commands } = await loadExtension(path.join(installRoot, 'pi', 'project-kit.js'));
-    let prompt;
-    await commands.get('project-kit:status').handler(project, {
-      async sendUserMessage(message) {
-        prompt = message;
-      },
-    });
+    const { commands, messages } = await loadExtension(path.join(installRoot, '.pi', 'extensions', 'project-kit.js'));
+    await commands.get('project-kit:status').handler(project, {});
+    const prompt = messages.at(-1);
 
     assert.match(prompt, new RegExp(project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-    assert.doesNotMatch(prompt, /node scripts\/project-docs\.cjs/);
-    const commandLine = prompt.match(/^node .+ status --root <项目根>$/m)[0]
-      .replace('<项目根>', () => `'${project}'`);
-    const output = execFileSync('/bin/sh', ['-c', commandLine], {
+    assert.match(prompt, /`status` skill/);
+    const cliCommand = prompt.match(/node '[^\n`]+project-docs\.cjs'/)[0];
+    const output = execFileSync('/bin/sh', ['-c', `${cliCommand} status --root '${project}'`], {
       cwd: project,
       encoding: 'utf8',
     });
@@ -113,7 +109,7 @@ test('Pi command executes the packaged CLI path from another project', async () 
 });
 
 test('Pi bootstrap coexists with other extensions and stays idempotent', async () => {
-  const { handlers } = await loadExtension(path.join(root, 'pi', 'project-kit.js'));
+  const { handlers } = await loadExtension(adapter);
   const beforeAgentStart = handlers.get('before_agent_start');
 
   assert.equal(typeof beforeAgentStart, 'function');

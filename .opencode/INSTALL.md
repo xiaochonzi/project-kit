@@ -19,13 +19,13 @@
 
 opencode 启动时用 Bun 自动安装并加载,技能与 slash command 在所有项目中可用。
 
-插件启动时会自动把 `commands/project-kit/*.md` 幂等同步到全局命令目录 `~/.config/opencode/commands/project-kit/`(命令名 `/project-kit/status` 等,`argument-hint` 字段自动剥离)。
+插件启动时会把 OpenCode 专属的薄 command 路由幂等写入全局命令目录 `~/.config/opencode/commands/project-kit/`(命令名 `/project-kit/status` 等)。每个 command 只负责加载对应 skill;完整流程以共享的 `skills/` 为事实源,不读取 Claude Code 或 Pi 的 command 实现。
 
 本地开发未推送时,可改用本地文件路径:
 
 ```json
 {
-  "plugin": ["/absolute/path/to/project-kit/plugin.js"]
+  "plugin": ["/absolute/path/to/project-kit/.opencode/plugins/project-kit.js"]
 }
 ```
 
@@ -52,9 +52,9 @@ cp -R /absolute/path/to/project-kit/skills your-project/.agents/skills
 或使用 slash command:
 
 ```text
-/project-kit:init
-/project-kit:brief
-/project-kit:status
+/project-kit/init
+/project-kit/brief
+/project-kit/status
 ```
 
 ## 故障排除

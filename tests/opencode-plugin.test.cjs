@@ -7,6 +7,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const root = path.resolve(__dirname, '..');
+const adapter = path.join(root, '.opencode', 'plugins', 'project-kit.js');
 function runPlugin(home, source) {
   return execFileSync('node', ['--input-type=module', '--eval', source], {
     cwd: root,
@@ -15,30 +16,42 @@ function runPlugin(home, source) {
   });
 }
 
-test('OpenCode commands use the plugin CLI outside the target project', () => {
+test('package uses the platform-specific OpenCode adapter', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+
+  assert.equal(pkg.main, '.opencode/plugins/project-kit.js');
+  assert.ok(pkg.files.includes('.opencode'));
+  assert.ok(fs.existsSync(adapter));
+  assert.equal(fs.existsSync(path.join(root, 'plugin.js')), false);
+});
+
+test('OpenCode commands route to skills without shared command files', () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pk-opencode-'));
   const project = fs.mkdtempSync(path.join(os.tmpdir(), 'pk-project-'));
   const installRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'pk install-$VALUE-'));
-  const pluginPath = path.join(installRoot, 'plugin.js');
+  const pluginPath = path.join(installRoot, '.opencode', 'plugins', 'project-kit.js');
   try {
-    fs.copyFileSync(path.join(root, 'plugin.js'), pluginPath);
-    fs.copyFileSync(path.join(root, 'README.md'), path.join(installRoot, 'README.md'));
-    fs.cpSync(path.join(root, 'commands'), path.join(installRoot, 'commands'), { recursive: true });
+    fs.mkdirSync(path.dirname(pluginPath), { recursive: true });
+    fs.copyFileSync(adapter, pluginPath);
     fs.cpSync(path.join(root, 'scripts'), path.join(installRoot, 'scripts'), { recursive: true });
 
     runPlugin(home, `
       const { ProjectKitPlugin } = await import(${JSON.stringify(pathToFileURL(pluginPath).href)});
-      await ProjectKitPlugin({});
+      const plugin = await ProjectKitPlugin({});
+      const config = {};
+      await plugin.config(config);
+      const names = Object.keys(config.command || {}).sort();
+      if (names.length !== 7 || !names.includes('project-kit/status')) process.exit(2);
     `);
 
     const command = fs.readFileSync(
       path.join(home, '.config', 'opencode', 'commands', 'project-kit', 'status.md'),
       'utf8',
     );
-    assert.doesNotMatch(command, /node scripts\/project-docs\.cjs/);
-    const commandLine = command.match(/^node .+ status --root <项目根>$/m)[0]
-      .replace('<项目根>', `'${project}'`);
-    const output = execFileSync('/bin/sh', ['-c', commandLine], {
+    assert.match(command, /`status` skill/);
+    assert.match(command, /\$ARGUMENTS/);
+    const cliCommand = command.match(/node '[^\n`]+project-docs\.cjs'/)[0];
+    const output = execFileSync('/bin/sh', ['-c', `${cliCommand} status --root '${project}'`], {
       cwd: project,
       encoding: 'utf8',
     });
@@ -50,11 +63,30 @@ test('OpenCode commands use the plugin CLI outside the target project', () => {
   }
 });
 
+test('OpenCode still registers skills when command persistence fails', () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pk-opencode-'));
+  try {
+    fs.mkdirSync(path.join(home, '.config'), { recursive: true });
+    fs.writeFileSync(path.join(home, '.config', 'opencode'), 'not a directory');
+    const output = runPlugin(home, `
+      console.warn = () => {};
+      const { ProjectKitPlugin } = await import(${JSON.stringify(pathToFileURL(adapter).href)});
+      const plugin = await ProjectKitPlugin({});
+      const config = {};
+      await plugin.config(config);
+      process.stdout.write(String(config.skills.paths.length));
+    `);
+    assert.equal(output, '1');
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
 test('Project Kit bootstrap coexists with other EXTREMELY_IMPORTANT prompts', () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pk-opencode-'));
   try {
     const output = runPlugin(home, `
-      const { ProjectKitPlugin } = await import(${JSON.stringify(pathToFileURL(path.join(root, 'plugin.js')).href)});
+      const { ProjectKitPlugin } = await import(${JSON.stringify(pathToFileURL(adapter).href)});
       const plugin = await ProjectKitPlugin({});
       const messages = [{
         info: { role: 'user' },
@@ -66,7 +98,7 @@ test('Project Kit bootstrap coexists with other EXTREMELY_IMPORTANT prompts', ()
     `);
     const messages = JSON.parse(output);
     const text = messages[0].parts.map((part) => part.text).join('\n');
-    assert.equal(text.match(/You have Project Kit installed\./g)?.length, 1);
+    assert.equal(text.match(/<PROJECT_KIT_BOOTSTRAP>/g)?.length, 1);
     assert.doesNotMatch(messages[0].parts[0].text, /<EXTREMELY_IMPORTANT>/);
   } finally {
     fs.rmSync(home, { recursive: true, force: true });

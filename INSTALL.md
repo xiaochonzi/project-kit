@@ -84,7 +84,7 @@ pi install git:github.com/xiaochonzi/project-kit
 pi install -l git:github.com/xiaochonzi/project-kit
 ```
 
-安装后 Pi 自动加载 `skills/` 与 `pi/project-kit.js`;技能可通过 `/skill:<name>` 调用,Project Kit 命令使用 `/project-kit:init`、`/project-kit:brief`、`/project-kit:change`、`/project-kit:plan`、`/project-kit:execute`、`/project-kit:verify`、`/project-kit:status`。
+安装后 Pi 自动加载共享的 `skills/` 与平台 adapter `.pi/extensions/project-kit.js`;技能可通过 `/skill:<name>` 调用,Project Kit 命令使用 `/project-kit:init`、`/project-kit:brief`、`/project-kit:change`、`/project-kit:plan`、`/project-kit:execute`、`/project-kit:verify`、`/project-kit:status`。Pi commands 是指向对应 skill 的薄路由,不读取其他平台的 command 模板。
 
 更新或卸载:
 

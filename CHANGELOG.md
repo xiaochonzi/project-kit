@@ -2,7 +2,8 @@
 
 ## 0.3.2 - 2026-08-21
 
-- **Pi 完整支持**:新增 Pi Package manifest 与 `pi/project-kit.js` extension;通过 `pi install git:github.com/xiaochonzi/project-kit` 自动加载 11 个 skills、7 个 `/project-kit:*` 命令及会话引导,并从安装包目录安全调用 Project Kit CLI。
+- **平台 adapter 隔离**:OpenCode 实现归位 `.opencode/plugins/project-kit.js`,Pi 实现归位 `.pi/extensions/project-kit.js`;删除根 `plugin.js` 与旧 `pi/` 入口。两个平台分别维护 bootstrap、tool mapping 和薄 command 路由,仅共享 skills、确定性 CLI 与 assets。
+- **Pi 完整支持**:新增 Pi Package manifest;通过 `pi install git:github.com/xiaochonzi/project-kit` 自动加载 11 个 skills、7 个 `/project-kit:*` 命令及会话引导,并从安装包目录安全调用 Project Kit CLI。
 - **元数据校正**:各平台 manifest 与 package 描述统一为当前 11 个技能,移除已删除的 `refine`。
 
 ## 0.3.1 - 2026-08-21

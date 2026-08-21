@@ -22,6 +22,8 @@ pi install git:github.com/xiaochonzi/project-kit
 
 安装后自动加载 11 个 skills,并提供 `/project-kit:init`、`/project-kit:status` 等命令。Pi extension 会从安装包目录调用 Project Kit CLI,不依赖当前项目存在 `scripts/project-docs.cjs`。
 
+OpenCode 与 Pi 分别由 `.opencode/plugins/project-kit.js`、`.pi/extensions/project-kit.js` 适配。两端都支持 command 主动触发和 skill 自动触发;平台 adapter 只维护加载、bootstrap、命令路由与工具映射,共享内容仅为 `skills/`、`scripts/project-docs.cjs` 与 assets。
+
 ### Claude Code(推荐)
 
 ```bash
