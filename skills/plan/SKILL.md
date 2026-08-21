@@ -25,7 +25,7 @@ NO PLAN WITHOUT AN APPROVED SPEC
 
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读取 `docs/constitution.md`(开发约束)、`docs/blueprint.md`(模块边界,如有)、`docs/STATE.md`(当前焦点)
+- [ ] 已读取 `docs/constitution.md`(开发约束)、`docs/blueprint.md`(模块边界,如有)、`.project-kit/state.md`(本地人员当前焦点)
 
 ## Process
 

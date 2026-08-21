@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 - 2026-08-21
+
+- **状态本地化(架构变更)**:删除全局 `docs/STATE.md`,新增 gitignored 的本地私有目录 `.project-kit/state.md`,每位成员各自维护个人焦点(active_change)、个人下一步(next_action)与最近一条完成记录(last_completed)。团队共享部分(blueprint / roadmap / changes)不变,需求仍是团队性产物。`status` / `next` 语义从"团队在做什么"变为"我在做什么"。init 时自动创建 `.project-kit/state.md` 并在仓库根 `.gitignore` 追加 `.project-kit/`。
+
 ## 0.3.2 - 2026-08-21
 
 - **平台 adapter 隔离**:OpenCode 实现归位 `.opencode/plugins/project-kit.js`,Pi 实现归位 `.pi/extensions/project-kit.js`;删除根 `plugin.js` 与旧 `pi/` 入口。两个平台分别维护 bootstrap、tool mapping 和薄 command 路由,仅共享 skills、确定性 CLI 与 assets。

@@ -17,7 +17,7 @@ description: Use when receiving any new requirement, scope change, or enhancemen
 NO DOCUMENTS FOR QUICK — FULL NEEDS THE THREE ARTIFACTS
 ```
 
-**Violating the letter of this rule is violating the spirit of change management.** Quick 路径禁止创建文档(记录 = git commit + STATE 一行);Full 路径禁止跳件(spec/plan 不可省)。
+**Violating the letter of this rule is violating the spirit of change management.** Quick 路径禁止创建文档(记录 = git commit + 本地 state 一行);Full 路径禁止跳件(spec/plan 不可省)。
 
 ## 路径判定(先判断再处理)
 
@@ -45,11 +45,11 @@ NO DOCUMENTS FOR QUICK — FULL NEEDS THE THREE ARTIFACTS
   → 澄清:改什么 / 为什么 / 影响哪些文件 / 怎么验证
   → 用户同轮确认
   → 直接实现 + 测试 + commit
-  → STATE.md 记一行(最近完成)
+  → 本地 state 记一行(最近完成)
 ```
 
 - **禁止**:创建任何文档文件、更新 roadmap 任务状态(那是 verify 的职责)。
-- **记录** = git commit + `docs/STATE.md` 一行(如"Quick: 修改 XX 字段,测试通过")。
+- **记录** = git commit + `.project-kit/state.md` 一行(如"Quick: 修改 XX 字段,测试通过")。
 - **验证**:测试命令真实运行,结果在对话中报告。
 
 ## Full 流程
@@ -127,7 +127,7 @@ Spec approved 后 → `plan` 技能(为 CR-### 编写实现计划)。
 
 ## Handoff Rule
 
-Full:Spec approved 后 → `plan`。Quick:直接完成,更新 STATE。判断为 Bug → `bug`。
+Full:Spec approved 后 → `plan`。Quick:直接完成,更新本地 state。判断为 Bug → `bug`。
 
 ## Common Rationalizations
 
@@ -135,5 +135,5 @@ Full:Spec approved 后 → `plan`。Quick:直接完成,更新 STATE。判断为 
 | --- | --- |
 | "需求小,直接塞当前 Plan" | 破坏当前迭代范围和验收边界 |
 | "改一下旧 Spec 就好" | 已验证契约不能静默扩写 |
-| "小改动也要记录文档" | Quick 零文档是设计,记录在 git + STATE |
+| "小改动也要记录文档" | Quick 零文档是设计,记录在 git + 本地 state |
 | "顺手把状态文档也建了吧" | Full 之外不建文档,避免文档数量回涨 |

@@ -4,7 +4,7 @@ Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,�
 
 ## 设计原则
 
-- **两档路径**:小改动(Quick)不产生任何文档,直接实现 + git + STATE 一行;复杂改动(Full)才创建 proposal/spec/plan 三件套
+- **两档路径**:小改动(Quick)不产生任何文档,直接实现 + git + 本地 state 一行;复杂改动(Full)才创建 proposal/spec/plan 三件套
 - **技能自包含**:每个技能写全可独立执行的流程(前置条件、步骤、校验清单、停止条件),触发即用,不依赖共享文档
 - **围绕 docs 约定**:所有技能围绕统一的项目文档结构工作(`init` 技能创建,脚本校验)
 - **渐进式**:每个技能只负责生命周期中的一环,通过 Handoff Rule 交接下一技能
@@ -61,13 +61,15 @@ claude plugin install github:xiaochonzi/project-kit
 ├── constitution.md      # 稳定开发准则
 ├── blueprint.md         # 系统边界与能力地图
 ├── roadmap.md           # 阶段规划 + 任务表格(状态列)
-├── STATE.md             # 当前焦点与下一动作(AI 接力入口)
 ├── briefs/              # BRIEF-###(原始讨论存档)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更三件套)
 └── research/
+
+<项目根>/.project-kit/    # 本地私有(gitignored,不提交)
+└── state.md             # 当前本地人员的焦点与下一动作(个人接力入口)
 ```
 
-**Quick 变更不落盘**——记录 = git commit + STATE 一行。只有 Full 变更在 `changes/` 下创建目录。
+**Quick 变更不落盘**——记录 = git commit + 本地 state 一行。只有 Full 变更在 `changes/` 下创建目录。团队共享进度看 `docs/changes/`,个人当前焦点看 `.project-kit/state.md`(每位成员各自维护,互不干扰)。
 
 ## 两档路径
 
@@ -76,8 +78,8 @@ claude plugin install github:xiaochonzi/project-kit
 | **Quick** | 不触碰既有契约文档(blueprint/spec)、API、数据模型、权限;改动小;边界清晰 | **零文档** |
 | **Full** | 多模块 / 架构 / 数据模型变化 / 多迭代 / 跨边界 / 高风险 | proposal + spec + plan 三件套 |
 
-- **Quick 流程**:澄清 → 用户同轮确认 → 直接实现 + 测试 + commit → STATE 记一行
-- **Full 流程**:proposal(为什么+边界)→ 用户确认 → spec(契约+验收标准)→ plan(步骤)→ 执行勾选 → 独立验收 → 更新 STATE
+- **Quick 流程**:澄清 → 用户同轮确认 → 直接实现 + 测试 + commit → 本地 state 记一行
+- **Full 流程**:proposal(为什么+边界)→ 用户确认 → spec(契约+验收标准)→ plan(步骤)→ 执行勾选 → 独立验收 → 更新本地 state
 
 ## 常用命令
 
@@ -103,14 +105,14 @@ node scripts/project-docs.cjs next --root <project>
   → change 判定:Quick(不触碰契约/API/数据模型)
   → 澄清 + 用户确认
   → 直接修改 + 测试 + commit
-  → STATE.md 记一行
+  → 本地 state 记一行
 ```
 
 ### Full 路径(有验收标准的需求)
 
 | 步骤 | 你要做什么 | 用什么 | 产出 |
 |---|---|---|---|
-| 1 | 新项目引入 Project Kit | `/project-kit/init` | `docs/` 骨架(4 根文档 + 3 目录) |
+| 1 | 新项目引入 Project Kit | `/project-kit/init` | `docs/` 骨架(3 根文档 + 3 目录)+ `.project-kit/state.md` |
 | 2 | 制定开发准则 | `constitution` | `docs/constitution.md` |
 | 3 | 把模糊想法固化为存档 | `brief` | `docs/briefs/BRIEF-001.md` |
 | 4 | 设计系统架构 | `blueprint` | `docs/blueprint.md` |
@@ -120,7 +122,7 @@ node scripts/project-docs.cjs next --root <project>
 | 8 | 填写契约与验收标准 | `change` | `spec.md`(做什么) |
 | 9 | 制定实现计划 | `/project-kit/plan CR-001` | `plan.md`(怎么做,逐步验证) |
 | 10 | 按计划实施 | `execute-plan` | 代码 + 测试 + plan 勾选 |
-| 11 | 独立验收 | `verify-plan` | 重跑验收标准,写回 plan + STATE |
+| 11 | 独立验收 | `verify-plan` | 重跑验收标准,写回 plan + 本地 state |
 | 随时 | 查看状态 | `/project-kit/status` | — |
 
 ### 迭代与缺陷
@@ -131,7 +133,7 @@ node scripts/project-docs.cjs next --root <project>
   根因复杂 → 转 change 走 Full。
 ```
 
-新 AI 会话或换人接手时,先运行 `/project-kit/status` 再读 `docs/STATE.md`,即可从明确的下一动作继续,不需要翻聊天记录。
+新 AI 会话或换人接手时,先运行 `/project-kit/status` 再读 `.project-kit/state.md`(个人视角)与 `docs/changes/`(团队进度),即可从明确的下一动作继续,不需要翻聊天记录。
 
 ## 不支持的能力
 

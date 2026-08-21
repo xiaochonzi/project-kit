@@ -1,20 +1,16 @@
 ---
-updated_at: {{DATE}}
 active_change: null
-mode: init
 next_action: null
+last_completed: null
+updated_at: {{DATE}}
 ---
 
-# Project State
+# 私人 State
 
 ## Current Focus
 
-## Recent Verified Results
-
-## Decisions
-
-## Blockers
-
 ## Next Action
+
+## Last Completed
 
 ## Resume Context

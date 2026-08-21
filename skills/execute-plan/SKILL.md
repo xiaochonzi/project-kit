@@ -9,7 +9,7 @@ description: Use when a Full change's Plan is approved and needs execution — i
 
 严格按已批准计划实施,勾选 `plan.md` 任务并把验证结果写回。**"代码写完了"不等于"任务完成"**——每个任务必须有可验证的证据(命令+输出)。
 
-**不产出独立执行文档**——执行事实记录在 plan.md 的勾选与「最终验证」区,结论同步到 STATE.md。
+**不产出独立执行文档**——执行事实记录在 plan.md 的勾选与「最终验证」区,结论同步到 `.project-kit/state.md`。
 
 **开始前宣布:** "我正在使用 execute-plan 技能执行此计划。"
 
@@ -39,7 +39,7 @@ NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读 `docs/STATE.md`(当前焦点)、`docs/constitution.md`(编码门禁)
+- [ ] 已读 `.project-kit/state.md`(本地人员当前焦点)、`docs/constitution.md`(编码门禁)
 - [ ] 目标仓库可构建、测试命令可运行
 
 ## TDD Iron Law(每任务严格执行)
@@ -118,9 +118,9 @@ node scripts/project-docs.cjs transition CR-### --to completed --kind plan --roo
 
 **本技能不标记 spec verified**——独立验收是 verify-plan 的职责。
 
-### Step 7: 更新 STATE.md
+### Step 7: 更新本地 state
 
-在 `docs/STATE.md` 中记录:完成内容、验证结果、计划偏差、下一动作:`verify-plan CR-###`。更新 frontmatter 的 `active_change` / `next_action`。
+在 `.project-kit/state.md` 中记录:完成内容、验证结果、计划偏差、下一动作:`verify-plan CR-###`。更新 frontmatter 的 `active_change` / `next_action` / `last_completed`。
 
 ## Stop Conditions(出现任一立即停止并报告)
 

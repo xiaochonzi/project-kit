@@ -106,7 +106,8 @@ node scripts/project-docs.cjs init --root <项目根>
 
 #### 核对清单
 
-- [ ] 4 个根文档:`constitution.md`、`blueprint.md`、`roadmap.md`、`STATE.md`
+- [ ] 3 个根文档:`constitution.md`、`blueprint.md`、`roadmap.md`
+- [ ] 本地私有目录 `.project-kit/state.md` 已创建,仓库根 `.gitignore` 含 `.project-kit/`
 - [ ] 3 个受管子目录:`briefs/` `changes/` `research/`
 - [ ] 无模板变量残留:`grep -r "{{" docs/` 期望空输出
 - [ ] 根文档 frontmatter 无占位符(如 `{{DATE}}` 替换为实际日期)
@@ -127,8 +128,9 @@ node scripts/project-docs.cjs validate --root <项目根>
 
 ```
 已初始化: <项目根>/docs/
-- 根文档(4): constitution / blueprint / roadmap / STATE
+- 根文档(3): constitution / blueprint / roadmap
 - 子目录(3): briefs / changes / research
+- 本地私有: .project-kit/state.md(个人状态,gitignored 不提交)
 - validate: 0 错误
 下一步: constitution(制定准则) 或 brief(接收需求)
 ```
@@ -161,14 +163,16 @@ init 产出的结构,也是后续 10 个技能的读写契约:
 ├── constitution.md      # 稳定准则 → plan/execute/verify 的约束来源
 ├── blueprint.md         # 系统边界 → brief/change 读写
 ├── roadmap.md           # 阶段分组 + 焦点 → status 读写
-├── STATE.md             # 当前焦点 → AI 接力的首要入口
 ├── briefs/              # BRIEF-###-<slug>.md(原始讨论存档)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更三件套)
 ├── research/            # 自由研究材料
 └── (capabilities/ 保留兼容,不预建)
+
+<项目根>/.project-kit/   # 本地私有(不入库):当前本地人员状态
+└── state.md             # 当前焦点(active_change)→ 个人接力的首要入口
 ```
 
-**Quick 变更不落盘**——记录 = git commit + STATE 一行。只有 Full 变更才在 `changes/` 下创建目录。
+**Quick 变更不落盘**——记录 = git commit + 本地 state 一行。只有 Full 变更才在 `changes/` 下创建目录。
 
 ## Exception Handling
 

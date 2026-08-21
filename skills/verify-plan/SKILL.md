@@ -1,6 +1,6 @@
 ---
 name: verify-plan
-description: Use when a Full change is implemented and needs independent acceptance — checking the actual implementation against the approved Spec with fresh evidence, writing results back into plan.md and STATE.md. If the change is still in progress, use execute-plan.
+description: Use when a Full change is implemented and needs independent acceptance — checking the actual implementation against the approved Spec with fresh evidence, writing results back into plan.md and local state. If the change is still in progress, use execute-plan.
 ---
 
 # Verify Plan
@@ -11,7 +11,7 @@ description: Use when a Full change is implemented and needs independent accepta
 
 **"执行者说完成了"不是证据。** 本技能独立于 execute-plan,不信任实现者的自述。
 
-**不产出独立验收文档**——验收证据写回 `plan.md` 的「最终验证」区,结论同步 STATE.md,并把 roadmap 中对应任务状态更新为 `已完成`。
+**不产出独立验收文档**——验收证据写回 `plan.md` 的「最终验证」区,结论同步 `.project-kit/state.md`,并把 roadmap 中对应任务状态更新为 `已完成`。
 
 **开始前宣布:** "我正在使用 verify-plan 技能进行独立验收。"
 
@@ -92,13 +92,13 @@ node scripts/project-docs.cjs transition CR-### --to completed --root <项目根
 
 脚本要求:spec verified 前 `spec_hash` 与 Spec 内容一致(防静默修改契约)、Plan 必须 completed;change completed 前 Spec verified 且 Plan completed。
 
-把 `docs/roadmap.md` 中该 change 对应任务的状态更新为 `已完成`,更新 `docs/STATE.md`(完成记录、下一动作)。
+把 `docs/roadmap.md` 中该 change 对应任务的状态更新为 `已完成`,更新 `.project-kit/state.md`(完成记录、下一动作、最近完成)。
 
 **任一必需标准 fail**:不标记完成。给出最小下一动作(回 execute-plan 修复 / 转 bug)。
 
 **任一 blocked**:记录阻塞原因,不标记完成。
 
-### Step 6: 更新 STATE.md
+### Step 6: 更新本地 state
 
 记录验收结论、下一动作、任何残留风险。更新 frontmatter 的 `active_change` / `next_action`。
 
@@ -118,7 +118,7 @@ node scripts/project-docs.cjs transition CR-### --to completed --root <项目根
 | 场景 | 处理 |
 |---|---|
 | **Plan 未 completed** | 路由到 execute-plan |
-| **全部 pass** | spec verified → change completed;roadmap 任务状态置为已完成,更新 STATE |
+| **全部 pass** | spec verified → change completed;roadmap 任务状态置为已完成,更新本地 state |
 | **任一必需标准 fail** | 记录,回 execute-plan 修复或转 bug |
 | **Spec 本身错误** | 停止,重新评审需求,不通过修改验收标准掩盖 |
 | **验收中发现新期望行为** | 创建新 Change(走 change 技能),不混入当前验收 |

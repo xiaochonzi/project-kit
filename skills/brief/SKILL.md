@@ -46,7 +46,7 @@ NO IMPLEMENTATION PLANS FROM UNVERIFIED REQUIREMENTS
 
 先了解现状,再提问:
 
-- 读取 `docs/STATE.md`,了解当前焦点
+- 读取 `.project-kit/state.md`,了解当前本地人员焦点;团队进度看 `docs/changes/`
 - 检查是否已有 `docs/blueprint.md`、`docs/roadmap.md`
 
 ### 2. 范围检查(先于细节提问)

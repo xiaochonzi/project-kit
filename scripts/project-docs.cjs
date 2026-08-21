@@ -33,8 +33,7 @@ const MANAGED_DIRECTORIES = [
 const INITIAL_FILES = {
   'constitution.md': 'constitution.md',
   'blueprint.md': 'blueprint.md',
-  'roadmap.md': 'roadmap.md',
-  'STATE.md': 'state.md'
+  'roadmap.md': 'roadmap.md'
 };
 const DOCUMENT_TYPES = {
   brief: { directory: 'briefs', prefix: 'BRIEF', template: 'brief.md' },
@@ -249,6 +248,21 @@ function initializeProject(root) {
     }
     writeNewFile(outputPath, renderTemplate(templateName, { DATE: currentDate() }));
     process.stdout.write(`创建: ${path.relative(root, outputPath)}\n`);
+  }
+  // 本地私有状态目录（gitignored，不提交）
+  const privateKitDir = path.join(root, '.project-kit');
+  fs.mkdirSync(privateKitDir, { recursive: true });
+  const privateStatePath = path.join(privateKitDir, 'state.md');
+  if (!fs.existsSync(privateStatePath)) {
+    writeNewFile(privateStatePath, renderTemplate('state.md', { DATE: currentDate() }));
+    process.stdout.write(`创建: ${path.relative(root, privateStatePath)}\n`);
+  }
+  // 仓库根 .gitignore 追加 .project-kit/
+  const gitignorePath = path.join(root, '.gitignore');
+  let gitignoreContent = fs.existsSync(gitignorePath) ? fs.readFileSync(gitignorePath, 'utf8') : '';
+  if (!gitignoreContent.split('\n').some((line) => line.trim() === '.project-kit/')) {
+    gitignoreContent = gitignoreContent.replace(/\s*$/, '\n') + '.project-kit/\n';
+    fs.writeFileSync(gitignorePath, gitignoreContent, 'utf8');
   }
 }
 
@@ -571,7 +585,7 @@ function contextForMode(root, mode, target, jsonOutput) {
   const add = (relativePath) => {
     if (fs.existsSync(path.join(docsRoot, relativePath))) paths.add(relativePath);
   };
-  for (const fileName of ['constitution.md', 'blueprint.md', 'roadmap.md', 'STATE.md']) add(fileName);
+  for (const fileName of ['constitution.md', 'blueprint.md', 'roadmap.md']) add(fileName);
 
   if (mode === 'brief') for (const document of documents.filter((item) => item.kind === 'brief')) paths.add(document.relativePath);
   if (mode === 'change' || mode === 'plan' || mode === 'execute-plan' || mode === 'verify-plan') {
@@ -594,7 +608,7 @@ function contextForMode(root, mode, target, jsonOutput) {
 
 function projectStatus(root, jsonOutput) {
   const documents = collectDocuments(root);
-  const statePath = path.join(root, 'docs', 'STATE.md');
+  const statePath = path.join(root, '.project-kit', 'state.md');
   let state = {};
   if (fs.existsSync(statePath)) state = parseFrontmatter(fs.readFileSync(statePath, 'utf8'));
   const changes = documents
@@ -608,6 +622,7 @@ function projectStatus(root, jsonOutput) {
   const result = {
     active_change: state.active_change ?? null,
     next_action: state.next_action ?? null,
+    last_completed: state.last_completed ?? null,
     changes
   };
   if (jsonOutput) {
@@ -617,6 +632,7 @@ function projectStatus(root, jsonOutput) {
   process.stdout.write('Project Kit Status\n');
   process.stdout.write(`当前焦点: ${result.active_change ?? '无'}\n`);
   process.stdout.write(`下一动作: ${result.next_action ?? '无'}\n`);
+  process.stdout.write(`最近完成: ${result.last_completed ?? '无'}\n`);
   process.stdout.write(`\nChanges (${changes.length})\n`);
   for (const change of changes) {
     process.stdout.write(`  - ${change.id} [${change.status}] ${change.title}\n`);
@@ -745,7 +761,7 @@ function validatePlugin(root, jsonOutput) {
 
 function nextAction(root, jsonOutput) {
   const documents = collectDocuments(root);
-  const statePath = path.join(root, 'docs', 'STATE.md');
+  const statePath = path.join(root, '.project-kit', 'state.md');
   let nextActionField = null;
   if (fs.existsSync(statePath)) {
     const stateMetadata = parseFrontmatter(fs.readFileSync(statePath, 'utf8'));
@@ -755,7 +771,7 @@ function nextAction(root, jsonOutput) {
   }
   let result;
   if (nextActionField) {
-    result = { mode: 'next', target: nextActionField, reason: 'STATE.md 记录的下一动作' };
+    result = { mode: 'next', target: nextActionField, reason: '本地 state 记录的下一动作' };
   } else {
     const draftProposal = documents.find((item) => item.kind === 'proposal' && item.metadata.status === 'proposed');
     const acceptedProposal = documents.find((item) => item.kind === 'proposal' && item.metadata.status === 'accepted');
@@ -765,7 +781,7 @@ function nextAction(root, jsonOutput) {
     else if (specDraft) result = { mode: 'change', target: specDraft.metadata.change, reason: 'Spec 待填写契约与验收标准' };
     else if (acceptedProposal) result = { mode: 'change', target: acceptedProposal.metadata.id, reason: 'Change 已接受，待创建 Spec' };
     else if (planDraft) result = { mode: 'plan', target: planDraft.metadata.change, reason: 'Plan 待编写或批准' };
-    else result = { mode: 'status', target: null, reason: '没有机械可推导的待办，请检查 Roadmap 与 STATE' };
+    else result = { mode: 'status', target: null, reason: '没有机械可推导的待办，请检查 Roadmap 与本地 state' };
   }
   if (jsonOutput) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else process.stdout.write(`下一模式: ${result.mode}${result.target ? ` ${result.target}` : ''}\n原因: ${result.reason}\n`);

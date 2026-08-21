@@ -92,3 +92,32 @@ test('quick project without changes validates', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('init creates local .project-kit/state.md and ignores it', () => {
+  const tmp = makeTmpProject();
+  try {
+    assert.ok(fs.existsSync(path.join(tmp, '.project-kit', 'state.md')));
+    assert.ok(!fs.existsSync(path.join(tmp, 'docs', 'STATE.md')));
+    const gitignore = fs.readFileSync(path.join(tmp, '.gitignore'), 'utf8');
+    assert.match(gitignore, /\.project-kit\//);
+    const status = JSON.parse(run(['status', '--root', tmp, '--json']));
+    assert.equal(status.active_change, null);
+    assert.equal(status.next_action, null);
+    assert.equal(status.last_completed, null);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('status degrades gracefully without .project-kit/state.md', () => {
+  const tmp = makeTmpProject();
+  try {
+    fs.rmSync(path.join(tmp, '.project-kit'), { recursive: true, force: true });
+    const status = JSON.parse(run(['status', '--root', tmp, '--json']));
+    assert.equal(status.active_change, null);
+    assert.equal(status.next_action, null);
+    assert.equal(status.last_completed, null);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

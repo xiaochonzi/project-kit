@@ -11,17 +11,17 @@ description: Use when you have a confirmed Blueprint and need to plan the delive
 
 **Roadmap 回答**:分几个阶段?每个阶段做哪几个任务?各任务完成情况?
 
-**Roadmap 是静态规划文档**——保存阶段与任务清单。**动态状态(当前在做哪个阶段/任务、下一步做什么)不属于 roadmap,归 `docs/STATE.md` 的 `active_change` / `next_action`。**
+**Roadmap 是静态规划文档**——保存阶段与任务清单。**动态状态(当前在做哪个阶段/任务、下一步做什么)不属于 roadmap,归 `.project-kit/state.md` 的 `active_change` / `next_action`。**
 
 **开始前宣布:** "我正在使用 roadmap 技能和您一起规划交付路线。"
 
 ## The Iron Law
 
 ```
-ROADMAP PLANS — STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
+ROADMAP PLANS — LOCAL STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
 ```
 
-**Violating the letter of this rule is violating the spirit of delivery planning.** Roadmap 只保存阶段与任务的规划事实,不写"当前进行中"的动态状态——那是 STATE.md 的职责。不按技术层横向拆分。不做远期详细设计。
+**Violating the letter of this rule is violating the spirit of delivery planning.** Roadmap 只保存阶段与任务的规划事实,不写"当前进行中"的动态状态——那是 `.project-kit/state.md` 的职责。不按技术层横向拆分。不做远期详细设计。
 
 ## Required Inputs(不满足即停止)
 
@@ -61,7 +61,7 @@ ROADMAP PLANS — STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
 | `已完成` | change completed,验收通过 | verify 完成时 |
 
 - 任务 = 一个 change(Full 三件套或 Quick)。阶段规划时 change 可能尚未创建,状态 `规划中`,Change 列写 `—`;创建后补充 CR-###。
-- **表格状态是静态完成事实**;动态焦点(当前做哪个任务、下一步做什么)由 `STATE.md` 的 `active_change` / `next_action` 承担。
+- **表格状态是静态完成事实**;动态焦点(当前做哪个任务、下一步做什么)由 `.project-kit/state.md` 的 `active_change` / `next_action` 承担。
 - **没有 Active/Next/Later 分区**。
 
 ## 阶段设计原则
@@ -125,7 +125,7 @@ ROADMAP PLANS — STATE TRACKS — NO ACTIVE/NEXT IN ROADMAP
 
 ### Step 5: 创建当前阶段首个 change
 
-当前阶段准备开发时,通过 `change` 技能创建任务对应的 change,并把任务状态更新为 `进行中`。任务完成时(change completed)由 verify 技能把状态更新为 `已完成`,并在 `STATE.md` 更新 `active_change` / `next_action`。
+当前阶段准备开发时,通过 `change` 技能创建任务对应的 change,并把任务状态更新为 `进行中`。任务完成时(change completed)由 verify 技能把状态更新为 `已完成`,并在 `.project-kit/state.md` 更新 `active_change` / `next_action` / `last_completed`。
 
 ### Step 6: 校验
 
@@ -136,7 +136,7 @@ node scripts/project-docs.cjs validate --root <项目根>
 - [ ] `validate` 无 error
 - [ ] 所有阶段有明确任务清单(可含规划占位)
 - [ ] 未按技术层横向拆分
-- [ ] 无 Active/Next/Later 分区(动态状态在 STATE)
+- [ ] 无 Active/Next/Later 分区(动态状态在 `.project-kit/state.md`)
 - [ ] 后续阶段保持粗粒度
 
 ## 场景路由
@@ -146,7 +146,7 @@ node scripts/project-docs.cjs validate --root <项目根>
 | **无 Blueprint 或为空骨架** | 路由到 blueprint |
 | **首次排 Roadmap** | 正常流程 |
 | **调整优先级/新增阶段** | 读当前 Roadmap→确认变更→更新→修订记录 |
-| **任务完成** | 由 verify 技能更新状态为 `已完成`,更新 STATE |
+| **任务完成** | 由 verify 技能更新状态为 `已完成`,更新 `.project-kit/state.md` |
 
 ## 脚本/AI 分工
 
@@ -166,5 +166,5 @@ Roadmap 确认后 → `change`(创建当前阶段首个任务)。本技能不写
 |---|---|
 | "先 M1 建表,M2 写后端,M3 写 UI" | 横向拆分=很长时间无可验收成果,按用户价值纵向切 |
 | "把每个任务的实现细节也写了吧" | Roadmap 只保存阶段与任务一行,细节由 change 三件套承接 |
-| "加个 Active 分区标当前进度" | 动态状态属于 STATE.md,roadmap 只存规划事实 |
+| "加个 Active 分区标当前进度" | 动态状态属于 `.project-kit/state.md`,roadmap 只存规划事实 |
 | "远期也细化掉效率高" | 过早细化=大量失效文档=返工成本 |

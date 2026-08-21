@@ -37,11 +37,11 @@ MINIMAL FIX — NO SCOPE CREEP, NO SILENT SPEC CHANGES
   → 最小修复
   → 回归验证:重跑相关测试 + 复现路径确认
   → commit
-  → STATE.md 记一行
+  → 本地 state 记一行
 ```
 
 - **禁止**:创建缺陷文档文件、扩大修复范围、顺手重构。
-- **记录** = git commit + `docs/STATE.md` 一行(如"Bug: 修复 XX,回归通过")。
+- **记录** = git commit + `.project-kit/state.md` 一行(如"Bug: 修复 XX,回归通过")。
 
 ## 转 Full 的信号(根因复杂或需架构决定)
 
@@ -52,7 +52,7 @@ MINIMAL FIX — NO SCOPE CREEP, NO SILENT SPEC CHANGES
 - 修复触及数据/权限/安全边界,影响面不可控
 - 连续 3 次修复尝试无改善(怀疑对根因的理解错误)
 
-转 change 时在 proposal 的「背景与问题」中记录:现象、复现方式、已尝试的修复与失败原因。
+转 change 时在 proposal 的「背景与问题」中记录:现象、复现方式、已尝试的修复与失败原因(proposal 位于 `docs/changes/CR-###-<slug>/`)。
 
 ## 回归验证要求
 

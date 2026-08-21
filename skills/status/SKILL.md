@@ -19,15 +19,17 @@ description: Use when asking what the project state is — current change focus,
 node scripts/project-docs.cjs status --root <项目根>
 ```
 
-输出:`当前焦点`(STATE frontmatter 的 `active_change`)、`下一动作`(STATE frontmatter 的 `next_action`)、全部 changes 及其状态。
+输出:`当前焦点`(本地 `.project-kit/state.md` 的 `active_change`)、`下一动作`(`next_action`)、`最近完成`(`last_completed`)、全部 changes 及其状态。
+
+> status 是**个人视角**:当前焦点/下一动作来自本地 `.project-kit/state.md`(gitignored,不共享);团队进度看 changes 列表(共享 `docs/changes/`)。
 
 ### Step 2: 读取接力文档
 
 ```bash
-cat docs/STATE.md
+cat .project-kit/state.md
 ```
 
-`STATE.md` 是 AI 接力的首要入口:当前焦点、最近完成、决策、阻塞项、下一动作、恢复上下文。
+`.project-kit/state.md` 是本地人员接力的首要入口:当前焦点(active_change)、个人下一步、最近完成、恢复上下文。团队共享的进度看 `docs/changes/` 下各 change 三件套。
 
 ### Step 3: 按需深入
 
@@ -49,7 +51,7 @@ cat docs/STATE.md
 
 | 禁止的行为 | 为什么 |
 |---|---|
-| 读全部历史文档再开始 | 只读 STATE + 当前 change 目录,噪声最小化 |
+| 读全部历史文档再开始 | 只读本地 state + 当前 change 目录,噪声最小化 |
 | 不跑 status 直接猜焦点 | 状态以脚本输出为准,不靠记忆 |
 | 修改任何文档 | 本技能只读;修改走对应技能 |
 
