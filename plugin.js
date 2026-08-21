@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillsDir = path.join(__dirname, 'skills');
 const commandsDir = path.join(__dirname, 'commands', 'project-kit');
+const cliPath = path.join(__dirname, 'scripts', 'project-docs.cjs');
+const quotedCliPath = `'${cliPath.replaceAll("'", "'\"'\"'")}'`;
 const globalCommandsDir = path.join(
   process.env.HOME || process.env.USERPROFILE,
   '.config', 'opencode', 'commands', 'project-kit'
@@ -28,23 +30,21 @@ const getBootstrapContent = () => {
   if (!fs.existsSync(readme)) { _bootstrapCache = null; return null; }
 
   const content = fs.readFileSync(readme, 'utf8');
-  const cliPath = path.join(__dirname, 'scripts', 'project-docs.cjs');
-
-  _bootstrapCache = `<EXTREMELY_IMPORTANT>
+  _bootstrapCache = `<PROJECT_KIT_BOOTSTRAP>
 You have Project Kit installed. It provides 12 lifecycle skills (init, constitution, brief, blueprint, roadmap, refine, plan, execute-plan, verify-plan, change, bug, status) that work around a unified docs/ directory convention.
 
 When the user asks to initialize project docs, break down requirements, create a system blueprint, plan features, execute plans with TDD, verify work with fresh evidence, or check project status — use the corresponding skill.
 
 ${content.slice(0, 2000)}
 
-**Project Kit CLI:** the skills and slash commands reference the CLI as \`node scripts/project-docs.cjs\`. This is a relative path; when executing it, replace \`scripts/project-docs.cjs\` with the absolute path \`${cliPath}\` (for example \`node ${cliPath} status --root <dir>\`). Do not run \`node scripts/project-docs.cjs\` from the current working directory unless you are inside the project-kit repository.
+**Project Kit CLI:** the skills and slash commands reference the CLI as \`node scripts/project-docs.cjs\`. This is a relative path; when executing it, replace \`scripts/project-docs.cjs\` with the installed CLI command \`node ${quotedCliPath}\`. Do not run \`node scripts/project-docs.cjs\` from the current working directory unless you are inside the project-kit repository.
 
 **Tool Mapping for OpenCode:**
 - Read files → \`read\`
 - Create/edit files → \`apply_patch\`
 - Run shell commands → \`bash\`
 - Search files → \`grep\`, \`glob\`
-</EXTREMELY_IMPORTANT>`;
+</PROJECT_KIT_BOOTSTRAP>`;
 
   return _bootstrapCache;
 };
@@ -56,7 +56,9 @@ const syncCommands = async () => {
     for (const entry of fs.readdirSync(commandsDir)) {
       if (!entry.endsWith('.md')) continue;
       const src = fs.readFileSync(path.join(commandsDir, entry), 'utf8');
-      const stripped = src.replace(/(\n|^)argument-hint: *[^\n]*/g, '');
+      const stripped = src
+        .replace(/(\n|^)argument-hint: *[^\n]*/g, '')
+        .replaceAll('node scripts/project-docs.cjs', `node ${quotedCliPath}`);
       const target = path.join(globalCommandsDir, entry);
       if (fs.existsSync(target) && fs.readFileSync(target, 'utf8') === stripped) continue;
       fs.writeFileSync(target, stripped);
@@ -83,7 +85,7 @@ export const ProjectKitPlugin = async (_opts) => {
       if (!bootstrap || !output.messages.length) return;
       const firstUser = output.messages.find(m => m.info.role === 'user');
       if (!firstUser || !firstUser.parts.length) return;
-      if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('EXTREMELY_IMPORTANT'))) return;
+      if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('<PROJECT_KIT_BOOTSTRAP>'))) return;
 
       const ref = firstUser.parts[0];
       firstUser.parts.unshift({ ...ref, type: 'text', text: bootstrap });

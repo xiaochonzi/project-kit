@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **OpenCode CLI 路径修复**:同步 slash command 时将 `scripts/project-docs.cjs` 替换为插件安装目录中的绝对路径;Project Kit bootstrap 使用独有标识去重,避免与 Superpowers 的 `EXTREMELY_IMPORTANT` 提示冲突。
+
 ## 0.3.1 - 2026-08-17
 
 - **OpenCode npm 插件化**:新增根 `package.json`(type: module, main: plugin.js)与根 `plugin.js`,使仓库可直接作为 npm/git 依赖被 opencode 安装(`project-kit@git+...`);`.opencode/plugins/project-kit.js` 改为 re-export 根插件,消除重复逻辑;`.opencode/INSTALL.md` 更新安装说明。
