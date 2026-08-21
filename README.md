@@ -12,7 +12,15 @@ Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,�
 
 ## 安装
 
-插件由 `plugin.json`、`skills/`、`assets/templates/` 与 `scripts/project-docs.cjs` 组成。支持 Claude Code / Codex / Cursor / OpenCode,完整安装说明见 [INSTALL.md](INSTALL.md)。
+插件由 `plugin.json`、`skills/`、`assets/templates/` 与 `scripts/project-docs.cjs` 组成。支持 Claude Code / Codex / Cursor / OpenCode / Pi,完整安装说明见 [INSTALL.md](INSTALL.md)。
+
+### Pi
+
+```bash
+pi install git:github.com/xiaochonzi/project-kit
+```
+
+安装后自动加载 11 个 skills,并提供 `/project-kit:init`、`/project-kit:status` 等命令。Pi extension 会从安装包目录调用 Project Kit CLI,不依赖当前项目存在 `scripts/project-docs.cjs`。
 
 ### Claude Code(推荐)
 

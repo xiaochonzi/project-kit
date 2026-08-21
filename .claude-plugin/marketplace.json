@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "project-kit",
-      "description": "12 个生命周期技能,围绕统一 docs/ 目录约定,自包含可独立触发。含 init/constitution/brief/blueprint/roadmap/refine/plan/execute-plan/verify-plan/change/bug/status。",
-      "version": "0.3.1",
+      "description": "11 个生命周期技能,围绕统一 docs/ 目录约定,自包含可独立触发。含 init/constitution/brief/blueprint/roadmap/plan/execute-plan/verify-plan/change/bug/status。",
+      "version": "0.3.2",
       "source": "./"
     }
   ]

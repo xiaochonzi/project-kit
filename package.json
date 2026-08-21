@@ -1,13 +1,14 @@
 {
   "name": "project-kit",
-  "version": "0.3.1",
-  "description": "Project Kit: 12 个自包含生命周期技能——从初始化、需求拆解、蓝图规划、路线图、功能细化、实现计划、TDD 执行、独立验收,到变更与缺陷处理,围绕统一 docs/ 目录约定。",
+  "version": "0.3.2",
+  "description": "Project Kit: 11 个自包含生命周期技能——从初始化、需求拆解、蓝图规划、路线图、实现计划、TDD 执行、独立验收,到变更与缺陷处理,围绕统一 docs/ 目录约定。",
   "type": "module",
   "main": "plugin.js",
   "files": [
     "plugin.js",
     "skills",
     "commands",
+    "pi",
     "scripts",
     "assets",
     "README.md"
@@ -15,9 +16,18 @@
   "license": "MIT",
   "keywords": [
     "workflow",
+    "pi-package",
     "skills",
     "lifecycle",
     "spec-driven",
     "project-management"
-  ]
+  ],
+  "pi": {
+    "extensions": [
+      "./pi/project-kit.js"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  }
 }

@@ -31,7 +31,7 @@ const getBootstrapContent = () => {
 
   const content = fs.readFileSync(readme, 'utf8');
   _bootstrapCache = `<PROJECT_KIT_BOOTSTRAP>
-You have Project Kit installed. It provides 12 lifecycle skills (init, constitution, brief, blueprint, roadmap, refine, plan, execute-plan, verify-plan, change, bug, status) that work around a unified docs/ directory convention.
+You have Project Kit installed. It provides 11 lifecycle skills (init, constitution, brief, blueprint, roadmap, plan, execute-plan, verify-plan, change, bug, status) that work around a unified docs/ directory convention.
 
 When the user asks to initialize project docs, break down requirements, create a system blueprint, plan features, execute plans with TDD, verify work with fresh evidence, or check project status — use the corresponding skill.
 

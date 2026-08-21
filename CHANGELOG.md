@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 - 2026-08-21
+
+- **Pi 完整支持**:新增 Pi Package manifest 与 `pi/project-kit.js` extension;通过 `pi install git:github.com/xiaochonzi/project-kit` 自动加载 11 个 skills、7 个 `/project-kit:*` 命令及会话引导,并从安装包目录安全调用 Project Kit CLI。
+- **元数据校正**:各平台 manifest 与 package 描述统一为当前 11 个技能,移除已删除的 `refine`。
+
 ## 0.3.1 - 2026-08-21
 
 - **OpenCode CLI 路径修复**:同步 slash command 时将 `scripts/project-docs.cjs` 替换为插件安装目录中的绝对路径;Project Kit bootstrap 使用独有标识去重,避免与 Superpowers 的 `EXTREMELY_IMPORTANT` 提示冲突。

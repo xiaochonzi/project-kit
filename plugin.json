@@ -1,14 +1,13 @@
 {
   "name": "project-kit",
-  "version": "0.3.1",
-  "description": "Project Kit: 12 个自包含生命周期技能——从初始化、需求拆解、蓝图规划、路线图、功能细化、实现计划、TDD 执行、独立验收,到变更与缺陷处理,围绕统一 docs/ 目录约定。",
+  "version": "0.3.2",
+  "description": "Project Kit: 11 个自包含生命周期技能——从初始化、需求拆解、蓝图规划、路线图、实现计划、TDD 执行、独立验收,到变更与缺陷处理,围绕统一 docs/ 目录约定。",
   "skills": [
     "./skills/init",
     "./skills/constitution",
     "./skills/brief",
     "./skills/blueprint",
     "./skills/roadmap",
-    "./skills/refine",
     "./skills/plan",
     "./skills/execute-plan",
     "./skills/verify-plan",
@@ -17,11 +16,12 @@
     "./skills/status"
   ],
   "commands": [
-    "./commands/project-kit/status.md",
     "./commands/project-kit/init.md",
     "./commands/project-kit/brief.md",
-    "./commands/project-kit/validate.md",
+    "./commands/project-kit/change.md",
     "./commands/project-kit/plan.md",
-    "./commands/project-kit/new.md"
+    "./commands/project-kit/execute.md",
+    "./commands/project-kit/verify.md",
+    "./commands/project-kit/status.md"
   ]
 }

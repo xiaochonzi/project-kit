@@ -70,6 +70,29 @@ Cursor 加载 `.cursor-plugin/plugin.json`,自动发现 `skills/` 与 `hooks/hoo
 
 详见 [`.opencode/INSTALL.md`](.opencode/INSTALL.md)。
 
+## Pi
+
+全局安装:
+
+```bash
+pi install git:github.com/xiaochonzi/project-kit
+```
+
+仅为当前项目安装:
+
+```bash
+pi install -l git:github.com/xiaochonzi/project-kit
+```
+
+安装后 Pi 自动加载 `skills/` 与 `pi/project-kit.js`;技能可通过 `/skill:<name>` 调用,Project Kit 命令使用 `/project-kit:init`、`/project-kit:brief`、`/project-kit:change`、`/project-kit:plan`、`/project-kit:execute`、`/project-kit:verify`、`/project-kit:status`。
+
+更新或卸载:
+
+```bash
+pi update git:github.com/xiaochonzi/project-kit
+pi remove git:github.com/xiaochonzi/project-kit
+```
+
 ## 验证安装
 
 安装后在任意项目中运行:
