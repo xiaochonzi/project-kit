@@ -34,3 +34,12 @@ test('verify-plan independently audits constitution compliance', () => {
   assert.match(skill, /transition 脚本只负责/);
   assert.match(skill, /不替 AI 判断代码规范/);
 });
+
+test('change routes from explicit user intent before risk inference', () => {
+  const skill = readSkill('change');
+  assert.match(skill, /用户明确.*路径意图/);
+  assert.match(skill, /直接修改.*Quick|Quick.*直接修改/s);
+  assert.match(skill, /用户明确要求.*Full|Full.*用户明确要求/s);
+  assert.match(skill, /意图.*没有明确.*澄清|澄清.*意图/s);
+  assert.match(skill, /Full.*proposal.*spec.*plan/s);
+});

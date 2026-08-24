@@ -11,13 +11,23 @@ description: Use when receiving any new requirement, scope change, or enhancemen
 
 **开始前宣布:** "我正在使用 change 技能处理变更请求。"
 
+## 用户意图优先
+
+先识别用户明确表达的路径意图,再使用风险和边界判断补充分流:
+
+- 用户明确要求直接修改、修复一个局部问题或不创建 Full 文档 → 进入 Quick,不触发 Full 门禁。
+- 用户明确要求 proposal/spec/plan 或完整生命周期 → 进入 Full。
+- 用户意图没有明确到足以决定路径 → 只询问 Quick/Full 澄清,不擅自升级。
+
+文件类型(包括 `.sql`)和 AI 的风险推断不能覆盖用户已经明确的路径意图;但目标项目的更高优先级规则仍需遵守。
+
 ## The Iron Law
 
 ```
-NO DOCUMENTS FOR QUICK — FULL NEEDS THE THREE ARTIFACTS
+FULL PATH ONLY: PROPOSAL → SPEC → PLAN → EXECUTE → VERIFY
 ```
 
-**Violating the letter of this rule is violating the spirit of change management.** Quick 路径禁止创建文档(记录 = git commit + 本地 state 一行);Full 路径禁止跳件(spec/plan 不可省)。
+**这条铁律只适用于已经分流为 Full 的需求。** Quick 路径不创建 proposal/spec/plan,直接实现、验证并记录本地 state。
 
 ## 路径判定(先判断再处理)
 
