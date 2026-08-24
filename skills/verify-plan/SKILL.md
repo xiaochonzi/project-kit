@@ -1,13 +1,13 @@
 ---
 name: verify-plan
-description: Use when a Full change is implemented and needs independent acceptance — checking the actual implementation against the approved Spec with fresh evidence, writing results back into plan.md and local state. If the change is still in progress, use execute-plan.
+description: Use when a Full change is implemented and needs independent acceptance against its Spec and project coding standards, with fresh evidence recorded in plan.md and local state. If the change is still in progress, use execute-plan.
 ---
 
 # Verify Plan
 
 ## Overview
 
-用**新鲜证据**独立核对 Spec 与实际实现——每条验收标准重新运行证据命令,不引用执行阶段的历史输出。只在全部验收标准满足时宣布完成。
+用**新鲜证据**独立核对 Spec、Plan 实施情况与 Constitution 代码规范——每条验收标准和规范检查重新运行证据命令,不引用执行阶段的历史输出。只在全部检查满足时宣布完成。
 
 **"执行者说完成了"不是证据。** 本技能独立于 execute-plan,不信任实现者的自述。
 
@@ -47,7 +47,8 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`(验收标准是核对清单)
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: completed`(任务全部勾选)
-- [ ] `docs/constitution.md`(对照约束检查)
+- [ ] `docs/constitution.md`(代码规范,在读取实现前完整阅读)
+- [ ] `plan.md` 的「Constitution 规范映射清单」表存在且已映射到任务
 - [ ] 若存在 `docs/changes/CR-###-<slug>/diagrams.md`，读取作为数据实现核对依据
 
 ## Process
@@ -58,9 +59,9 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项目根>
 ```
 
-读取该 change 三件套。
+读取该 change 三件套。**先完整读取 `docs/constitution.md`,再读取 Plan 的「Constitution 规范映射清单」表,然后才开始查看变更代码。**
 
-### Step 2: 逐条核对验收标准
+### Step 2: 逐条核对 Spec 与 Plan 实施情况
 
 对 Spec 的**每条**验收标准:
 
@@ -71,18 +72,30 @@ node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项�
 
 **如果 execute 阶段的测试已经通过,仍然重新运行**——验证的是"当前代码是否满足验收标准",不是"以前是否满足过"。
 
-### Step 3: 回归与边界检查
+### Step 3: 独立审查 Constitution 代码规范符合性
+
+对 Plan 的「Constitution 规范映射清单」中的**每条规则**:
+
+1. 对照 Constitution 原文确认规则含义,不自行扩大解释
+2. 检查 Plan 声明的变更文件、实际 `git diff` 和相关调用方
+3. 运行规则映射的 lint、format、type、test 或静态检查命令
+4. 对无法机械验证的规则执行针对性代码审查,记录文件和判断依据
+5. 判定:`pass` / `fail` / `blocked`
+
+规范审查不是“代码看起来不错”;必须有命令输出或明确的文件级审查证据。
+
+### Step 4: 回归与边界检查
 
 - 运行受影响模块的回归测试
 - 检查 Constitution 约束(编码门禁/测试要求)
 - 检查关键失败路径(空输入/损坏数据/权限边界)
 - 检查安全与数据边界
 
-### Step 4: 记录验收证据
+### Step 5: 记录验收证据
 
-把每条验收标准的命令+输出+结论追加到 `plan.md` 的「最终验证」区,并更新「验收标准映射」表的最终验证列。
+把 Spec/Plan 每条验收标准和 Constitution 每条规范的命令+输出/审查依据+结论追加到 `plan.md` 的「最终验证」区,并更新两个映射表的最终验证列。
 
-### Step 5: 判定与状态推进
+### Step 6: 判定与状态推进
 
 **全部 pass**:
 
@@ -91,15 +104,17 @@ node scripts/project-docs.cjs transition CR-### --to verified --kind spec --root
 node scripts/project-docs.cjs transition CR-### --to completed --root <项目根>
 ```
 
-脚本要求:spec verified 前 `spec_hash` 与 Spec 内容一致(防静默修改契约)、Plan 必须 completed;change completed 前 Spec verified 且 Plan completed。
+transition 脚本只负责核对 `spec_hash`、Spec 状态和 Plan 状态;它不替 AI 判断代码规范。**在调用 transition 前,本技能必须确认 Constitution 规范检查全部 `pass`**。change completed 前还必须满足 Spec verified 和 Plan completed。
 
 把 `docs/roadmap.md` 中该 change 对应任务的状态更新为 `已完成`,更新 `.project-kit/state.md`(完成记录、下一动作、最近完成)。
 
-**任一必需标准 fail**:不标记完成。给出最小下一动作(回 execute-plan 修复 / 转 bug)。
+**任一 Spec/Plan 标准或 Constitution 规范检查 `fail`**:不标记完成。给出最小下一动作(回 execute-plan 修复 / 转 bug)。
 
-**任一 blocked**:记录阻塞原因,不标记完成。
+**任一检查 `blocked`**:记录阻塞原因,不标记完成。
 
-### Step 6: 更新本地 state
+Constitution 规范检查出现 `fail` 或 `blocked` 时,不得推进 `spec verified` 或 `change completed`。
+
+### Step 7: 更新本地 state
 
 记录验收结论、下一动作、任何残留风险。更新 frontmatter 的 `active_change` / `next_action`。
 
@@ -128,9 +143,9 @@ node scripts/project-docs.cjs transition CR-### --to completed --root <项目根
 
 | 脚本 | AI |
 |---|---|
-| `context verify-plan` 输出上下文 | 逐条运行证据命令 |
+| `context verify-plan` 输出上下文 | 逐条运行 Spec/Plan 与 Constitution 证据命令 |
 | `transition` 状态迁移与 spec_hash 核对 | 判定 pass/fail/blocked |
-| — | 检查越界/回归/Constitution |
+| — | 检查越界/回归/Constitution 代码规范 |
 | — | **禁止**:引用旧输出、手修代码、"看起来正确" |
 
 ## Handoff Rule

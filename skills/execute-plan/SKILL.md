@@ -39,7 +39,7 @@ NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读 `.project-kit/state.md`(本地人员当前焦点)、`docs/constitution.md`(编码门禁)；若存在 `docs/changes/CR-###-<slug>/diagrams.md`，一并读取作为数据依据
+- [ ] 已读 `.project-kit/state.md`(本地人员当前焦点)、`docs/constitution.md`(编码门禁) 和 Plan 的「Constitution 规范映射清单」；若存在 `docs/changes/CR-###-<slug>/diagrams.md`，一并读取作为数据依据
 - [ ] 目标仓库可构建、测试命令可运行
 
 ## TDD Iron Law(每任务严格执行)
@@ -66,6 +66,17 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 ```
 
 确认上下文文件齐全,Plan 状态为 approved。
+
+### Step 1.1: 代码规范预检(写代码前)
+
+在读取目标实现文件和执行第一个 Task 前:
+
+1. 完整读取 `docs/constitution.md`
+2. 读取 Plan 的「Constitution 规范映射清单」表
+3. 为本次变更列出适用规则、影响文件和验证命令
+4. 确认每条规则已映射到 Task 和最终验证
+
+缺少 Constitution、规范映射表或验证命令时立即停止,回 `plan` 补齐;不得先写测试或实现。
 
 ### Step 2: 批判性检查 Plan(改代码前,最后一次机会)
 
@@ -106,6 +117,7 @@ git diff --stat    # 实际改动 vs Plan 声明的 files
 - [ ] 实际 diff 只覆盖 Plan 的 `files`
 - [ ] `validate` 无新增 error
 - [ ] Plan 的「最终验证」全部通过并记录在案
+- [ ] Constitution 约束与验证全部通过并记录在案
 - [ ] plan.md 无 `- [ ]` 残留
 
 ### Step 6: 状态收口

@@ -25,7 +25,7 @@ NO PLAN WITHOUT AN APPROVED SPEC
 
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读取 `docs/constitution.md`(开发约束)、`docs/blueprint.md`(模块边界,如有)、`.project-kit/state.md`(本地人员当前焦点)
+- [ ] **先完整读取** `docs/constitution.md`(开发约束)、`docs/blueprint.md`(模块边界,如有)、`.project-kit/state.md`(本地人员当前焦点),再探索代码和写 Plan
 
 ## Process
 
@@ -39,7 +39,18 @@ node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 
 ### Step 2: 探索代码现实
 
-找到 Spec 涉及的真实文件、接口、测试位置。确认可复用的现有模式。按 constitution 的约束执行影响分析;高风险影响先报告,不隐瞒。
+找到 Spec 涉及的真实文件、接口、测试位置。确认可复用的现有模式。按已读取的 Constitution 约束执行影响分析;高风险影响先报告,不隐瞒。
+
+### Step 2.1: 建立规范映射
+
+不复制整份 Constitution,只提取本 change 涉及的规则,形成「适用规范清单」:
+
+- 规则来源: `constitution.md` 的章节和原文要点
+- 影响范围:哪些任务/文件必须遵守
+- 验证方式:具体 lint、format、type、test、静态检查或人工代码审查
+- 任务映射:在哪个 Task 执行,由 `verify-plan` 在最终验收中复核
+
+如果无法从 Constitution 确定适用规则或验证方式,停止写 Plan,先澄清准则。
 
 ### Step 3: 选择实现方案
 
@@ -83,8 +94,13 @@ created_at: <日期>
 | Spec 验收标准 | 覆盖任务 | 最终验证 |
 | --- | --- | --- |
 
+## Constitution 规范映射清单
+| 规则来源 | 适用文件/任务 | 验证方式 | 最终验收 |
+| --- | --- | --- | --- |
+
 ## 最终验证
-- <整体验证命令,逐条列出>
+- Spec 验收标准: <整体验证命令,逐条列出>
+- Constitution 约束: <规范验证命令与代码审查清单>
 
 ## 非目标
 <计划明确不做的事>
