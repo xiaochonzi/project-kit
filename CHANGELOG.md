@@ -10,7 +10,7 @@
 
 ## 0.3.2 - 2026-08-21
 
-- **Change 路由修正**:先尊重用户明确的 Quick/Full 路径意图,再进行风险分流;Full 铁律只在已分流为 Full 时生效,避免用户明确要求直接修改局部文件时被错误升级为完整生命周期。
+- **Change 路由修正**:区分“使用 change 作为入口”和 Quick/Full 路径意图;Quick 必须全部条件满足,Full 任一高风险信号命中即成立,避免多模块需求被误判为 Quick。
 - **验收规范增强**: `plan` 在写计划前建立 Constitution 规范映射,`execute-plan` 在写代码前执行规范预检,`verify-plan` 独立核对代码是否符合 Constitution 并将规范检查纳入完成门禁。
 - **平台 adapter 隔离**:OpenCode 实现归位 `.opencode/plugins/project-kit.js`,Pi 实现归位 `.pi/extensions/project-kit.js`;删除根 `plugin.js` 与旧 `pi/` 入口。两个平台分别维护 bootstrap、tool mapping 和薄 command 路由,仅共享 skills、确定性 CLI 与 assets。
 - **Pi 完整支持**:新增 Pi Package manifest;通过 `pi install git:github.com/xiaochonzi/project-kit` 自动加载 11 个 skills、7 个 `/project-kit:*` 命令及会话引导,并从安装包目录安全调用 Project Kit CLI。

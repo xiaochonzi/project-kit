@@ -38,8 +38,10 @@ test('verify-plan independently audits constitution compliance', () => {
 test('change routes from explicit user intent before risk inference', () => {
   const skill = readSkill('change');
   assert.match(skill, /用户明确.*路径意图/);
-  assert.match(skill, /直接修改.*Quick|Quick.*直接修改/s);
-  assert.match(skill, /用户明确要求.*Full|Full.*用户明确要求/s);
-  assert.match(skill, /意图.*没有明确.*澄清|澄清.*意图/s);
+  assert.match(skill, /Quick.*全部满足|全部满足.*Quick/s);
+  assert.match(skill, /Full.*任一命中|任一命中.*Full/s);
+  assert.match(skill, /使用 change.*Full|Full.*使用 change/s);
+  assert.match(skill, /多个模块|多个独立结果/);
+  assert.match(skill, /意图.*不明确.*澄清|澄清.*意图/s);
   assert.match(skill, /Full.*proposal.*spec.*plan/s);
 });
