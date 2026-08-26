@@ -1,17 +1,15 @@
 ---
 name: plan
-description: Use when a Full change's Spec is approved and needs an implementation plan — writing the plan.md inside the change directory with exact files, steps, and verifications. If no approved Spec exists, use change first. If asked to execute, use execute-plan.
+description: Use when a Full change has an approved business Spec and its existing draft plan.md needs technical design and executable task decomposition. If the Spec is not approved, use spec; if the Plan is already approved, use execute-plan.
 ---
 
 # Plan
 
 ## Overview
 
-为已批准 Spec 的 Full 变更(CR-###)编写可逐步执行、逐步验证的实现计划,写入 change 目录内的 `plan.md`。
+把已批准业务 Spec 转化为当前代码库中的技术设计和可逐步执行计划，填写已存在的 `docs/changes/CR-###-<slug>/plan.md`。执行者被假定为对代码库零上下文，因此文件、接口、动作、验证和完成条件必须具体。
 
-**核心假设:执行者对这个代码库零上下文,对测试设计不太在行。** 计划必须写全:改哪些文件、按什么顺序、每步怎么验证、满足什么才算完成。每步是单一动作(2-5 分钟可完成)。
-
-**开始前宣布:** "我正在使用 plan 技能制定实现计划。"
+**开始前宣布：**“我正在使用 plan 技能制定实现计划。”
 
 ## The Iron Law
 
@@ -19,182 +17,137 @@ description: Use when a Full change's Spec is approved and needs an implementati
 NO PLAN WITHOUT AN APPROVED SPEC
 ```
 
-**Violating the letter of this rule is violating the spirit of planning discipline.** 没有 approved Spec→不制定计划。Spec 有歧义或矛盾→停止,回 change 修订。Plan 不得引入 Spec 没有的新能力,不得包含未授权的重构。
+Plan 可以选择技术方案，但不得新增、改变或删除 Spec 中的业务行为。Spec 有歧义、与代码现实冲突或缺少契约时，停止并返回 `spec`。
 
-## Required Inputs(不满足即停止)
+## Required Inputs
 
-- [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
-- [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] **先完整读取** `docs/constitution.md`(开发约束)、`docs/blueprint.md`(模块边界,如有)、`.project-kit/state.md`(本地人员当前焦点),再探索代码和写 Plan
+- [ ] `proposal.md` 存在且 `status: accepted`
+- [ ] `spec.md` 存在且 `status: approved`，`spec_hash` 有效
+- [ ] 同目录已有 `plan.md` 且 `status: draft`
+- [ ] 已完整读取 `docs/constitution.md` 或项目等效编码规则、`docs/blueprint.md`（如有）、`.project-kit/state.md`
+- [ ] 已读取可选 `diagrams.md`、相关代码和测试模式
+
+Plan 已 approved 时不重写，直接交接 `execute-plan`。
 
 ## Process
 
-### Step 1: 确认上下文
+### Step 1：加载上下文
 
 ```bash
 node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 ```
 
-读取该 change 目录的三件套与全局文档。**若存在 `diagrams.md`**（涉及数据模型的 change），一并读取，作为数据关系与前后端操作时机的依据。
+读取三件套、项目规则、Blueprint、state 和可选 diagrams。确认 Spec 的全部 `REQ-##`、`BR-##`、`AC-##`。
 
-### Step 2: 探索代码现实
+### Step 2：探索代码现实
 
-找到 Spec 涉及的真实文件、接口、测试位置。确认可复用的现有模式。按已读取的 Constitution 约束执行影响分析;高风险影响先报告,不隐瞒。
+找到真实文件、接口、调用关系和测试入口，确认现有模式与集成点。若 Spec 假设和代码冲突，报告具体冲突并停止，不通过改 Plan 偷换业务语义。
 
-### Step 2.1: 建立规范映射
+### Step 3：建立适用规范清单
 
-不复制整份 Constitution,只提取本 change 涉及的规则,形成「适用规范清单」:
+从 Constitution、AGENTS 或项目等效规则中只提取本 change 适用的规则：
 
-- 规则来源: `constitution.md` 的章节和原文要点
-- 影响范围:哪些任务/文件必须遵守
-- 验证方式:具体 lint、format、type、test、静态检查或人工代码审查
-- 任务映射:在哪个 Task 执行,由 `verify-plan` 在最终验收中复核
+- 规则来源和原文要点
+- 影响文件和任务
+- lint、format、type、test 或人工审查方式
+- 最终由 `verify-plan` 复核的证据
 
-如果无法从 Constitution 确定适用规则或验证方式,停止写 Plan,先澄清准则。
+无法确定适用规则或验证方式时停止，不先写任务。
 
-### Step 3: 选择实现方案
+### Step 4：设计技术实现
 
-选**最小满足 Spec** 的实现方式。列出不采用的方案及原因(一行)。明确数据流、接口变化。
+选择最小满足 Spec 的方案，并在已有 `plan.md` 填写：
 
-### Step 4: 写 Plan 文档
+- 实现策略及未采用方案的原因
+- 模块职责、接口签名和依赖方向
+- 数据流、状态落点、兼容与迁移方式
+- 需要创建、修改、测试的精确文件
+- Spec 契约到任务和最终验证的映射
 
-```bash
-node scripts/project-docs.cjs new plan --change <CR-###> --root <项目根>
-```
+技术设计不得把 Spec 未授权的重构、抽象或未来能力带入计划。
 
-生成 `docs/changes/CR-###-<slug>/plan.md`。必须包含以下章节(全部填写,禁止留空):
+### Step 5：拆解 Tasks
+
+每个任务是可独立验证、可独立审查的最小交付单元。任务必须包含：
 
 ```markdown
----
-change: CR-###
-title: <标题>
-status: draft
-created_at: <日期>
----
-
-# <标题> 实现计划
-
-## 实现策略
-<一句话策略 + 不采用的方案及原因>
-
-## Tasks
-
 ### Task N: <任务名>
 
-- files: <精确文件路径,逗号分隔>
-- read_first: <执行前必须读取的文件/符号>
-- action: <具体修改与关键逻辑,含代码片段>
-- verify: <该任务后立即运行的命令>
-- acceptance: <可观察的通过条件>
-- done: <何时可勾选完成>
+- files: <精确文件路径>
+- read_first: <执行前必须读取的文件或符号>
+- action: <具体目标状态、标识符、接口和关键逻辑>
+- verify: <任务后立即运行的真实命令>
+- acceptance: <可观察通过条件，并引用 REQ/BR/AC>
+- done: <何时可以勾选>
 
 - [ ] Task N
-
-## 验收标准映射
-| Spec 验收标准 | 覆盖任务 | 最终验证 |
-| --- | --- | --- |
-
-## Constitution 规范映射清单
-| 规则来源 | 适用文件/任务 | 验证方式 | 最终验收 |
-| --- | --- | --- | --- |
-
-## 最终验证
-- Spec 验收标准: <整体验证命令,逐条列出>
-- Constitution 约束: <规范验证命令与代码审查清单>
-
-## 非目标
-<计划明确不做的事>
 ```
 
-### 任务粒度标准
+TDD 工作按 RED → GREEN → CHECK 排序。不要把“写测试、实现、验证、提交”机械拆成没有独立审查价值的空任务；每个任务必须产生一个可验证交付物。
 
-**每个任务是一个 2-5 分钟可完成的单一动作:**
+### Step 6：契约与规范映射
 
-- "写失败测试" → 一个任务
-- "运行测试确认 RED" → 一个任务
-- "写最小实现" → 一个任务
-- "运行测试确认 GREEN" → 一个任务
-- "提交" → 一个任务
+在「验收标准映射」中逐项列出全部 `REQ-##`、`BR-##`、`AC-##`，对应覆盖任务和最终验证。任何编号不得只出现在背景文字中而没有任务与验证。
 
-### No Placeholders(计划失败检查清单)
+在「Constitution 规范映射清单」中写清规则来源、适用任务、验证方式和最终验收。
 
-以下是**计划失败**——写出这些即视为计划未完成:
+### Step 7：No Placeholders 自审
 
-- "TBD"、"TODO"、"稍后实现"、"补充细节"
-- "添加适当的错误处理"/"添加验证"/"处理边界情况"——没有给出具体怎么做
-- "类似于 Task N"——重复代码,不是引用。执行者可能打乱顺序读任务
-- 描述做什么但不给怎么做——代码步骤必须有代码块
-- 引用未在任何任务中定义的类型、函数、方法——每个符号必须在某个任务中首次出现
+以下任一出现都表示 Plan 未完成：
 
-### Step 5: 自审(写完后逐项核对)
+- 模板注释、`<任务名>`、TBD、TODO、稍后补充
+- “添加适当错误处理”“验证同上”“类似 Task N”
+- 只有动作名称，没有具体目标状态、接口或验证命令
+- 使用未在任何任务定义的函数、类型或字段
+- Spec 编号没有任务或验证覆盖
+- 任务引用不存在的旧文件、命令或接口
 
-1. **Spec 覆盖**:扫 Spec 每条验收标准。能找到覆盖它的任务吗?列出缺口,补上。
-2. **No Placeholders**:找 "TBD"、"TODO"、"适当处理"、"类似于 Task N"——有就修复。
-3. **类型一致性**:Task 3 调用的函数名和 Task 2 定义的一致吗?修。
-4. **可执行性**:每个 verify 命令在目标仓库可运行吗?read_first 引用的文件/符号存在吗?
+再检查任务依赖、类型和命名前后一致，验证命令能在目标仓库执行。
 
-发现任何问题→内联修复,不需要重审。
+### Step 8：用户批准
 
-### Step 6: 提交用户批准
-
-把 Plan 完整展示给用户。批准后:
+向用户展示技术策略、任务边界、Spec 覆盖和规范映射。用户明确批准后：
 
 ```bash
 node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root <项目根>
 ```
 
-脚本要求 Plan approved 前 Spec 必须为 approved,且任务字段完整、无空章节。
+脚本会拒绝占位符、空章节、字段不完整或遗漏任一 Spec 契约编号的 Plan。
 
-### Step 7: 执行 Handoff
+## 校验清单
 
-Plan 批准后,向用户提供两种执行选择:
-
-**"Plan 已保存到 `docs/changes/CR-###-<slug>/plan.md`。两种执行方式:**
-
-**1. 子代理驱动(推荐)** — 每任务派全新子代理,任务间审查,快速迭代
-
-**2. 内联执行** — 在当前会话使用 execute-plan 技能,批量执行带检查点
-
-**哪种?"**
-
-不要在本技能中开始实施。
-
-## 校验
-
-```bash
-node scripts/project-docs.cjs validate --root <项目根>
-```
-
-- [ ] `validate` 无 error(脚本检查 Plan 任务 6 字段与章节完整性)
-- [ ] 每条 Spec 验收标准映射到至少一个任务和最终验证
-
-## 场景路由
-
-| 场景 | 处理 |
-|---|---|
-| **Spec 未 approved** | 路由到 change |
-| **Spec 与代码现实冲突** | 停止,报告具体冲突,不改 Spec |
-| **影响分析发现需要新的 Change 或 blueprint 调整** | 停止,先走 change |
-| **无法给出真实文件路径或可执行验证命令** | 停止,不猜测 |
+- [ ] Spec approved 且 hash 有效
+- [ ] 已有 `plan.md` 被完整填写，没有再次创建
+- [ ] 技术设计只实现 Spec，没有新增业务能力
+- [ ] 每个任务有 files/read_first/action/verify/acceptance/done
+- [ ] 全部 REQ/BR/AC 和适用编码规范均已映射
+- [ ] 用户明确批准，状态迁移成功
 
 ## 脚本/AI 分工
 
 | 脚本 | AI |
 |---|---|
-| `new plan` 创建骨架 | 探索代码,选实现方案 |
-| `context plan` 输出上下文 | 写任务(每步 2-5 分钟) |
-| `transition` 状态迁移 | 自审(覆盖/占位符/一致性/可执行性) |
-| `validate` 校验 | **禁止**:手建文件、引入 Spec 外能力、"顺手重构" |
+| `context plan` 输出上下文路径 | 探索代码、选择技术实现 |
+| `transition` 校验任务字段、占位符和契约覆盖 | 填写已有 Plan、建立任务和规范映射 |
+| `validate` 校验结构与状态 | 不引入 Spec 外能力，不开始实施 |
+
+## 停止条件
+
+- Spec 未 approved、hash 失效或仍有业务歧义 → 返回 `spec`。
+- Spec 与代码现实冲突 → 报告冲突，返回 `spec` 或 `change`。
+- 需要修改 Blueprint、扩大范围或新增业务能力 → 返回 `change`。
+- 无法给出真实文件路径、接口或验证命令 → 停止，不猜测。
+- 缺少项目编码规则或无法建立验证方式 → 先补齐规则。
 
 ## Handoff Rule
 
-Plan approved → `execute-plan`。本技能不写代码,只写计划。
+Plan approved → `execute-plan`。本技能只写计划，不修改代码。
 
 ## Common Rationalizations
 
 | 借口 | 现实 |
-| --- | --- |
-| "Spec 够清楚了,直接写代码" | 没有计划,执行无法按步验证,验收无从映射 |
-| "先写大步骤,细节执行时再补" | 缺文件/命令/条件的步骤无法执行=计划未完成 |
-| "测试最后统一补" | 没有任务级 verify,问题堆到最后无法定位 |
-| "顺手把这个重构也写进计划" | Plan 只服务当前 Spec,不在计划内的修改=范围越界 |
+|---|---|
+| “已有骨架不完整，重新 new plan” | Full 创建时已生成唯一 Plan，直接填写它 |
+| “Spec 没写，Plan 顺便决定” | Plan 不能成为隐形业务契约 |
+| “写大步骤，执行时再探索” | 跨模型执行需要精确文件、接口和验证 |
+| “只映射 AC 就够了” | REQ 和 BR 也可能在拆解中被静默遗漏 |

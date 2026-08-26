@@ -41,7 +41,7 @@ test('OpenCode commands route to skills without shared command files', () => {
       const config = {};
       await plugin.config(config);
       const names = Object.keys(config.command || {}).sort();
-      if (names.length !== 7 || !names.includes('project-kit/status')) process.exit(2);
+      if (names.length !== 8 || !names.includes('project-kit/spec')) process.exit(2);
     `);
 
     const command = fs.readFileSync(

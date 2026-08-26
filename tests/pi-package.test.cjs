@@ -54,6 +54,23 @@ test('platform manifests reference only existing resources', () => {
   }
 });
 
+test('platform metadata advertises the 12-skill lifecycle', () => {
+  const jsonFiles = [
+    'package.json',
+    'plugin.json',
+    '.claude-plugin/plugin.json',
+    '.codex-plugin/plugin.json',
+    '.cursor-plugin/plugin.json',
+    '.claude-plugin/marketplace.json',
+    '.cursor-plugin/marketplace.json',
+  ];
+  for (const relativePath of jsonFiles) {
+    const content = fs.readFileSync(path.join(root, relativePath), 'utf8');
+    assert.match(content, /12 个/);
+    assert.doesNotMatch(content, /11 个/);
+  }
+});
+
 test('Pi extension registers all Project Kit commands', async () => {
   const { commands } = await loadExtension(adapter);
 
@@ -63,6 +80,7 @@ test('Pi extension registers all Project Kit commands', async () => {
     'project-kit:execute',
     'project-kit:init',
     'project-kit:plan',
+    'project-kit:spec',
     'project-kit:status',
     'project-kit:verify',
   ]);

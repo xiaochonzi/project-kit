@@ -1,43 +1,8 @@
 ---
-description: 为已批准的 Spec 制定可逐步执行的实现计划（Full 变更）
+description: 把已批准业务 Spec 转化为技术设计与可执行实现计划
 argument-hint: "<change-id>"
 ---
 
-`$ARGUMENTS` 必须提供 Change ID（如 CR-001）。
+加载并严格执行 `plan` 技能。`$ARGUMENTS` 必须提供 Change ID（如 `CR-001`）。
 
-**第一步:确认 Spec 已 approved**
-
-```bash
-node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
-```
-
-如果 Spec 不是 approved → 停止，告知用户先走 change 完成 Spec 批准。
-
-**第二步:创建 Plan 骨架**
-
-```bash
-node scripts/project-docs.cjs new plan --change <CR-###> --root <项目根>
-```
-
-**第三步:填写 Plan**
-
-读取 Spec 验收标准，按以下标准编写 `docs/changes/CR-###-<slug>/plan.md`:
-
-- 每个任务含 files/read_first/action/verify/acceptance/done 六字段
-- 每个任务是 2-5 分钟可完成的单一动作(写失败测试→运行确认 RED→最小实现→运行确认 GREEN)
-- **禁止**:TBD、TODO、"适当处理错误"、"类似 Task N"、"验证同上"
-- 每条 Spec 验收标准映射到至少一个任务和最终验证
-
-**第四步:自审**
-
-扫描 Plan 全文:无 TBD/占位符?每个 `verify` 命令可执行?`read_first` 引用的文件存在?前后任务的函数名一致?
-
-**第五步:提交批准**
-
-展示 Plan 给用户。批准后:
-
-```bash
-node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root <项目根>
-```
-
-报告:Plan 路径、任务数、验收映射覆盖率、下一技能(execute-plan)。
+读取已批准的 `docs/changes/CR-###-<slug>/spec.md`、项目编码规范和代码现实，填写同目录已存在的 `plan.md`，覆盖全部 REQ/BR/AC 并建立 Constitution 规范映射。不得再次创建 Plan，也不得引入 Spec 外业务能力。

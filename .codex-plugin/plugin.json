@@ -1,11 +1,24 @@
 {
   "name": "project-kit",
-  "version": "0.3.2",
-  "description": "Project Kit: 11 个自包含生命周期技能——从初始化、需求拆解、蓝图规划、路线图、实现计划、TDD 执行、独立验收,到变更与缺陷处理,围绕统一 docs/ 目录约定。",
+  "version": "0.3.3",
+  "description": "Project Kit: 12 个自包含生命周期技能——从初始化、需求拆解、业务 Spec、实现计划、TDD 执行、独立验收,到变更与缺陷处理,围绕统一 docs/ 目录约定。",
   "skills": "./skills/",
   "author": {
     "name": "Project Kit Team"
   },
   "license": "MIT",
-  "keywords": ["workflow","skills","lifecycle","spec-driven","project-management"]
+  "keywords": ["workflow","skills","lifecycle","spec-driven","project-management"],
+  "interface": {
+    "displayName": "Project Kit",
+    "shortDescription": "管理需求、Spec、计划、执行与验收",
+    "longDescription": "用 Quick 和 Full 两档路径管理项目变更。复杂需求依次完成 Proposal、业务 Spec、实现 Plan、执行和独立验收，并通过统一 docs/ 目录在模型与会话之间保持可追踪契约。",
+    "developerName": "Project Kit Team",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "查看当前项目状态并告诉我下一步",
+      "把这个新需求整理成可执行的变更",
+      "为已接受的 Proposal 设计业务 Spec"
+    ]
+  }
 }

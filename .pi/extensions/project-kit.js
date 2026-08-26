@@ -7,6 +7,7 @@ const quotedCliPath = `'${cliPath.replaceAll("'", "'\"'\"'")}'`;
 const commands = [
   ['brief', 'brief', '为一个模糊想法或原始需求启动 Brief 需求梳理流程'],
   ['change', 'change', '新需求入口——Quick 零文档或 Full 三件套'],
+  ['spec', 'spec', '为已接受 Proposal 完成业务 Spec 设计'],
   ['execute', 'execute-plan', '执行已批准的 Full 变更实现计划'],
   ['init', 'init', '初始化 Project Kit 标准 docs 目录'],
   ['plan', 'plan', '为已批准的 Spec 制定实现计划'],
@@ -19,7 +20,7 @@ export default function projectKit(pi) {
     if (event.systemPrompt.includes('<PROJECT_KIT_PI>')) return;
     return {
       systemPrompt: `${event.systemPrompt}\n\n<PROJECT_KIT_PI>
-Project Kit provides 11 project lifecycle skills. Load the matching skill before initializing docs, clarifying requirements, designing a blueprint, planning or executing changes, verifying work, fixing bugs, or checking project status.
+Project Kit provides 12 project lifecycle skills. Load the matching skill before initializing docs, clarifying requirements, designing a business Spec or blueprint, planning or executing changes, verifying work, fixing bugs, or checking project status.
 When a skill invokes \`node scripts/project-docs.cjs\`, use the installed CLI command \`node ${quotedCliPath}\` instead.
 </PROJECT_KIT_PI>`,
     };

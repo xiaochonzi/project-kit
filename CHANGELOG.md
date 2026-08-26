@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 - 2026-08-26
+
+- **Change / Spec / Plan 职责拆分**：Full 分流时由 `new change` 一次创建 proposal/spec/plan；`change` 只完成 Proposal，新增独立 `spec` 技能负责业务行为、边界、失败和 REQ/BR/AC 契约设计，`plan` 只负责技术设计与任务拆解。
+- **跨模型契约门禁**：Spec/Plan 批准前拒绝模板占位符与 TODO/TBD；Spec 要求无未决问题并包含 REQ/BR/AC，Plan 必须覆盖全部契约编号。OpenCode、Pi 和 Claude command 同步增加 `spec` 入口，插件共 12 个技能。
+
 ## 0.6.0 - 2026-08-21
 
 - **change 技能新增 diagrams 数据关系文档（可选）**：Full 变更新增可选的 `docs/changes/CR-###-<slug>/diagrams.md`，当需求涉及新数据模型设计时创建，沉淀数据模型清单、模型间关系（ER）、设计依据与前后端操作时机。生成顺序：proposal → spec → diagrams → plan。新增 `node scripts/project-docs.cjs new diagrams --change CR-###` 命令（复用 change 文档创建机制）；validate 不强制要求（非必填），diagrams 无独立状态机。

@@ -13,6 +13,7 @@ const PLUGIN_SKILLS = [
   'brief',
   'blueprint',
   'roadmap',
+  'spec',
   'plan',
   'execute-plan',
   'verify-plan',
@@ -85,6 +86,8 @@ const CONTENT_GATES = {
   plan: { statuses: ['approved', 'completed'], sections: ['实现策略', 'Tasks', '验收标准映射', '最终验证'] },
   proposal: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] }
 };
+const APPROVAL_PLACEHOLDER_PATTERN = /<!--\s*由 (?:spec|plan) 技能填写[\s\S]*?-->|\b(?:TBD|TODO)\b|<(?:任务名|精确文件路径|执行前必须读取[^>]*|具体修改[^>]*|该任务后[^>]*|可观察[^>]*|何时[^>]*|命令[^>]*|计划[^>]*|需求名称|当前行为|触发条件|目标行为|业务规则|可得到[^>]*)>/i;
+const CONTRACT_ID_PATTERN = /\b(?:REQ|BR|AC)-\d{2,}\b/g;
 
 function parseArguments(argv) {
   const positional = [];
@@ -304,9 +307,12 @@ function createDocument(root, type, options) {
     const id = nextSequentialId(documents, 'CR');
     const directory = path.join(docsRoot, 'changes', `${id}-${slugify(options.title.trim())}`);
     fs.mkdirSync(directory, { recursive: true });
-    const outputPath = path.join(directory, 'proposal.md');
-    writeNewFile(outputPath, renderTemplate('proposal.md', { ID: id, TITLE: options.title.trim(), DATE: currentDate() }));
-    process.stdout.write(`${outputPath}\n`);
+    const values = { ID: id, CHANGE: id, TITLE: options.title.trim(), DATE: currentDate() };
+    for (const fileName of ['proposal.md', 'spec.md', 'plan.md']) {
+      const outputPath = path.join(directory, fileName);
+      writeNewFile(outputPath, renderTemplate(fileName, values));
+      process.stdout.write(`${outputPath}\n`);
+    }
     return;
   }
 
@@ -345,6 +351,10 @@ function sectionBody(content, title) {
 
 function emptySections(document, sections) {
   return sections.filter((section) => sectionBody(document.content, section) === '');
+}
+
+function contractIds(content) {
+  return [...new Set(content.match(CONTRACT_ID_PATTERN) || [])];
 }
 
 function contentHash(content) {
@@ -488,6 +498,12 @@ function validateProject(root, jsonOutput) {
         errors.push(`verified Spec 缺少或已偏离 spec_hash: ${document.relativePath}`);
       }
     }
+    if (document.kind === 'spec' && document.metadata.status === 'approved') {
+      const hash = document.metadata.spec_hash;
+      if (!hash || hash === 'null' || hash !== contentHash(document.content)) {
+        errors.push(`approved Spec 缺少或已偏离 spec_hash: ${document.relativePath}`);
+      }
+    }
   }
 
   detectDependencyCycles(documents, errors);
@@ -544,8 +560,21 @@ function transitionDocument(root, target, nextStatus, kind) {
   if (document.kind === 'spec' && nextStatus === 'approved') {
     const proposal = documents.find((item) => item.kind === 'proposal' && item.metadata.id === document.metadata.change);
     if (!proposal || proposal.metadata.status !== 'accepted') throw new Error('Spec approved 前 Change 必须为 accepted');
-    const empty = emptySections(document, ['问题与依据', '目标', '范围', '验收标准']);
+    if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Spec 批准前必须移除模板占位符和 TODO/TBD');
+    const empty = emptySections(document, ['问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '禁止事项', '验收标准', '未决问题']);
     if (empty.length > 0) throw new Error(`Spec 批准前必须填写: ${empty.join('、')}`);
+    const ids = contractIds(document.content);
+    for (const prefix of ['REQ-', 'BR-', 'AC-']) {
+      if (!ids.some((id) => id.startsWith(prefix))) throw new Error(`Spec 批准前至少需要一个 ${prefix}## 契约编号`);
+    }
+    const requirements = [...document.content.matchAll(/^###\s+(REQ-\d{2,})[^\r\n]*\r?\n([\s\S]*?)(?=^###\s+|^##\s+|(?![\s\S]))/gm)];
+    if (requirements.length === 0) throw new Error('Spec 批准前至少需要一个 REQ-## 需求章节');
+    for (const requirement of requirements) {
+      if (!/\bBR-\d{2,}\b/.test(requirement[2]) || !/\bAC-\d{2,}\b/.test(requirement[2])) {
+        throw new Error(`${requirement[1]} 必须关联 BR-## 和 AC-##`);
+      }
+    }
+    if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Spec 批准前「未决问题」必须为“无”');
   }
   if (document.kind === 'spec' && nextStatus === 'verified') {
     const hash = document.metadata.spec_hash;
@@ -558,11 +587,18 @@ function transitionDocument(root, target, nextStatus, kind) {
   if (document.kind === 'plan' && nextStatus === 'approved') {
     const spec = documents.find((item) => item.kind === 'spec' && item.metadata.change === document.metadata.change);
     if (!spec || spec.metadata.status !== 'approved') throw new Error('Plan approved 前 Spec 必须为 approved');
+    if (!spec.metadata.spec_hash || spec.metadata.spec_hash === 'null' || spec.metadata.spec_hash !== contentHash(spec.content)) {
+      throw new Error('Plan approved 前 Spec 的 spec_hash 必须有效');
+    }
+    if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Plan 批准前必须移除模板占位符和 TODO/TBD');
     const taskErrors = [];
     validatePlanTasks(document, taskErrors, []);
     if (taskErrors.length > 0) throw new Error(taskErrors.join('\n'));
-    const empty = emptySections(document, ['实现策略', 'Tasks', '验收标准映射', '最终验证']);
+    const empty = emptySections(document, ['实现策略', '技术设计', 'Tasks', '验收标准映射', 'Constitution 规范映射清单', '最终验证', '非目标']);
     if (empty.length > 0) throw new Error(`Plan 批准前必须填写: ${empty.join('、')}`);
+    const contractMapping = sectionBody(document.content, '验收标准映射');
+    const missingIds = contractIds(spec.content).filter((id) => !contractMapping.includes(id));
+    if (missingIds.length > 0) throw new Error(`Plan 未覆盖 Spec 契约: ${missingIds.join('、')}`);
   }
   if (document.kind === 'plan' && nextStatus === 'completed') {
     if (/^- \[ \] /m.test(document.content)) throw new Error('Plan completed 前必须勾选全部任务');
@@ -589,7 +625,7 @@ function contextForMode(root, mode, target, jsonOutput) {
   for (const fileName of ['constitution.md', 'blueprint.md', 'roadmap.md']) add(fileName);
 
   if (mode === 'brief') for (const document of documents.filter((item) => item.kind === 'brief')) paths.add(document.relativePath);
-  if (mode === 'change' || mode === 'plan' || mode === 'execute-plan' || mode === 'verify-plan') {
+  if (mode === 'change' || mode === 'spec' || mode === 'plan' || mode === 'execute-plan' || mode === 'verify-plan') {
     if (target) {
       const changeDir = documents
         .filter((item) => item.kind === 'proposal' && item.metadata.id === target)
@@ -779,8 +815,8 @@ function nextAction(root, jsonOutput) {
     const specDraft = documents.find((item) => item.kind === 'spec' && item.metadata.status === 'draft');
     const planDraft = documents.find((item) => item.kind === 'plan' && item.metadata.status === 'draft');
     if (draftProposal) result = { mode: 'change', target: draftProposal.metadata.id, reason: 'Proposal 待用户确认范围' };
-    else if (specDraft) result = { mode: 'change', target: specDraft.metadata.change, reason: 'Spec 待填写契约与验收标准' };
-    else if (acceptedProposal) result = { mode: 'change', target: acceptedProposal.metadata.id, reason: 'Change 已接受，待创建 Spec' };
+    else if (specDraft) result = { mode: 'spec', target: specDraft.metadata.change, reason: 'Spec 待完成业务设计与批准' };
+    else if (acceptedProposal) result = { mode: 'spec', target: acceptedProposal.metadata.id, reason: 'Change 已接受，待完成 Spec' };
     else if (planDraft) result = { mode: 'plan', target: planDraft.metadata.change, reason: 'Plan 待编写或批准' };
     else result = { mode: 'status', target: null, reason: '没有机械可推导的待办，请检查 Roadmap 与本地 state' };
   }

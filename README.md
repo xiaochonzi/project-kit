@@ -4,7 +4,7 @@ Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,�
 
 ## 设计原则
 
-- **两档路径**:小改动(Quick)不产生任何文档,直接实现 + git + 本地 state 一行;复杂改动(Full)才创建 proposal/spec/plan 三件套
+- **两档路径**:小改动(Quick)不产生任何文档,直接实现 + git + 本地 state 一行;复杂改动(Full)原子创建 proposal/spec/plan 三件套
 - **技能自包含**:每个技能写全可独立执行的流程(前置条件、步骤、校验清单、停止条件),触发即用,不依赖共享文档
 - **围绕 docs 约定**:所有技能围绕统一的项目文档结构工作(`init` 技能创建,脚本校验)
 - **渐进式**:每个技能只负责生命周期中的一环,通过 Handoff Rule 交接下一技能
@@ -20,7 +20,7 @@ Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,�
 pi install git:github.com/xiaochonzi/project-kit
 ```
 
-安装后自动加载 11 个 skills,并提供 `/project-kit:init`、`/project-kit:status` 等命令。Pi extension 会从安装包目录调用 Project Kit CLI,不依赖当前项目存在 `scripts/project-docs.cjs`。
+安装后自动加载 12 个 skills,并提供 `/project-kit:init`、`/project-kit:spec`、`/project-kit:status` 等命令。Pi extension 会从安装包目录调用 Project Kit CLI,不依赖当前项目存在 `scripts/project-docs.cjs`。
 
 OpenCode 与 Pi 分别由 `.opencode/plugins/project-kit.js`、`.pi/extensions/project-kit.js` 适配。两端都支持 command 主动触发和 skill 自动触发;平台 adapter 只维护加载、bootstrap、命令路由与工具映射,共享内容仅为 `skills/`、`scripts/project-docs.cjs` 与 assets。
 
@@ -48,6 +48,7 @@ claude plugin install github:xiaochonzi/project-kit
 | `blueprint` | 基于已确认需求建立系统架构 |
 | `roadmap` | 拆分为可交付的阶段 |
 | `change` | **新需求唯一入口**:Quick/Full 分流 |
+| `spec` | 为已接受 Proposal 完成业务逻辑、边界与验收契约设计(Full) |
 | `plan` | 为已批准 Spec 制定实现计划(Full) |
 | `execute-plan` | 按计划实施并勾选记录(Full) |
 | `verify-plan` | 用新鲜证据独立验收(Full) |
@@ -79,7 +80,7 @@ claude plugin install github:xiaochonzi/project-kit
 | **Full** | 多模块 / 架构 / 数据模型变化 / 多迭代 / 跨边界 / 高风险 | proposal + spec + plan 三件套 |
 
 - **Quick 流程**:澄清 → 用户同轮确认 → 直接实现 + 测试 + commit → 本地 state 记一行
-- **Full 流程**:proposal(为什么+边界)→ 用户确认 → spec(契约+验收标准)→ plan(步骤)→ 执行勾选 → 独立验收 → 更新本地 state
+- **Full 流程**:`change` 原子创建三件套并确认 proposal → `spec` 设计业务契约与验收标准 → `plan` 设计技术实现并拆解任务 → 执行勾选 → 独立验收 → 更新本地 state
 
 ## 常用命令
 
@@ -117,9 +118,9 @@ node scripts/project-docs.cjs next --root <project>
 | 3 | 把模糊想法固化为存档 | `brief` | `docs/briefs/BRIEF-001.md` |
 | 4 | 设计系统架构 | `blueprint` | `docs/blueprint.md` |
 | 5 | 拆成可交付阶段 | `roadmap` | `docs/roadmap.md` |
-| 6 | 新需求入口与分流 | `change` | Quick:零文档 / Full:`changes/CR-001-<slug>/` |
+| 6 | 新需求入口与分流 | `change` | Quick:零文档 / Full:原子创建 `changes/CR-001-<slug>/` 三件套 |
 | 7 | 填写 proposal 并确认 | `change` | `proposal.md`(为什么+边界) |
-| 8 | 填写契约与验收标准 | `change` | `spec.md`(做什么) |
+| 8 | 设计业务契约与验收标准 | `/project-kit/spec CR-001` | `spec.md`(做什么、规则与边界) |
 | 9 | 制定实现计划 | `/project-kit/plan CR-001` | `plan.md`(怎么做,逐步验证) |
 | 10 | 按计划实施 | `execute-plan` | 代码 + 测试 + plan 勾选 |
 | 11 | 独立验收 | `verify-plan` | 重跑验收标准,写回 plan + 本地 state |
