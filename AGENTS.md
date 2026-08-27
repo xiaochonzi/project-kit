@@ -21,6 +21,7 @@
 - 输出上下文
 - 校验结构、状态、引用与依赖环(只校验 Full 变更完整性,Quick 零文档不校验)
 - 状态迁移(Spec/Plan 状态、plan 勾选门禁)
+- Proposal/Spec/Plan 批准前的章节、占位符、未决问题、契约覆盖和 Plan Task 字段门禁
 - 插件结构校验(`validate-plugin`)
 
 它不替用户做产品决定,不生成需求正文,不引入 YAML/JSON 状态源。

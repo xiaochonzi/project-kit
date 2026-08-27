@@ -85,8 +85,11 @@ const CONTENT_GATES = {
   plan: { statuses: ['approved', 'completed'], sections: ['实现策略', 'Tasks', '验收标准映射', '最终验证'] },
   proposal: { statuses: ['accepted', 'completed'], sections: ['背景与问题', '期望结果', '决定'] }
 };
-const APPROVAL_PLACEHOLDER_PATTERN = /<!--\s*由 (?:spec|plan) 技能填写[\s\S]*?-->|\b(?:TBD|TODO)\b|<(?:任务名|精确文件路径|执行前必须读取[^>]*|具体修改[^>]*|该任务后[^>]*|可观察[^>]*|何时[^>]*|命令[^>]*|计划[^>]*|需求名称|当前行为|触发条件|目标行为|业务规则|可得到[^>]*)>/i;
+const APPROVAL_PLACEHOLDER_PATTERN = /<!--\s*由 (?:change|spec|plan) 技能[\s\S]*?-->|\b(?:TBD|TODO)\b|<(?:任务名|精确文件路径|修改或验证[^>]*|执行前必须读取[^>]*|前置 Task[^>]*|本 Task[^>]*|当前行为[^>]*|完成后的[^>]*|可直接执行[^>]*|该任务后[^>]*|可观察[^>]*|何时[^>]*|是\/否|原因|章节或 Task|命令[^>]*|计划[^>]*|需求名称|触发条件|目标行为|业务规则|可得到[^>]*)>/i;
 const CONTRACT_ID_PATTERN = /\b(?:REQ|BR|AC)-\d{2,}\b/g;
+const LEGACY_PLAN_TASK_FIELDS = ['files', 'read_first', 'action', 'verify', 'acceptance', 'done'];
+const PLAN_TASK_FIELDS = ['files', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'invariants', 'verify', 'acceptance', 'done'];
+const CONDITIONAL_DESIGN_CATEGORIES = ['状态机', '错误策略', '并发与幂等', '数据与事务', 'API / 事件', '配置', '兼容与迁移', '权限与安全', '可观测性', '参考实现'];
 
 function parseArguments(argv) {
   const positional = [];
@@ -348,6 +351,12 @@ function sectionBody(content, title) {
   return match[1].replace(/^###\s+.*$/gm, '').trim();
 }
 
+function subsectionBody(content, title) {
+  const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = content.match(new RegExp(`^###\\s+${escaped}[ \\t]*\\r?\\n([\\s\\S]*?)(?=^#{2,3}\\s+|(?![\\s\\S]))`, 'm'));
+  return match ? match[1].trim() : '';
+}
+
 function emptySections(document, sections) {
   return sections.filter((section) => sectionBody(document.content, section) === '');
 }
@@ -382,16 +391,16 @@ function detectDependencyCycles(documents, errors) {
   for (const id of graph.keys()) visit(id);
 }
 
-function validatePlanTasks(document, errors, warnings) {
+function validatePlanTasks(document, errors, warnings, requiredFields) {
   const tasks = [...document.content.matchAll(/^###\s+Task\s+\d+:[^\r\n]*\r?\n([\s\S]*?)(?=^###\s+Task\s+\d+:|^##\s+|(?![\s\S]))/gm)];
-  const target = document.metadata.status === 'draft' ? warnings : errors;
+  const target = requiredFields || document.metadata.status !== 'draft' ? errors : warnings;
   if (tasks.length === 0) {
     target.push(`Plan 没有任务: ${document.relativePath}`);
     return;
   }
-  const requiredFields = ['files', 'read_first', 'action', 'verify', 'acceptance', 'done'];
+  const fields = requiredFields || (/(?:^|\n)-\s+implementation:/m.test(document.content) ? PLAN_TASK_FIELDS : LEGACY_PLAN_TASK_FIELDS);
   for (const [index, task] of tasks.entries()) {
-    for (const field of requiredFields) {
+    for (const field of fields) {
       const match = task[1].match(new RegExp(`^-\\s+${field}:[ \\t]*(.*)$`, 'm'));
       if (!match || match[1].trim() === '') target.push(`Plan Task ${index + 1} 缺少 ${field}: ${document.relativePath}`);
     }
@@ -528,8 +537,13 @@ function transitionDocument(root, target, nextStatus, kind) {
   }
 
   if (document.kind === 'proposal' && nextStatus === 'accepted') {
-    const empty = emptySections(document, ['背景与问题', '期望结果', '决定']);
+    if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Proposal 接受前必须移除模板占位符和 TODO/TBD');
+    const empty = emptySections(document, ['背景与问题', '期望结果', '包含', '不包含', '影响范围', '决定', '未决问题']);
     if (empty.length > 0) throw new Error(`${target} 进入 accepted 前必须填写: ${empty.join('、')}`);
+    for (const section of ['已确认选择', '未采用方向与原因']) {
+      if (subsectionBody(document.content, section) === '') throw new Error(`Proposal 接受前必须填写「${section}」`);
+    }
+    if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Proposal 接受前「未决问题」必须为“无”');
   }
   if (document.kind === 'proposal' && nextStatus === 'completed') {
     const spec = documents.find((item) => item.kind === 'spec' && item.metadata.change === target);
@@ -541,7 +555,7 @@ function transitionDocument(root, target, nextStatus, kind) {
     const proposal = documents.find((item) => item.kind === 'proposal' && item.metadata.id === document.metadata.change);
     if (!proposal || proposal.metadata.status !== 'accepted') throw new Error('Spec approved 前 Change 必须为 accepted');
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Spec 批准前必须移除模板占位符和 TODO/TBD');
-    const empty = emptySections(document, ['问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '禁止事项', '验收标准', '未决问题']);
+    const empty = emptySections(document, ['术语与业务对象', '问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '禁止事项', '验收标准', '未决问题']);
     if (empty.length > 0) throw new Error(`Spec 批准前必须填写: ${empty.join('、')}`);
     const ids = contractIds(document.content);
     for (const prefix of ['REQ-', 'BR-', 'AC-']) {
@@ -565,13 +579,20 @@ function transitionDocument(root, target, nextStatus, kind) {
     if (!spec || spec.metadata.status !== 'approved') throw new Error('Plan approved 前 Spec 必须为 approved');
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Plan 批准前必须移除模板占位符和 TODO/TBD');
     const taskErrors = [];
-    validatePlanTasks(document, taskErrors, []);
+    validatePlanTasks(document, taskErrors, [], PLAN_TASK_FIELDS);
     if (taskErrors.length > 0) throw new Error(taskErrors.join('\n'));
-    const empty = emptySections(document, ['实现策略', '技术设计', 'Tasks', '验收标准映射', 'Constitution 规范映射清单', '最终验证', '非目标']);
+    const empty = emptySections(document, ['实施目标', '实现策略', '技术设计', '全局不变量', '条件技术设计', 'Tasks', '验收标准映射', 'Constitution 规范映射清单', '最终验证', '非目标', '未决问题']);
     if (empty.length > 0) throw new Error(`Plan 批准前必须填写: ${empty.join('、')}`);
+    for (const section of ['当前技术现状', '目标技术设计']) {
+      if (!sectionExists(document.content, section)) throw new Error(`Plan 批准前必须填写「${section}」`);
+    }
+    const conditionalDesign = sectionBody(document.content, '条件技术设计');
+    const missingCategories = CONDITIONAL_DESIGN_CATEGORIES.filter((category) => !conditionalDesign.includes(category));
+    if (missingCategories.length > 0) throw new Error(`Plan 条件技术设计缺少类别: ${missingCategories.join('、')}`);
     const contractMapping = sectionBody(document.content, '验收标准映射');
     const missingIds = contractIds(spec.content).filter((id) => !contractMapping.includes(id));
     if (missingIds.length > 0) throw new Error(`Plan 未覆盖 Spec 契约: ${missingIds.join('、')}`);
+    if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Plan 批准前「未决问题」必须为“无”');
   }
   if (document.kind === 'plan' && nextStatus === 'completed') {
     if (/^- \[ \] /m.test(document.content)) throw new Error('Plan completed 前必须勾选全部任务');

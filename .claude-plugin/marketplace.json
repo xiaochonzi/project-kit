@@ -8,7 +8,7 @@
     {
       "name": "project-kit",
       "description": "12 个生命周期技能,围绕统一 docs/ 目录约定,自包含可独立触发。含 init/constitution/brief/blueprint/roadmap/change/spec/plan/execute-plan/verify-plan/bug/status。",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "source": "./"
     }
   ]

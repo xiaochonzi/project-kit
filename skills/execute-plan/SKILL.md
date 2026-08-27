@@ -39,7 +39,7 @@ NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读 `.project-kit/state.md`(本地人员当前焦点)、`docs/constitution.md`(编码门禁) 和 Plan 的「Constitution 规范映射清单」；若存在 `docs/changes/CR-###-<slug>/diagrams.md`，一并读取作为数据依据
+- [ ] 已读 `.project-kit/state.md`、`docs/constitution.md` 或项目等效编码规则（如 `AGENTS.md`），以及 Plan 的「Constitution 规范映射清单」；若存在 `diagrams.md`，一并读取
 - [ ] 目标仓库可构建、测试命令可运行
 
 ## TDD Iron Law(每任务严格执行)
@@ -71,7 +71,7 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 
 在读取目标实现文件和执行第一个 Task 前:
 
-1. 完整读取 `docs/constitution.md`
+1. 完整读取 `docs/constitution.md`；不存在时读取 Plan 指定的项目等效编码规则（如 `AGENTS.md`）
 2. 读取 Plan 的「Constitution 规范映射清单」表
 3. 为本次变更列出适用规则、影响文件和验证命令
 4. 确认每条规则已映射到 Task 和最终验证
@@ -80,8 +80,11 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 
 ### Step 2: 批判性检查 Plan(改代码前,最后一次机会)
 
-- [ ] Plan 里每个 `files` 指向的文件/目录真实存在(新建文件除外)
-- [ ] `read_first` 引用的符号存在,接口签名与 Plan 描述一致
+- [ ] Plan 里每个 `files` 路径指向的文件/目录真实存在(新建文件除外)
+- [ ] `symbols` 和 `read_first` 引用的 Symbol 存在，签名与 Plan 描述一致
+- [ ] Plan 的系统入口与调用链可由当前代码定位，各层职责一致
+- [ ] Plan 的 Current Behavior 有代码、测试或配置证据，未被代码变化推翻
+- [ ] 每个 Task 的 `interfaces`、`depends_on` 和前后任务使用的名称/数据结构一致
 - [ ] 每个 `verify` 命令可运行
 - [ ] 任务依赖顺序无环
 - [ ] Plan 只覆盖本 Spec 范围,没有相邻问题/未来设计混入
@@ -92,7 +95,7 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 
 对 Plan 中每个 Task N:
 
-1. **读 `read_first`** 指定的文件,确认理解当前代码
+1. **读 `read_first`** 指定文件和 Symbol，再核对该 Task 的 Current Behavior、Target Behavior、interfaces 与 invariants
 2. **只修改 `files` 范围内的文件**——不在范围内,哪怕"顺手就能改",不碰
 3. **RED**:写/运行该任务的失败测试,确认 FAIL
 4. **GREEN**:写最小实现,运行确认 PASS

@@ -47,7 +47,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`(验收标准是核对清单)
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: completed`(任务全部勾选)
-- [ ] `docs/constitution.md`(代码规范,在读取实现前完整阅读)
+- [ ] `docs/constitution.md` 或 Plan 指定的项目等效编码规则（如 `AGENTS.md`），在读取实现前完整阅读
 - [ ] `plan.md` 的「Constitution 规范映射清单」表存在且已映射到任务
 - [ ] 若存在 `docs/changes/CR-###-<slug>/diagrams.md`，读取作为数据实现核对依据
 
@@ -59,7 +59,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项目根>
 ```
 
-读取该 change 三件套。**先完整读取 `docs/constitution.md`,再读取 Plan 的「Constitution 规范映射清单」表,然后才开始查看变更代码。**
+读取该 change 三件套。**先完整读取 `docs/constitution.md` 或 Plan 指定的项目等效编码规则，再读取 Plan 的「Constitution 规范映射清单」表，然后才开始查看变更代码。**
 
 ### Step 2: 逐条核对 Spec 与 Plan 实施情况
 
@@ -69,6 +69,9 @@ node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项�
 2. **重新运行证据命令**,记录命令+输出(不引用 execute 阶段的旧日志)
 3. 判定:`pass`(证据满足) / `fail`(证据不满足) / `blocked`(无法运行证据)
 4. 检查 Plan 每项任务是否勾选、实际文件是否越界(超出 Plan `files`)
+5. 核对实现与 Plan 的 Target Behavior、interfaces、全局不变量和 Task invariants 一致
+6. 核对每个适用的条件技术设计已实现，不适用项没有被实际改动推翻
+7. 核对全部 REQ/BR/AC 的契约映射都有实现与新鲜验证证据
 
 **如果 execute 阶段的测试已经通过,仍然重新运行**——验证的是"当前代码是否满足验收标准",不是"以前是否满足过"。
 

@@ -17,7 +17,7 @@ description: Use when a Full change has an accepted Proposal and its draft spec.
 NO PLAN OR IMPLEMENTATION DETAILS IN AN UNAPPROVED BUSINESS SPEC
 ```
 
-Spec 有歧义、矛盾或阻断性未决问题时必须继续澄清。不得把决定留给能力不同的 Plan 或执行模型猜测。
+Spec 有歧义、矛盾或阻断性未决问题时必须继续澄清。不得把业务决定留给 Plan 或实施阶段猜测。
 
 ## Required Inputs
 
@@ -80,6 +80,7 @@ node scripts/project-docs.cjs context spec --target <CR-###> --root <项目根>
 
 以下内容全部必填：
 
+- 术语与业务对象：定义可能影响理解的名称、状态和对象；无新增含义时说明沿用的现有定义
 - 问题与依据：代码现实、用户问题和触发原因
 - 目标：一个具体、可观察的结果
 - 用户流程：角色、前置条件、触发、主流程、结果
@@ -119,6 +120,8 @@ node scripts/project-docs.cjs context spec --target <CR-###> --root <项目根>
 3. 检查每个 REQ 是否关联 BR 和 AC，每个 AC 是否可独立 PASS/FAIL。
 4. 检查是否混入文件、函数、代码或任务级实现细节。
 5. 检查是否包含多个应拆分的独立系统或未经请求的能力。
+6. 扫描“按之前讨论”“同上”“相关逻辑”“适当处理”“根据实际情况”“后续再定”等模糊引用；把它们改成明确规则、示例或边界。
+7. 检查术语、输入输出、状态名称和失败结果是否只有一种合理解释；必要时增加决策表或具体示例。
 
 发现问题直接修正；需要产品决定时停止并只问当前最关键的一个问题。
 
@@ -136,7 +139,7 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind spec --root
 
 - [ ] Proposal accepted，Spec 原始状态为 draft
 - [ ] 代码现实已探查，Current 不是猜测
-- [ ] 必填核心全部完成，条件设计均已填写或说明不适用
+- [ ] 术语与业务对象、必填核心全部完成，条件设计均已填写或说明不适用
 - [ ] 每个 REQ 有规则和验收映射
 - [ ] 无阻断问题、占位符、歧义和实现任务
 - [ ] 用户明确批准，状态迁移成功
@@ -165,7 +168,7 @@ Spec approved（需要时 `diagrams.md` 已确认）→ `plan`。本技能不写
 
 | 借口 | 现实 |
 |---|---|
-| “Plan 模型很强，可以自己补边界” | 未写入 Spec 的行为无法追踪，也无法稳定验收 |
-| “多写几段说明就够了” | 跨模型可靠性来自稳定 ID、明确规则和 PASS/FAIL 契约 |
+| “Plan 阶段可以自己补边界” | 未写入 Spec 的行为无法追踪，也无法稳定验收 |
+| “多写几段说明就够了” | 完备性来自稳定 ID、明确规则和 PASS/FAIL 契约 |
 | “先 approved，问题放 Plan 决定” | Plan 只能选择技术实现，不能发明业务行为 |
 | “所有条件类别都写不适用最快” | 适用性必须根据真实业务与代码判断，不能机械跳过 |

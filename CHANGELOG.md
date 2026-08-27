@@ -2,12 +2,16 @@
 
 ## Unreleased
 
+## 0.3.4 - 2026-08-27
+
+- **Full 三件套完备性**：Proposal 增加已确认选择与未采用方向，Spec 增加术语与业务对象，Plan 固化代码入口、调用链、Symbol、Current/Target、全局不变量、十类条件技术设计和十二字段 Task。新的 accepted/approved 动作执行对应机械门禁，历史 completed Plan 仍可读取。
+- **实施与验收对齐**：`execute-plan` 开始实施前核对 Plan 的路径、Symbol、调用链、Current Behavior 和 interfaces；`verify-plan` 复核 Target Behavior、不变量、条件技术设计和契约映射。五个显式 command 统一为加载同名技能的薄路由。
 - **移除 Spec Hash 门禁**：新 Spec 不再生成 `spec_hash`；Spec approved、Plan approved、Spec verified 和项目校验不再依赖内容摘要，继续由状态、REQ/BR/AC 映射与独立验收约束 Full 流程。历史字段保留但不参与判断。
 
 ## 0.3.3 - 2026-08-26
 
 - **Change / Spec / Plan 职责拆分**：Full 分流时由 `new change` 一次创建 proposal/spec/plan；`change` 只完成 Proposal，新增独立 `spec` 技能负责业务行为、边界、失败和 REQ/BR/AC 契约设计，`plan` 只负责技术设计与任务拆解。
-- **跨模型契约门禁**：Spec/Plan 批准前拒绝模板占位符与 TODO/TBD；Spec 要求无未决问题并包含 REQ/BR/AC，Plan 必须覆盖全部契约编号。OpenCode、Pi 和 Claude command 同步增加 `spec` 入口，插件共 12 个技能。
+- **三件套契约门禁**：Spec/Plan 批准前拒绝模板占位符与 TODO/TBD；Spec 要求无未决问题并包含 REQ/BR/AC，Plan 必须覆盖全部契约编号。OpenCode、Pi 和 Claude command 同步增加 `spec` 入口，插件共 12 个技能。
 
 ## 0.6.0 - 2026-08-21
 

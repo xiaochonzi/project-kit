@@ -1,9 +1,9 @@
 ---
 date: 2026-08-12
-description: 定义项目从初始讨论、蓝图拆解到变更与 AI 接力的两档文档工作流——Quick(零文档)与 Full(proposal/spec/plan 三件套)。
+description: 定义项目从初始讨论、蓝图拆解到变更实施的两档文档工作流——Quick(零文档)与 Full(proposal/spec/plan 三件套)。
 ---
 
-# 项目文档与 AI 协作生命周期(两档路径)
+# 项目文档与协作生命周期(两档路径)
 
 ## 1. 文档目的
 
@@ -28,11 +28,11 @@ description: 定义项目从初始讨论、蓝图拆解到变更与 AI 接力的
 
 | 文档 | 回答 | 何时冻结 |
 | --- | --- | --- |
-| proposal | 为什么做、边界、包含/不包含 | 开发前,短 |
-| spec | 做什么、验收标准(契约) | 批准后冻结,不随实现改动 |
-| plan | 怎么做、步骤 + 验证命令 | 执行中更新(勾选) |
+| proposal | 为什么做、证据、边界、决定与取舍 | accepted 后冻结 |
+| spec | 最终业务行为、规则、失败边界与验收契约 | approved 后冻结 |
+| plan | 当前技术现实、目标设计、实施任务、不变量与验证 | approved 后按任务勾选和追加证据 |
 
-**spec(契约)与 plan(步骤)是两种本质不同的文档,不可合并**:spec 在开发前批准并冻结,plan 在执行中勾选更新。
+**spec(契约)与 plan(技术实施依据)是两种本质不同的文档,不可合并**。三件套共同构成 Full Change 完整且唯一的上下文，必要决定、业务规则和实施约束不能只留在原始对话中。
 
 ### 2.3 单一事实来源
 
@@ -105,7 +105,7 @@ changes/CR-###-<slug>/
 
 #### proposal(需求)
 
-最低内容:背景与问题 / 期望结果 / 包含 / 不包含 / 影响范围 / 决定 / 未决问题。
+最低内容:背景与问题及证据 / 期望结果 / 包含 / 不包含 / 影响范围 / 决定（已确认选择、未采用方向与原因）/ 未决问题。
 
 proposal 的状态即 change 目录的状态:
 
@@ -114,11 +114,11 @@ proposed → accepted → completed
                  ↘ deferred | rejected
 ```
 
-accepted 前必须填写「背景与问题/期望结果/决定」;completed 前 spec 必须 verified 且 plan 必须 completed。
+accepted 前固定核心必须完整、无模板标记，未决问题精确为“无”；completed 前 spec 必须 verified 且 plan 必须 completed。
 
 #### spec(契约)
 
-最低内容:问题与依据 / 目标 / 用户流程 / 范围(包含/不包含)/ 输入与输出 / 业务规则 / 失败与边界情况 / **验收标准** / 未决问题。
+最低内容:术语与业务对象 / 问题与依据 / 目标 / 用户流程 / 范围(包含/不包含)/ 输入与输出 / REQ/BR / 失败与边界情况 / 禁止事项 / **AC 验收标准** / 未决问题。
 
 状态:`draft → approved → verified`。
 
@@ -128,12 +128,14 @@ accepted 前必须填写「背景与问题/期望结果/决定」;completed 前 
 
 #### plan(步骤)
 
-最低内容:实现策略 / Tasks / 验收标准映射 / 最终验证 / 非目标。
+最低内容:实施目标 / 实现策略 / 当前技术现状 / 目标技术设计 / 全局不变量 / 条件技术设计 / Tasks / 验收与规范映射 / 最终验证 / 非目标 / 未决问题。
 
 状态:`draft → approved → completed`。
 
-- 每个任务 = 单一动作(2-5 分钟):files/read_first/action/verify/acceptance/done 六字段。
-- 禁止 TBD、TODO、"适当处理"、"类似 Task N"。
+- 当前技术现状必须记录系统入口与调用链、关键文件与 Symbol、Current Behavior 及证据；目标技术设计必须给出 Target Behavior、接口和 Current → Target 对照。
+- 条件技术设计逐项判断状态机、错误策略、并发幂等、数据事务、API/事件、配置、兼容迁移、权限安全、可观测性和参考实现；不适用时说明原因。
+- 每个任务包含 files/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/invariants/verify/acceptance/done 十二字段。
+- 禁止 TBD、TODO、“按之前讨论”“同上”“相关逻辑”“适当处理”“根据实际情况”“后续再定”。
 - 每条 Spec 验收标准映射到至少一个任务和最终验证。
 - completed 前全部任务必须勾选(无 `- [ ]` 残留)。
 - plan 不得扩大 spec 范围。
@@ -198,11 +200,11 @@ Brief:           captured
 
 状态变化必须有事实依据,不能因为"看起来差不多完成"而跳转。
 
-## 6. AI 接力协议
+## 6. 实施上下文规则
 
-### 6.1 AI 开始工作前
+### 6.1 开始实施前
 
-新 AI 会话不应读取所有历史文档,按顺序建立上下文:
+实施会话不应读取所有历史文档，按顺序建立上下文：
 
 1. 仓库 `AGENTS.md`:稳定开发约束。
 2. `docs/STATE.md`:当前焦点、阻塞和下一动作。
@@ -210,9 +212,9 @@ Brief:           captured
 4. 当前 change 目录:`changes/CR-###-<slug>/` 三件套(如进行中)。
 5. 与当前任务直接相关的 blueprint 章节和代码。
 
-AI 开始行动前必须复述:当前目标、包含范围、不包含范围、当前权威文档、依赖和阻塞项、下一动作。如果复述与文档矛盾,先澄清,不开始实施。
+开始行动前必须核对当前目标、包含范围、不包含范围、三件套、依赖、阻塞项和下一动作。如果文档与代码事实矛盾，先修订 Plan，不开始实施。
 
-### 6.2 AI 工作中的防偏移规则
+### 6.2 实施中的防偏移规则
 
 - 每项修改都能映射到当前 spec 或 plan(Quick 变更映射到用户确认的对话范围)。
 - 不因为发现相邻问题就扩大范围。
@@ -222,9 +224,9 @@ AI 开始行动前必须复述:当前目标、包含范围、不包含范围、�
 - 不修改已 verified spec 的语义。
 - 发现代码事实与 plan 不同时立即报告。
 
-### 6.3 AI 结束工作时
+### 6.3 结束工作时
 
-每次工作结束必须留下接力信息:
+每次工作结束必须记录：
 
 - 完成了什么。
 - 没有完成什么。
@@ -234,9 +236,9 @@ AI 开始行动前必须复述:当前目标、包含范围、不包含范围、�
 - 新发现了哪些问题。
 - 下一步唯一动作是什么。
 
-更新 `STATE.md`(frontmatter 的 `active_change` / `next_action` + 正文),让下一位 AI 从明确位置继续。
+更新本地 state（frontmatter 的 `active_change` / `next_action` + 正文），保留明确的下一动作。
 
-### 6.4 AI 上下文包
+### 6.4 实施上下文
 
 ```text
 必读:
@@ -286,7 +288,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 - `STATE.md` 是否指向真实的当前工作。
 - 相对链接是否有效。
 
-## 8. 常用 AI 提示词
+## 8. 常用提示词
 
 ### 8.1 接收新需求
 
@@ -309,11 +311,12 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 
 ```text
 基于已批准 Spec 和当前代码事实生成 CR-### 的 plan。
-每个任务必须说明:修改文件/读取符号/具体改动/验证命令/通过条件/完成条件。
+每个任务必须包含 files/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/invariants/verify/acceptance/done。
+Plan 必须记录系统入口与调用链、关键文件与 Symbol、Current/Target Behavior、全局不变量和十类条件技术设计。
 如果代码事实与 Spec 冲突,或需要扩大范围,停止并报告,不要自行调整需求。
 ```
 
-### 8.4 AI 接力
+### 8.4 开始实施
 
 ```text
 请先阅读 AGENTS.md、STATE.md 和当前 change 三件套。
@@ -354,7 +357,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 - [ ] 没有静默修改已 verified spec。
 - [ ] 多迭代能力已拆成边界明确的多个阶段。
 
-### 9.5 AI 交接时
+### 9.5 工作结束时
 
 - [ ] 当前目标和范围明确。
 - [ ] 当前权威文档链接明确。
@@ -374,8 +377,8 @@ Discussion → Brief → Blueprint → Roadmap → change(首个需求)
   ├── Quick → 对话确认 → 实现 + 测试 + commit → STATE 一行
   └── Full → proposal → 用户确认 → spec → plan → 执行勾选 → 独立验收 → STATE
 
-AI 接力:
+实施上下文:
 AGENTS.md → STATE.md → 当前 change 三件套 → 核对范围后继续
 ```
 
-整套方法的核心:Quick 零文档,Full 三件套(proposal 保存需求决策、spec 冻结功能契约、plan 指导一次实施),Blueprint 保存系统边界,Roadmap 安排交付顺序,代码和 Git 保存实施事实,`STATE.md` 保存当前结果并负责 AI 接力。
+整套方法的核心:Quick 零文档,Full 三件套(proposal 保存需求决策、spec 冻结功能契约、plan 固化技术现实并指导实施),Blueprint 保存系统边界,Roadmap 安排交付顺序,代码和 Git 保存实施事实,本地 state 保存当前结果和下一动作。

@@ -62,9 +62,45 @@ test('spec owns business design and hands off implementation planning', () => {
 
 test('plan fills the existing placeholder and maps all spec contracts', () => {
   const skill = readSkill('plan');
+  const template = fs.readFileSync(path.join(root, 'assets', 'templates', 'plan.md'), 'utf8');
   assert.doesNotMatch(skill, /new plan --change/);
   assert.match(skill, /已有.*plan\.md|plan\.md.*已存在/s);
   assert.match(skill, /REQ-##|REQ.*BR.*AC/s);
+  for (const concept of ['系统入口与调用链', '关键文件与符号', 'Current Behavior', 'Target Behavior', '全局不变量', '条件技术设计']) {
+    assert.match(skill, new RegExp(concept));
+  }
+  for (const field of ['files', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'invariants', 'verify', 'acceptance', 'done']) {
+    assert.match(template, new RegExp(`- ${field}:`));
+  }
+});
+
+test('full change skills persist complete context and reject ambiguous references', () => {
+  const change = readSkill('change');
+  const spec = readSkill('spec');
+  assert.match(change, /已确认.*决定|决定.*取舍/s);
+  assert.match(change, /未采用.*原因/);
+  assert.match(spec, /术语与业务对象/);
+  assert.match(spec, /按之前讨论|模糊引用/);
+  assert.doesNotMatch(spec, /跨模型|跨 AI|跨AI|交接自检/);
+});
+
+test('execution and verification audit the plan technical baseline', () => {
+  const execute = readSkill('execute-plan');
+  const verify = readSkill('verify-plan');
+  for (const concept of ['路径', 'Symbol', '调用链', 'Current Behavior', 'interfaces']) {
+    assert.match(execute, new RegExp(concept));
+  }
+  for (const concept of ['Target Behavior', '不变量', '条件技术设计', '契约映射']) {
+    assert.match(verify, new RegExp(concept));
+  }
+});
+
+test('lifecycle commands are thin skill routers', () => {
+  for (const name of ['change', 'spec', 'plan', 'execute', 'verify']) {
+    const command = fs.readFileSync(path.join(root, 'commands', 'project-kit', `${name}.md`), 'utf8');
+    assert.match(command, /SKILL\.md/);
+    assert.ok(command.split(/\r?\n/).length <= 12, `${name} command 不应复制技能流程`);
+  }
 });
 
 test('current lifecycle guidance does not require spec hash', () => {

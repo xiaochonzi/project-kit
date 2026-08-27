@@ -7,7 +7,7 @@ description: Use when receiving any new requirement, scope change, or enhancemen
 
 ## Overview
 
-新需求的唯一入口。先识别用户意图，再以影响范围校正 Quick/Full 判定。Quick 零文档直接实施；Full 一次创建 `docs/changes/CR-###-<slug>/{proposal,spec,plan}.md`，本技能只完善 Proposal，不编写 Spec 或 Plan 正文。
+新需求的唯一入口。先识别用户意图，再以影响范围校正 Quick/Full 判定。Quick 零文档直接实施；Full 一次创建 `docs/changes/CR-###-<slug>/{proposal,spec,plan}.md`，本技能只完善 Proposal，不编写 Spec 或 Plan 正文。Full 三件套共同保存完整上下文，不把必要决定留在原始对话中。
 
 **开始前宣布：**“我正在使用 change 技能处理变更请求。”
 
@@ -64,12 +64,15 @@ node scripts/project-docs.cjs new change --title <变更标题> --root <项目�
 
 填写：
 
-- 背景与问题：需求来源、当前状态和证据
-- 期望结果：为什么值得进入 Full
-- 包含 / 不包含：立项范围，不是详细业务规则
-- 影响范围：模块、契约文档、API、数据、权限和风险
-- 决定：用户确认后的结论
-- 未决问题：会影响是否立项或范围的问题
+- 背景与问题：需求来源、当前状态、真实证据和用户影响
+- 期望结果：为什么值得进入 Full，以可观察结果表述
+- 包含 / 不包含：立项范围，以及排除相邻能力的原因
+- 影响范围：业务、模块、契约文档、API、数据、权限、配置、测试和风险
+- 决定 / 已确认选择：所有影响后续设计的结论、约束和技术原则
+- 决定 / 未采用方向与原因：已讨论但不采用的方向及理由；没有时明确写“无”
+- 未决问题：会影响是否立项或范围的问题；accepted 前必须精确写为“无”
+
+引用代码、规则或现有文档时，同时摘要其职责、相关事实和本 Change 使用它的原因，不能只留下路径或“按之前讨论”等外部引用。
 
 Proposal 不写业务规则、验收标准、文件路径、实现方案或任务。
 
@@ -98,6 +101,8 @@ Proposal accepted 后停止本技能：
 - [ ] Quick 必须满足全部条件；Full 只需命中一个信号
 - [ ] Full 目录同时存在 proposal/spec/plan
 - [ ] Proposal 只有立项问题、目标、范围和影响，没有提前设计实现
+- [ ] 已确认选择、未采用方向与原因均已写入 Proposal，未决问题为“无”
+- [ ] 理解立项所需的事实和决定不依赖原始对话
 - [ ] 用户已明确决定 Proposal 状态
 - [ ] Accepted 后交接 `spec`，没有越权继续写 Spec
 
@@ -127,4 +132,4 @@ Full Proposal accepted → `spec`。Quick → 直接实现、验证并记录本�
 | “三件套建好了，顺便把 Spec 写了” | 文件存在不等于职责转移；业务设计属于 `spec` |
 | “用户说直接改，所以一定 Quick” | 用户意图优先，但不能覆盖真实影响范围 |
 | “小改也留个 Proposal 更稳” | Quick 零文档是明确设计 |
-| “先写一半 Spec，后续模型补” | 半设计会被误当契约，必须完整交给 `spec` |
+| “先写一半 Spec，后续再补” | 半设计会被误当契约，必须完整交给 `spec` |
