@@ -122,7 +122,7 @@ accepted 前必须填写「背景与问题/期望结果/决定」;completed 前 
 
 状态:`draft → approved → verified`。
 
-- approved 时脚本记录 `spec_hash`;verified 时核对 hash,spec 被静默修改会报错。
+- approved 只表示用户已批准当前业务契约;verified 前由独立验收重新核对当前 Spec、实现结果和项目规范。
 - 验收标准必须可验证,禁止"工作正常""体验良好"。
 - 需要继续拆分的信号:包含多个不同的用户结果、多个独立验收流程、同时改变多个无关业务域。
 

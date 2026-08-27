@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **移除 Spec Hash 门禁**：新 Spec 不再生成 `spec_hash`；Spec approved、Plan approved、Spec verified 和项目校验不再依赖内容摘要，继续由状态、REQ/BR/AC 映射与独立验收约束 Full 流程。历史字段保留但不参与判断。
+
 ## 0.3.3 - 2026-08-26
 
 - **Change / Spec / Plan 职责拆分**：Full 分流时由 `new change` 一次创建 proposal/spec/plan；`change` 只完成 Proposal，新增独立 `spec` 技能负责业务行为、边界、失败和 REQ/BR/AC 契约设计，`plan` 只负责技术设计与任务拆解。

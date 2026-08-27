@@ -43,7 +43,7 @@ node scripts/project-docs.cjs transition CR-### --to verified --kind spec --root
 node scripts/project-docs.cjs transition CR-### --to completed --root <项目根>
 ```
 
-脚本要求:spec verified 前 spec_hash 与 Spec 内容一致(防静默修改契约)、Plan 必须 completed;change completed 前 spec verified 且 plan completed。
+脚本要求:spec verified 前 Plan 必须 completed;change completed 前 spec verified 且 plan completed。当前 Spec 契约与代码规范是否通过由 verify-plan 的独立证据判定。
 
 任一必需标准 fail → 不标记完成,给出最小下一动作(回 execute 修复或走 bug)。
 

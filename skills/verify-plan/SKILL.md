@@ -104,7 +104,7 @@ node scripts/project-docs.cjs transition CR-### --to verified --kind spec --root
 node scripts/project-docs.cjs transition CR-### --to completed --root <项目根>
 ```
 
-transition 脚本只负责核对 `spec_hash`、Spec 状态和 Plan 状态;它不替 AI 判断代码规范。**在调用 transition 前,本技能必须确认 Constitution 规范检查全部 `pass`**。change completed 前还必须满足 Spec verified 和 Plan completed。
+transition 脚本只负责核对 Spec 状态和 Plan 状态;它不替 AI 判断当前契约，也不替 AI 判断代码规范。**在调用 transition 前,本技能必须确认 Spec 与 Constitution 规范检查全部 `pass`**。change completed 前还必须满足 Spec verified 和 Plan completed。
 
 把 `docs/roadmap.md` 中该 change 对应任务的状态更新为 `已完成`,更新 `.project-kit/state.md`(完成记录、下一动作、最近完成)。
 
@@ -144,7 +144,7 @@ Constitution 规范检查出现 `fail` 或 `blocked` 时,不得推进 `spec veri
 | 脚本 | AI |
 |---|---|
 | `context verify-plan` 输出上下文 | 逐条运行 Spec/Plan 与 Constitution 证据命令 |
-| `transition` 状态迁移与 spec_hash 核对 | 判定 pass/fail/blocked |
+| `transition` 核对状态并执行迁移 | 判定 pass/fail/blocked |
 | — | 检查越界/回归/Constitution 代码规范 |
 | — | **禁止**:引用旧输出、手修代码、"看起来正确" |
 
@@ -159,4 +159,3 @@ Change completed 后 → `status`(查看下一动作)或进入下一个 change �
 | "执行阶段测过了,不用重跑" | 没有新鲜证据就不是独立验收 |
 | "失败的验收标准写成限制就行" | 失败就是失败,不能用表述掩盖 |
 | "顺手修掉这个越界问题再验收" | 验收不是修复入口,失败→标记,交给 execute-plan |
-| "spec_hash 随便填" | 脚本用它检测 Spec 是否被静默修改——必须准确 |

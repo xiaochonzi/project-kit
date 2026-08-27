@@ -66,3 +66,21 @@ test('plan fills the existing placeholder and maps all spec contracts', () => {
   assert.match(skill, /已有.*plan\.md|plan\.md.*已存在/s);
   assert.match(skill, /REQ-##|REQ.*BR.*AC/s);
 });
+
+test('current lifecycle guidance does not require spec hash', () => {
+  const spec = readSkill('spec');
+  const plan = readSkill('plan');
+  const verify = readSkill('verify-plan');
+  const verifyCommand = fs.readFileSync(path.join(root, 'commands', 'project-kit', 'verify.md'), 'utf8');
+  const lifecycle = fs.readFileSync(path.join(root, 'project-lifecycle.md'), 'utf8');
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+
+  for (const content of [spec, plan, verify, verifyCommand, lifecycle, agents]) {
+    assert.doesNotMatch(content, /spec_hash/);
+  }
+  assert.match(spec, /缺少 REQ\/BR\/AC|REQ\/BR\/AC/);
+  assert.match(plan, /Spec.*approved/);
+  assert.match(plan, /全部.*REQ.*BR.*AC|REQ.*BR.*AC.*全部/s);
+  assert.match(verify, /Plan.*completed/);
+  assert.match(verify, /代码规范/);
+});

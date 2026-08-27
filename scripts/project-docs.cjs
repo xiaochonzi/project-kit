@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const process = require('node:process');
@@ -357,13 +356,6 @@ function contractIds(content) {
   return [...new Set(content.match(CONTRACT_ID_PATTERN) || [])];
 }
 
-function contentHash(content) {
-  const stableContent = content
-    .replace(/^status:[^\r\n]*$/m, 'status: <lifecycle>')
-    .replace(/^spec_hash:[^\r\n]*$/m, 'spec_hash: <hash>');
-  return crypto.createHash('sha256').update(stableContent).digest('hex');
-}
-
 function detectDependencyCycles(documents, errors) {
   const graph = new Map();
   for (const document of documents) {
@@ -492,18 +484,6 @@ function validateProject(root, jsonOutput) {
         }
       }
     }
-    if (document.kind === 'spec' && document.metadata.status === 'verified') {
-      const hash = document.metadata.spec_hash;
-      if (!hash || hash === 'null' || hash !== contentHash(document.content)) {
-        errors.push(`verified Spec 缺少或已偏离 spec_hash: ${document.relativePath}`);
-      }
-    }
-    if (document.kind === 'spec' && document.metadata.status === 'approved') {
-      const hash = document.metadata.spec_hash;
-      if (!hash || hash === 'null' || hash !== contentHash(document.content)) {
-        errors.push(`approved Spec 缺少或已偏离 spec_hash: ${document.relativePath}`);
-      }
-    }
   }
 
   detectDependencyCycles(documents, errors);
@@ -577,19 +557,12 @@ function transitionDocument(root, target, nextStatus, kind) {
     if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Spec 批准前「未决问题」必须为“无”');
   }
   if (document.kind === 'spec' && nextStatus === 'verified') {
-    const hash = document.metadata.spec_hash;
-    if (!hash || hash === 'null' || hash !== contentHash(document.content)) {
-      throw new Error('Spec verified 前 spec_hash 缺失或 Spec 内容已变化，请重新批准');
-    }
     const plan = documents.find((item) => item.kind === 'plan' && item.metadata.change === document.metadata.change);
     if (!plan || plan.metadata.status !== 'completed') throw new Error('Spec verified 前 Plan 必须为 completed');
   }
   if (document.kind === 'plan' && nextStatus === 'approved') {
     const spec = documents.find((item) => item.kind === 'spec' && item.metadata.change === document.metadata.change);
     if (!spec || spec.metadata.status !== 'approved') throw new Error('Plan approved 前 Spec 必须为 approved');
-    if (!spec.metadata.spec_hash || spec.metadata.spec_hash === 'null' || spec.metadata.spec_hash !== contentHash(spec.content)) {
-      throw new Error('Plan approved 前 Spec 的 spec_hash 必须有效');
-    }
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Plan 批准前必须移除模板占位符和 TODO/TBD');
     const taskErrors = [];
     validatePlanTasks(document, taskErrors, []);
@@ -604,13 +577,7 @@ function transitionDocument(root, target, nextStatus, kind) {
     if (/^- \[ \] /m.test(document.content)) throw new Error('Plan completed 前必须勾选全部任务');
   }
 
-  let content = replaceFrontmatterField(document.content, 'status', nextStatus);
-  if (document.kind === 'spec' && nextStatus === 'approved') {
-    content = replaceFrontmatterField(content, 'spec_hash', contentHash(content));
-  }
-  if (document.kind === 'spec' && !['approved', 'verified'].includes(nextStatus)) {
-    content = replaceFrontmatterField(content, 'spec_hash', 'null');
-  }
+  const content = replaceFrontmatterField(document.content, 'status', nextStatus);
   fs.writeFileSync(document.filePath, content, 'utf8');
   process.stdout.write(`${document.relativePath}: ${currentStatus} -> ${nextStatus}\n`);
 }

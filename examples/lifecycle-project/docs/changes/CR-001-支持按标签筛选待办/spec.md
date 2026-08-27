@@ -3,7 +3,6 @@ change: CR-001
 title: 支持按标签筛选待办
 status: verified
 created_at: 2026-08-12
-spec_hash: ece7a810ed903df66d1ab344c182a670b99c3a80262b4d44bfa5252fe9209326
 ---
 
 # 支持按标签筛选待办

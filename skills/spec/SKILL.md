@@ -130,7 +130,7 @@ node scripts/project-docs.cjs context spec --target <CR-###> --root <项目根>
 node scripts/project-docs.cjs transition CR-### --to approved --kind spec --root <项目根>
 ```
 
-脚本会拒绝占位符、缺少 REQ/BR/AC、空核心章节或未决问题不为“无”的 Spec，并记录 `spec_hash`。
+脚本会拒绝占位符、缺少 REQ/BR/AC、空核心章节或未决问题不为“无”的 Spec，并把状态更新为 approved。
 
 ## 校验清单
 
@@ -146,8 +146,8 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind spec --root
 | 脚本 | AI |
 |---|---|
 | `context spec` 输出上下文路径 | 探查现实、澄清业务、设计契约 |
-| `transition` 校验结构、编号、占位符并记录 hash | 判断适用性、解决歧义、请求用户批准 |
-| `validate` 检查结构与 hash | 不写实现计划，不替用户做产品决定 |
+| `transition` 校验结构、编号、占位符并迁移状态 | 判断适用性、解决歧义、请求用户批准 |
+| `validate` 检查结构与状态 | 不写实现计划，不替用户做产品决定 |
 
 ## 停止条件
 

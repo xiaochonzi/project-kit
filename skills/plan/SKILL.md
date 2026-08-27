@@ -22,7 +22,7 @@ Plan 可以选择技术方案，但不得新增、改变或删除 Spec 中的业
 ## Required Inputs
 
 - [ ] `proposal.md` 存在且 `status: accepted`
-- [ ] `spec.md` 存在且 `status: approved`，`spec_hash` 有效
+- [ ] `spec.md` 存在且 `status: approved`
 - [ ] 同目录已有 `plan.md` 且 `status: draft`
 - [ ] 已完整读取 `docs/constitution.md` 或项目等效编码规则、`docs/blueprint.md`（如有）、`.project-kit/state.md`
 - [ ] 已读取可选 `diagrams.md`、相关代码和测试模式
@@ -116,7 +116,7 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root
 
 ## 校验清单
 
-- [ ] Spec approved 且 hash 有效
+- [ ] Spec 为 approved
 - [ ] 已有 `plan.md` 被完整填写，没有再次创建
 - [ ] 技术设计只实现 Spec，没有新增业务能力
 - [ ] 每个任务有 files/read_first/action/verify/acceptance/done
@@ -133,7 +133,7 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root
 
 ## 停止条件
 
-- Spec 未 approved、hash 失效或仍有业务歧义 → 返回 `spec`。
+- Spec 未 approved 或仍有业务歧义 → 返回 `spec`。
 - Spec 与代码现实冲突 → 报告冲突，返回 `spec` 或 `change`。
 - 需要修改 Blueprint、扩大范围或新增业务能力 → 返回 `change`。
 - 无法给出真实文件路径、接口或验证命令 → 停止，不猜测。

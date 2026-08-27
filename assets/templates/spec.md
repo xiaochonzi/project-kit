@@ -3,7 +3,6 @@ change: {{CHANGE}}
 title: {{TITLE}}
 status: draft
 created_at: {{DATE}}
-spec_hash: null
 ---
 
 # {{TITLE}}
