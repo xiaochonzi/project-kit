@@ -313,3 +313,41 @@ test('new diagrams requires existing proposal (order constraint)', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('validate rejects contract id letter-suffix variants (AC-09a)', () => {
+  const tmp = makeTmpProject();
+  try {
+    run(['new', 'change', '--title', '编号变体', '--root', tmp]);
+    const changeDir = path.join(tmp, 'docs', 'changes', 'CR-001-编号变体');
+    fs.writeFileSync(
+      path.join(changeDir, 'spec.md'),
+      '---\nchange: CR-001\ntitle: 编号变体\nstatus: draft\n---\n\n## 验收标准\n\n- [ ] AC-01：通过。\n- [ ] AC-09a：变体。\n- [ ] AC-09b：变体。\n',
+      'utf8'
+    );
+    const result = JSON.parse(run(['validate', '--root', tmp, '--json'], true));
+    assert.equal(result.valid, false);
+    assert.match(result.errors.join('\n'), /非法契约编号/);
+    assert.match(result.errors.join('\n'), /AC-09a/);
+    assert.match(result.errors.join('\n'), /AC-09b/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('validate warns on machine absolute paths in plan', () => {
+  const tmp = makeTmpProject();
+  try {
+    run(['new', 'change', '--title', '绝对路径', '--root', tmp]);
+    const changeDir = path.join(tmp, 'docs', 'changes', 'CR-001-绝对路径');
+    fs.writeFileSync(
+      path.join(changeDir, 'plan.md'),
+      '---\nchange: CR-001\ntitle: 绝对路径\nstatus: draft\n---\n\n## 实施目标\n\n目标。\n\n## 实现策略\n\n策略。\n\n## 技术设计\n\n### 当前技术现状\n\n现状。\n\n### 目标技术设计\n\n目标。\n\n## 全局不变量\n\n不变。\n\n## 条件技术设计\n\n状态机、错误策略、并发与幂等、数据与事务、API / 事件、配置、兼容与迁移、权限与安全、可观测性、参考实现。\n\n## Tasks\n\n### Task 1: 实现\n\n- files: file.js\n- symbols: run\n- read_first: file.js\n- depends_on: 无\n- interfaces: 输入输出\n- current_behavior: 当前\n- target_behavior: 目标\n- implementation: 实现\n- invariants: 不变\n- verify: node /Users/stone/project-kit/scripts/project-docs.cjs validate --root .\n- acceptance: 通过\n- done: 通过\n\n- [ ] Task 1\n\n## 验收标准映射\n\nREQ-01 BR-01 AC-01 → Task 1\n\n## Constitution 规范映射清单\n\nAGENTS.md → Task 1\n\n## 最终验证\n\n验证。\n\n## 非目标\n\n无。\n\n## 未决问题\n\n无\n',
+      'utf8'
+    );
+    const result = JSON.parse(run(['validate', '--root', tmp, '--json']));
+    assert.equal(result.valid, true);
+    assert.match(result.warnings.join('\n'), /机器绝对路径/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

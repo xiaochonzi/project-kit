@@ -62,7 +62,7 @@ node scripts/project-docs.cjs new change --title <变更标题> --root <项目�
 
 ### Step 2：只完善 Proposal
 
-填写：
+按 `proposal.md` 模板填写以下章节（各章节的细节度与红线见模板注释）：
 
 - 背景与问题：需求来源、当前状态、真实证据和用户影响
 - 期望结果：为什么值得进入 Full，以可观察结果表述
@@ -74,7 +74,7 @@ node scripts/project-docs.cjs new change --title <变更标题> --root <项目�
 
 引用代码、规则或现有文档时，同时摘要其职责、相关事实和本 Change 使用它的原因，不能只留下路径或“按之前讨论”等外部引用。
 
-Proposal 不写业务规则、验收标准、文件路径、实现方案或任务。
+Proposal 不写业务规则、验收标准、文件路径、实现方案或任务——这些分别属于 `spec` 与 `plan`。
 
 ### Step 3：影响分析与用户决定
 
@@ -99,9 +99,10 @@ Proposal accepted 后停止本技能：
 ## 校验清单
 
 - [ ] Quick 必须满足全部条件；Full 只需命中一个信号
+- [ ] 路由判定有依据（意图 + 影响范围），无擅自降级或擅自 Full
 - [ ] Full 目录同时存在 proposal/spec/plan
-- [ ] Proposal 只有立项问题、目标、范围和影响，没有提前设计实现
-- [ ] 已确认选择、未采用方向与原因均已写入 Proposal，未决问题为“无”
+- [ ] Proposal 只有立项问题、目标、范围和影响，无业务规则/类名/文件路径/实现
+- [ ] 已确认选择、未采用方向与原因均已写入，未决问题为“无”
 - [ ] 理解立项所需的事实和决定不依赖原始对话
 - [ ] 用户已明确决定 Proposal 状态
 - [ ] Accepted 后交接 `spec`，没有越权继续写 Spec

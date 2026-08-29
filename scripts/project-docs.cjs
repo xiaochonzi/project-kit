@@ -87,6 +87,8 @@ const CONTENT_GATES = {
 };
 const APPROVAL_PLACEHOLDER_PATTERN = /<!--\s*由 (?:change|spec|plan) 技能[\s\S]*?-->|\b(?:TBD|TODO)\b|<(?:任务名|精确文件路径|修改或验证[^>]*|执行前必须读取[^>]*|前置 Task[^>]*|本 Task[^>]*|当前行为[^>]*|完成后的[^>]*|可直接执行[^>]*|该任务后[^>]*|可观察[^>]*|何时[^>]*|是\/否|原因|章节或 Task|命令[^>]*|计划[^>]*|需求名称|触发条件|目标行为|业务规则|可得到[^>]*)>/i;
 const CONTRACT_ID_PATTERN = /\b(?:REQ|BR|AC)-\d{2,}\b/g;
+const CONTRACT_ID_VARIANT_PATTERN = /\b(?:REQ|BR|AC)-\d{2,}[a-z]+\b/gi;
+const MACHINE_ABSOLUTE_PATH_PATTERN = /(?:\/Users\/|\/home\/|[A-Za-z]:[\\/])/;
 const LEGACY_PLAN_TASK_FIELDS = ['files', 'read_first', 'action', 'verify', 'acceptance', 'done'];
 const PLAN_TASK_FIELDS = ['files', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'invariants', 'verify', 'acceptance', 'done'];
 const CONDITIONAL_DESIGN_CATEGORIES = ['状态机', '错误策略', '并发与幂等', '数据与事务', 'API / 事件', '配置', '兼容与迁移', '权限与安全', '可观测性', '参考实现'];
@@ -481,6 +483,13 @@ function validateProject(root, jsonOutput) {
       if (document.metadata.status === 'completed' && /^- \[ \] /m.test(document.content)) {
         errors.push(`completed Plan 仍有未勾选任务: ${document.relativePath}`);
       }
+      if (MACHINE_ABSOLUTE_PATH_PATTERN.test(document.content)) {
+        warnings.push(`Plan 含机器绝对路径（跨机器无法复现）: ${document.relativePath}`);
+      }
+    }
+    const variantIds = [...new Set(document.content.match(CONTRACT_ID_VARIANT_PATTERN) || [])];
+    if (variantIds.length > 0) {
+      errors.push(`非法契约编号（字母后缀变体，应重编号为下一个整数）: ${variantIds.join('、')} @ ${document.relativePath}`);
     }
   }
 
@@ -555,6 +564,8 @@ function transitionDocument(root, target, nextStatus, kind) {
     const proposal = documents.find((item) => item.kind === 'proposal' && item.metadata.id === document.metadata.change);
     if (!proposal || proposal.metadata.status !== 'accepted') throw new Error('Spec approved 前 Change 必须为 accepted');
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Spec 批准前必须移除模板占位符和 TODO/TBD');
+    const variantIds = [...new Set(document.content.match(CONTRACT_ID_VARIANT_PATTERN) || [])];
+    if (variantIds.length > 0) throw new Error(`非法契约编号（字母后缀变体）: ${variantIds.join('、')}`);
     const empty = emptySections(document, ['术语与业务对象', '问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '禁止事项', '验收标准', '未决问题']);
     if (empty.length > 0) throw new Error(`Spec 批准前必须填写: ${empty.join('、')}`);
     const ids = contractIds(document.content);
@@ -578,6 +589,9 @@ function transitionDocument(root, target, nextStatus, kind) {
     const spec = documents.find((item) => item.kind === 'spec' && item.metadata.change === document.metadata.change);
     if (!spec || spec.metadata.status !== 'approved') throw new Error('Plan approved 前 Spec 必须为 approved');
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Plan 批准前必须移除模板占位符和 TODO/TBD');
+    const variantIds = [...new Set(document.content.match(CONTRACT_ID_VARIANT_PATTERN) || [])];
+    if (variantIds.length > 0) throw new Error(`非法契约编号（字母后缀变体）: ${variantIds.join('、')}`);
+    if (MACHINE_ABSOLUTE_PATH_PATTERN.test(document.content)) throw new Error('Plan 批准前不得含机器绝对路径（跨机器无法复现）');
     const taskErrors = [];
     validatePlanTasks(document, taskErrors, [], PLAN_TASK_FIELDS);
     if (taskErrors.length > 0) throw new Error(taskErrors.join('\n'));

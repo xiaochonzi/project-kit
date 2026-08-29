@@ -19,6 +19,33 @@ NO PLAN WITHOUT AN APPROVED SPEC
 
 Plan 可以选择技术方案，但不得新增、改变或删除 Spec 中的业务行为。Spec 有歧义、与代码现实冲突或缺少契约时，停止并返回 `spec`。
 
+**单一事实来源**：一条信息只写一次。Plan 引用 Spec 契约用编号（REQ/BR/AC），不得复制 Spec 的契约正文；重复书写会引入漂移，破坏跨工具无歧义执行。
+
+## Plan 的定位与细节度
+
+Plan 是三件套中**唯一记录技术现实与实施路径**的文档。它的读者是执行 AI 工具，读完必须能：
+
+1. 直接改代码，不用重新探查代码现实；
+2. 不用依赖原始对话或生成者补充。
+
+**细节度双向判据**：
+
+- **下限**：消除歧义——换一台新机器、一个陌生 AI，拿到 Plan 就能直接开始改并跑通验证。
+- **上限**：不越界到 Spec 的职责——不发明 Spec 之外的业务行为。
+
+**分层归属**：Plan 承接 Spec，但只写 Spec 不写的那一面。
+
+| 信息 | 写在哪 |
+|---|---|
+| 业务流程图（参与者=角色） | Spec |
+| **技术调用链**（参与者=类名/Symbol） | **Plan** |
+| 业务状态机（迁移规则） | Spec |
+| **状态机技术实现**（表/锁/幂等） | **Plan** |
+| 对外 API 字段 + 语义 | Spec |
+| **内部 DTO/VO 类名、方法签名** | **Plan** |
+
+**结论必须落盘**：引用外部（代码/规则/研究/工具结果）必须摘要其结论，不能只写“去读 X 结果”。正确写法是“`<方法名>`：高风险，存在接口级调用方和未解析调用点”；错误写法是“`read_first: 去跑依赖分析看结果`”。
+
 ## Required Inputs
 
 - [ ] `proposal.md` 存在且 `status: accepted`
@@ -47,7 +74,7 @@ node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 - 关键文件与符号：文件、Symbol、当前职责、相关行为和本 Change 使用原因
 - Current Behavior：当前如何运行，以及代码、测试或配置证据
 
-若 Spec 假设和代码冲突，报告具体冲突并停止，不通过改 Plan 偷换业务语义。
+**结论必须落盘**：引用外部必须摘要结论（见上文正反例）。若 Spec 假设和代码冲突，报告具体冲突并停止，不通过改 Plan 偷换业务语义。
 
 ### Step 3：建立适用规范清单
 
@@ -99,14 +126,14 @@ node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 
 - files: <精确文件路径>
 - symbols: <修改或验证的 Symbol；纯文档任务说明定位对象>
-- read_first: <执行前必须读取的文件和 Symbol，按顺序列出>
+- read_first: <执行前必须读取的文件和 Symbol，按顺序列出；并摘要本 Task 依赖的结论（“X 的结论是 Y”），不能只写“去读 X 结果”>
 - depends_on: <前置 Task 或“无”>
 - interfaces: <本 Task 消费和产出的接口、数据或文档契约>
 - current_behavior: <当前行为和证据>
 - target_behavior: <完成后的唯一目标行为>
 - implementation: <可直接执行的实现步骤>
 - invariants: <本 Task 不得破坏的约束>
-- verify: <任务后立即运行的真实命令>
+- verify: <任务后立即运行的真实命令；机器无关，禁用户主目录路径或盘符路径；引用的脚本必须已由某 Task 创建或已存在>
 - acceptance: <可观察通过条件，并引用 REQ/BR/AC>
 - done: <何时可以勾选>
 
@@ -134,6 +161,10 @@ TDD 工作按 RED → GREEN → CHECK 排序。不要把“写测试、实现、
 - Spec 编号没有任务或验证覆盖
 - 任务引用不存在的旧文件、命令或接口
 - 调用链、Symbol、Current Behavior 或接口只存在于探查过程，没有写入 Plan
+- **“去读/去跑 X 结果”式未落盘引用**（`read_first: 去跑依赖分析看结果` = 未完成，必须写出结论）
+- **机器绝对路径**（用户主目录路径、盘符路径）
+- **verify/read_first 引用的脚本或路径在仓库内不存在**，且没有任务负责创建它们
+- **复制了 Spec 的契约正文**（违反单一事实来源，应改为引用编号）
 
 再检查任务依赖、类型和命名前后一致，验证命令能在目标仓库执行。
 
@@ -145,7 +176,7 @@ TDD 工作按 RED → GREEN → CHECK 排序。不要把“写测试、实现、
 node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root <项目根>
 ```
 
-脚本会拒绝占位符、空章节、字段不完整或遗漏任一 Spec 契约编号的 Plan。
+脚本会拒绝占位符、空章节、字段不完整、机器绝对路径或遗漏任一 Spec 契约编号的 Plan。
 
 ## 校验清单
 
@@ -154,7 +185,10 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root
 - [ ] 技术设计记录系统入口与调用链、关键文件与符号、Current/Target Behavior 和全局不变量
 - [ ] 十类条件技术设计均有适用性、原因和对应设计或 Task
 - [ ] 每个任务有 files/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/invariants/verify/acceptance/done
+- [ ] read_first 里无“去读/去跑 X 结果”式未落盘引用，依赖结论已写出
+- [ ] verify 命令机器无关，引用的脚本已存在或已由某 Task 创建；无机器绝对路径
 - [ ] 全部 REQ/BR/AC 和适用编码规范均已映射
+- [ ] Plan 未复制 Spec 契约正文（引用用编号）
 - [ ] 用户明确批准，状态迁移成功
 
 ## 脚本/AI 分工
@@ -162,7 +196,7 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root
 | 脚本 | AI |
 |---|---|
 | `context plan` 输出上下文路径 | 探索代码、选择技术实现 |
-| `transition` 校验任务字段、占位符和契约覆盖 | 填写已有 Plan、建立任务和规范映射 |
+| `transition` 校验任务字段、占位符、机器绝对路径和契约覆盖 | 填写已有 Plan、建立任务和规范映射 |
 | `validate` 校验结构与状态 | 不引入 Spec 外能力，不开始实施 |
 
 ## 停止条件
@@ -185,3 +219,4 @@ Plan approved → `execute-plan`。本技能只写计划，不修改代码。
 | “Spec 没写，Plan 顺便决定” | Plan 不能成为隐形业务契约 |
 | “写大步骤，执行时再探索” | 可执行 Plan 必须提前记录精确文件、Symbol、接口、现状和验证 |
 | “只映射 AC 就够了” | REQ 和 BR 也可能在拆解中被静默遗漏 |
+| “把 Spec 的契约正文抄过来更完整” | 违反单一事实来源，Spec 一改 Plan 就漂移 |
