@@ -7,7 +7,9 @@ description: Use when a Full change's Plan is approved and needs execution — i
 
 ## Overview
 
-严格按已批准计划实施,勾选 `plan.md` 任务并把验证结果写回。**"代码写完了"不等于"任务完成"**——每个任务必须有可验证的证据(命令+输出)。
+严格按已批准三件套实施，勾选 `plan.md` 任务并把验证结果写回。执行者把落盘 proposal/spec/plan 视为唯一需求与实施上下文，不使用原始对话补充决定，也不在执行阶段重新设计业务。
+
+**“代码写完了”不等于“任务完成”**——每个任务必须产生 `outputs` 并有可验证的命令与输出证据。
 
 **不产出独立执行文档**——执行事实记录在 plan.md 的勾选与「最终验证」区,结论同步到 `.project-kit/state.md`。
 
@@ -40,7 +42,9 @@ NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
 - [ ] 已读 `.project-kit/state.md`、`docs/constitution.md` 或项目等效编码规则（如 `AGENTS.md`），以及 Plan 的「Constitution 规范映射清单」；若存在 `diagrams.md`，一并读取
-- [ ] 目标仓库可构建、测试命令可运行
+- [ ] 已读取 Plan 的「代码基线」「执行环境」「Implementation Binding」
+- [ ] 每个 Task 包含 `file_actions`、`outputs`、`decisions`、`prerequisites` 和 `stop_if`
+- [ ] 目标仓库满足执行环境；缺失项按 Plan 指定动作处理，不自行跳过
 
 ## TDD Iron Law(每任务严格执行)
 
@@ -80,28 +84,31 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 
 ### Step 2: 批判性检查 Plan(改代码前,最后一次机会)
 
-- [ ] Plan 里每个 `files` 路径指向的文件/目录真实存在(新建文件除外)
+- [ ] 当前仓库、分支、commit 和 worktree 与「代码基线」一致；不一致时已重新核对全部受影响事实
+- [ ] `file_actions` 标记为 modify/delete/verify 的路径真实存在；标记 create 的路径尚未被错误占用
 - [ ] `symbols` 和 `read_first` 引用的 Symbol 存在，签名与 Plan 描述一致
 - [ ] Plan 的系统入口与调用链可由当前代码定位，各层职责一致
 - [ ] Plan 的 Current Behavior 有代码、测试或配置证据，未被代码变化推翻
-- [ ] 每个 Task 的 `interfaces`、`depends_on` 和前后任务使用的名称/数据结构一致
-- [ ] 每个 `verify` 命令可运行
-- [ ] 任务依赖顺序无环
+- [ ] 每个 Task 的 `interfaces`、`depends_on`、`outputs` 和前后任务名称/数据结构一致
+- [ ] `prerequisites` 已满足；`verify` 命令和本地脚本在使用时存在
+- [ ] 每个 DEC / REQ / BR / AC 在 Implementation Binding 和任务中有一致绑定
+- [ ] 任务依赖顺序无环，所有 `stop_if` 均可判断
 - [ ] Plan 只覆盖本 Spec 范围,没有相邻问题/未来设计混入
 
-**任何一项不满足 → 停止,记录偏差,回 plan 修订。禁止边执行边改 Plan。**
+**任何一项不满足 → 按 `stop_if` 停止，记录偏差并回 plan/spec/change 修订。禁止使用原始对话补全、现场猜测或边执行边改批准语义。**
 
 ### Step 3: 逐任务执行(每个任务一个 TDD 循环)
 
 对 Plan 中每个 Task N:
 
-1. **读 `read_first`** 指定文件和 Symbol，再核对该 Task 的 Current Behavior、Target Behavior、interfaces 与 invariants
-2. **只修改 `files` 范围内的文件**——不在范围内,哪怕"顺手就能改",不碰
-3. **RED**:写/运行该任务的失败测试,确认 FAIL
-4. **GREEN**:写最小实现,运行确认 PASS
-5. **CHECK**:对照 `acceptance`,可观察结果满足?
-6. **记录**:在 plan.md 勾选 `- [x] Task N`,把命令+输出摘要追加到「最终验证」区
-7. **提交**:小步提交,描述该任务做了什么
+1. **检查 `prerequisites` 和 `stop_if`**；触发停止条件时不得修改代码
+2. **读 `read_first`** 指定文件、Symbol 和已落盘结论，再核对 Current/Target、interfaces、decisions 与 invariants
+3. **按 `file_actions` 操作**：只创建、修改、删除或验证声明的 `files`；范围外文件不碰
+4. **RED**：写/运行该任务的失败测试，确认因目标行为尚未实现而 FAIL
+5. **GREEN**：按 `implementation` 写最小实现，运行确认 PASS
+6. **CHECK**：核对 `outputs` 已真实产生，`acceptance` 中的 REQ/BR/AC 可观察满足
+7. **记录**：在 plan.md 勾选 `- [x] Task N`，把命令、输出摘要和产物追加到「最终验证」区
+8. **提交**：按项目约定小步提交，描述该任务的实际产物
 
 ### Step 4: 验证失败处理
 
@@ -141,8 +148,9 @@ node scripts/project-docs.cjs transition CR-### --to completed --kind plan --roo
 
 | 条件 | 动作 |
 |---|---|
-| Plan 未批准/过期/与代码现实冲突 | 回 plan 修订 |
-| 需改 Plan 范围外文件 | 停止;可能需要 change 或 plan 修订 |
+| Plan 未批准/代码基线过期/与代码现实冲突 | 回 plan 修订 |
+| `prerequisites` 不满足或触发 Task `stop_if` | 按 Plan 指定动作停止并报告 |
+| 需改 `file_actions` 范围外文件 | 停止;可能需要 change 或 plan 修订 |
 | 需改 Spec 语义/加功能/跨模块/新架构决定 | 转 change |
 | 需要未授权的外部写操作(删数据/推远端) | 停止,等用户授权 |
 | 连续修复无改善 | 停止:Plan 假设错误,回 plan |

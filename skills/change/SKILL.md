@@ -1,136 +1,185 @@
 ---
 name: change
-description: Use when receiving any new requirement, scope change, or enhancement — route it to Quick direct implementation or a Full change with proposal/spec/plan scaffolding. If it is a defect against an approved Spec, use bug instead.
+description: Use when receiving any new requirement, scope change, or enhancement — route it to Quick direct implementation or a Full change whose Proposal must be written. If it is a defect against an approved Spec, use bug instead.
 ---
 
 # Change
 
 ## Overview
 
-新需求的唯一入口。先识别用户意图，再以影响范围校正 Quick/Full 判定。Quick 零文档直接实施；Full 一次创建 `docs/changes/CR-###-<slug>/{proposal,spec,plan}.md`，本技能只完善 Proposal，不编写 Spec 或 Plan 正文。Full 三件套共同保存完整上下文，不把必要决定留在原始对话中。
+新需求的唯一入口。先根据用户意图和真实影响分流 Quick / Full；Quick 零文档直接实施，Full 原子创建 `docs/changes/CR-###-<slug>/{proposal,spec,plan}.md` 的最小骨架，并在本技能中从空正文完整编写 Proposal。
+
+Proposal 回答“为什么做、做多大、哪些决定已经冻结”。它不是需求契约，也不是实现计划。
+
+## The Document Is the Handoff
+
+后续 AI 没有原始对话，也不应重新猜测立项范围。理解 Proposal 所需的事实、证据摘要、范围和决定必须全部落盘；“按之前讨论”“参照原型”“去看分析结果”都不能代替正文。
 
 **开始前宣布：**“我正在使用 change 技能处理变更请求。”
-
-## 用户意图优先
-
-先判断用户是在要求“直接完成局部修改”，还是要求“创建、设计、梳理一项需求”。“使用 change”只是入口指令，本身不等于 Quick。
-
-- 用户明确要求创建或设计需求、Proposal、Spec、Plan 或完整生命周期 → Full。
-- 用户明确要求直接修改文件 → 仍须满足 Quick 的全部条件；文件类型（包括 `.sql`）不能单独决定路径。
-- 意图不明确或 Quick/Full 信号冲突 → 先说明影响范围和冲突点，只问一个决定路径的问题。
-
-## The Iron Law
-
-```
-FULL PATH ONLY: PROPOSAL → SPEC → PLAN → EXECUTE → VERIFY
-```
-
-铁律只适用于已分流为 Full 的需求。Quick 不创建 proposal/spec/plan，用户也可以明确要求直接处理一个满足 Quick 条件的局部修改。
 
 ## 路径判定
 
 | 路径 | 判据 | 文档 |
-|---|---|---|
-| **Quick** | 以下条件全部满足：只有一个明确用户结果；单一局部模块；不改变契约/API/数据模型/权限；一次小范围实现可完成；只有一组验收流程；用户未要求创建或设计需求文档 | 零文档 |
-| **Full** | 以下信号任一命中：用户要求创建/设计需求；多个模块或独立结果；架构/API/数据模型/权限变化；需要多轮实现；多组独立验收；范围或风险不清 | proposal + spec + plan |
+| --- | --- | --- |
+| **Quick** | 以下全部满足：单一明确结果；单一局部模块；不改变契约/API/数据模型/权限；一次小范围实现；一组验收；用户未要求需求设计 | 零文档 |
+| **Full** | 任一命中：用户要求创建或设计需求；多模块或多个独立结果；架构/API/数据模型/权限变化；多轮实现；多组验收；范围或风险不清 | proposal + spec + plan |
 
-拿不准时询问用户，不自动降级为 Quick，也不擅自创建 Full change。
+意图与影响信号冲突时，只问一个决定路径的问题。拿不准不得自动降级为 Quick，也不得擅自创建 Full。
 
-## Quick 流程
+## Quick Process
 
-1. 澄清改什么、为什么、影响哪些文件、如何验证。
-2. 用户同轮确认后直接实现并运行相关测试。
-3. 记录 git commit，并在 `.project-kit/state.md` 写一行最近完成。
+1. 澄清目标、影响文件和验证方法。
+2. 获得用户同轮确认。
+3. 直接实现并运行相关测试。
+4. 记录 git commit，并在 `.project-kit/state.md` 写一行最近完成。
 
-禁止为 Quick 创建任何 `docs/changes/` 文档。
+禁止为 Quick 创建 `docs/changes/` 文档。
 
-## Full 流程
+## Full Required Inputs
 
-### Step 1：原子创建三件套
+- [ ] 项目根和 `docs/` 已存在；否则先使用 `init`
+- [ ] 已读取 `docs/constitution.md`、`docs/blueprint.md`（如有）和相关已批准契约
+- [ ] 已检查 `.project-kit/state.md` 与现有 changes，确认没有重复立项
+- [ ] 当前请求不是已批准 Spec 的缺陷；缺陷使用 `bug`
+
+## Full Process
+
+### Step 1：探查再立项
+
+先收集足以判断范围的事实：
+
+- 用户当前遇到的具体问题和可观察影响
+- 当前系统或流程的真实行为
+- 相关契约、API、数据、权限和模块边界
+- 已讨论的方案、约束和排除方向
+- 会影响是否立项或范围的未决问题
+
+不得根据标题或用户一句话直接填文档。工具、原型、代码和研究材料可以作为证据，但其结论必须写入 Proposal。
+
+### Step 2：原子创建最小三件套
 
 ```bash
 node scripts/project-docs.cjs new change --title <变更标题> --root <项目根>
 ```
 
-命令必须一次创建：
+命令只负责稳定 ID、目录、frontmatter、标题和初始状态：
 
-- `proposal.md`：`status: proposed`
-- `spec.md`：`status: draft`，由 `spec` 技能填写
-- `plan.md`：`status: draft`，由 `plan` 技能填写
+- 三个文件保留 `schema_version: 2`
+- `proposal.md`：`proposed`
+- `spec.md`：`draft`
+- `plan.md`：`draft`
 
-不得手动再次创建 Spec 或 Plan。
+三个文件不得包含指导注释、示例契约、示例 Task 或待填占位符。不得再次创建 Spec 或 Plan。
 
-### Step 2：只完善 Proposal
+### Step 3：从空正文编写 Proposal
 
-按 `proposal.md` 模板填写以下章节（各章节的细节度与红线见模板注释）：
+Proposal 必须包含以下章节，顺序可按阅读需要组织，但标题必须可被 CLI 识别。
 
-- 背景与问题：需求来源、当前状态、真实证据和用户影响
-- 期望结果：为什么值得进入 Full，以可观察结果表述
-- 包含 / 不包含：立项范围，以及排除相邻能力的原因
-- 影响范围：业务、模块、契约文档、API、数据、权限、配置、测试和风险
-- 决定 / 已确认选择：所有影响后续设计的结论、约束和技术原则
-- 决定 / 未采用方向与原因：已讨论但不采用的方向及理由；没有时明确写“无”
-- 未决问题：会影响是否立项或范围的问题；accepted 前必须精确写为“无”
+#### 背景与问题
 
-引用代码、规则或现有文档时，同时摘要其职责、相关事实和本 Change 使用它的原因，不能只留下路径或“按之前讨论”等外部引用。
+写清需求来源、当前行为、可复核问题和用户影响。禁止“感觉不对”“可能有问题”。
 
-Proposal 不写业务规则、验收标准、文件路径、实现方案或任务——这些分别属于 `spec` 与 `plan`。
+#### 证据快照
 
-### Step 3：影响分析与用户决定
+每条证据使用稳定 `EVD-##`：
 
-- 若改变系统能力边界或跨模块约束，报告需要同步 `docs/blueprint.md`。
-- 若一个 change 包含多个可独立交付的系统，先建议拆分。
-- 把 Proposal 和影响分析展示给用户，等待明确的 Accepted、Deferred 或 Rejected。
+```markdown
+- EVD-01
+  - 来源：<可定位来源>
+  - 已确认事实：<完整事实摘要>
+  - 对本 Change 的影响：<为何相关>
+  - 复核方式：<如何重新验证>
+```
+
+来源不可代替事实摘要。即使来源暂时不可访问，读者仍能理解立项依据。
+
+#### 期望结果
+
+只写可观察结果，不写内部实现动作。
+
+#### 包含 / 不包含
+
+- 包含：本 Change 明确交付的能力边界。
+- 不包含：相邻但不做的能力及原因，防止执行时范围蔓延。
+
+#### 影响范围
+
+覆盖适用的业务、模块、契约、API、数据、权限、配置、测试、文档和风险；只到能力或模块级，不写类名、函数和逐文件修改方案。
+
+#### 决定
+
+每项已确认选择使用稳定 `DEC-##`：
+
+```markdown
+### 已确认选择
+
+- DEC-01：<唯一决定>
+  - 原因：<为什么>
+  - 对后续约束：<Spec/Plan 不得重新选择什么>
+```
+
+同时记录“未采用方向与原因”。没有未采用方向时明确写“无”。
+
+#### 未决问题
+
+accepted 前必须精确写为“无”。不能把未决事项藏在“建议”“或者”“暂时”“后续再定”等表达中。
+
+### Step 4：Proposal 文档自检
+
+只依据落盘 Proposal 逐项回答：
+
+1. 为什么值得做？真实证据是什么？
+2. 范围内和范围外分别是什么？
+3. 哪些选择已由 `DEC-##` 冻结，后续不得重新决定？
+4. 是否有事实只存在于原始对话或外部材料？
+5. 是否混入属于 Spec 的业务规则、验收标准，或属于 Plan 的文件和实现？
+6. 是否仍存在两种合理的立项范围解释？
+
+任一答案不唯一或需要原始对话时，直接修正 Proposal。不要用篇幅代替明确性。
+
+### Step 5：用户决定
+
+向用户展示 Proposal 摘要、影响分析、全部 DEC 和排除范围，等待明确选择：Accepted / Deferred / Rejected。
+
+Accepted：
 
 ```bash
 node scripts/project-docs.cjs transition CR-### --to accepted --root <项目根>
 ```
 
-Deferred/Rejected 时记录原因并执行对应迁移，不继续设计 Spec。
+Deferred / Rejected：记录原因并执行对应迁移，不继续设计 Spec。
 
-### Step 4：交接 Spec
-
-Proposal accepted 后停止本技能：
-
-> `CR-###` Proposal 已接受，三件套已就位。下一步使用 `spec` 技能完成 `docs/changes/CR-###-<slug>/spec.md` 的业务设计。
-
-不得在本技能中填写 Spec 或 Plan。
-
-## 校验清单
+## Quality Checklist
 
 - [ ] Quick 必须满足全部条件；Full 只需命中一个信号
-- [ ] 路由判定有依据（意图 + 影响范围），无擅自降级或擅自 Full
-- [ ] Full 目录同时存在 proposal/spec/plan
-- [ ] Proposal 只有立项问题、目标、范围和影响，无业务规则/类名/文件路径/实现
-- [ ] 已确认选择、未采用方向与原因均已写入，未决问题为“无”
-- [ ] 理解立项所需的事实和决定不依赖原始对话
-- [ ] 用户已明确决定 Proposal 状态
-- [ ] Accepted 后交接 `spec`，没有越权继续写 Spec
+- [ ] 三件套是无指导注释、无示例、无占位符的最小骨架
+- [ ] Proposal 从空正文完整编写，不沿模板机械填空
+- [ ] 背景有可复核事实，证据使用 EVD-## 且结论已落盘
+- [ ] 所有冻结选择使用 DEC-##，排除方向有原因
+- [ ] 包含、不包含和影响范围只有一种合理解释
+- [ ] 不含业务契约、验收标准、文件路径或实现任务
+- [ ] 不依赖原始对话或仅可外部访问的资料
+- [ ] 未决问题为“无”且用户明确决定状态
 
-## 脚本/AI 分工
+## Script / Author Responsibility
 
-| 脚本 | AI |
-|---|---|
-| `new change` 分配 ID 并创建三件套 | 判断 Quick/Full、填写 Proposal、影响分析 |
-| `transition` 执行状态迁移 | 请求并记录用户决定 |
-| `validate` 校验 Full 结构 | 不替用户决定范围，不编写 Spec/Plan |
+| CLI | 文档作者 |
+| --- | --- |
+| 分配 ID、原子创建最小骨架 | 判断 Quick / Full，探查事实 |
+| 校验章节、EVD/DEC、占位符和状态 | 从空正文完整编写并自检 Proposal |
+| 执行状态迁移 | 请求并记录用户决定 |
 
-## 停止条件
+CLI 不替用户做产品决定，也不判断证据和范围是否真实。
 
-- 用户意图或影响范围不足以判定路径 → 询问用户。
-- Proposal 有影响立项的未决问题 → 暂停，不 accepted。
-- 用户选择 Deferred/Rejected → 记录后停止。
-- 需求实际是已批准 Spec 的缺陷 → 转 `bug`。
+## Stop Conditions
+
+- 用户意图或影响不足以判定路径 → 只问一个关键问题
+- Proposal 仍有影响范围的未决问题 → 不 accepted
+- 一个 Change 包含多个可独立交付系统 → 建议拆分
+- 需要先改变 Blueprint 边界 → 暂停并处理 Blueprint
+- 实际是 approved Spec 的缺陷 → 转 `bug`
+- 用户选择 Deferred / Rejected → 记录并停止
 
 ## Handoff Rule
 
-Full Proposal accepted → `spec`。Quick → 直接实现、验证并记录本地 state。
-
-## Common Rationalizations
-
-| 借口 | 现实 |
-|---|---|
-| “三件套建好了，顺便把 Spec 写了” | 文件存在不等于职责转移；业务设计属于 `spec` |
-| “用户说直接改，所以一定 Quick” | 用户意图优先，但不能覆盖真实影响范围 |
-| “小改也留个 Proposal 更稳” | Quick 零文档是明确设计 |
-| “先写一半 Spec，后续再补” | 半设计会被误当契约，必须完整交给 `spec` |
+Proposal accepted → `spec`。本技能不得继续写 Spec 或 Plan。

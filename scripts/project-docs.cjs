@@ -80,6 +80,11 @@ const REQUIRED_SECTIONS = {
   change: ['背景与问题', '期望结果', '决定'],
   brief: ['背景', '想解决的问题', '目标用户与场景']
 };
+const AUTHORING_SECTIONS = {
+  proposal: ['背景与问题', '证据快照', '期望结果', '包含', '不包含', '影响范围', '决定', '未决问题'],
+  spec: ['术语与业务对象', '数据权威表', '问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '禁止事项', '验收标准', '未决问题'],
+  plan: ['代码基线', '实施目标', '实现策略', '技术设计', '全局不变量', '条件技术设计', '执行环境', 'Implementation Binding', 'Tasks', '验收标准映射', 'Constitution 规范映射清单', '最终验证', '非目标', '未决问题']
+};
 const CONTENT_GATES = {
   spec: { statuses: ['approved', 'verified'], sections: ['问题与依据', '目标', '范围', '验收标准'] },
   plan: { statuses: ['approved', 'completed'], sections: ['实现策略', 'Tasks', '验收标准映射', '最终验证'] },
@@ -88,9 +93,13 @@ const CONTENT_GATES = {
 const APPROVAL_PLACEHOLDER_PATTERN = /<!--\s*由 (?:change|spec|plan) 技能[\s\S]*?-->|\b(?:TBD|TODO)\b|<(?:任务名|精确文件路径|修改或验证[^>]*|执行前必须读取[^>]*|前置 Task[^>]*|本 Task[^>]*|当前行为[^>]*|完成后的[^>]*|可直接执行[^>]*|该任务后[^>]*|可观察[^>]*|何时[^>]*|是\/否|原因|章节或 Task|命令[^>]*|计划[^>]*|需求名称|触发条件|目标行为|业务规则|可得到[^>]*)>/i;
 const CONTRACT_ID_PATTERN = /\b(?:REQ|BR|AC)-\d{2,}\b/g;
 const CONTRACT_ID_VARIANT_PATTERN = /\b(?:REQ|BR|AC)-\d{2,}[a-z]+\b/gi;
+const EVIDENCE_ID_PATTERN = /\bEVD-\d{2,}\b/g;
+const DECISION_ID_PATTERN = /\bDEC-\d{2,}\b/g;
+const ENHANCED_CHANGE_SCHEMA_VERSION = 2;
 const MACHINE_ABSOLUTE_PATH_PATTERN = /(?:\/Users\/|\/home\/|[A-Za-z]:[\\/])/;
 const LEGACY_PLAN_TASK_FIELDS = ['files', 'read_first', 'action', 'verify', 'acceptance', 'done'];
 const PLAN_TASK_FIELDS = ['files', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'invariants', 'verify', 'acceptance', 'done'];
+const EXECUTION_PLAN_TASK_FIELDS = ['files', 'file_actions', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'outputs', 'decisions', 'invariants', 'prerequisites', 'stop_if', 'verify', 'acceptance', 'done'];
 const CONDITIONAL_DESIGN_CATEGORIES = ['状态机', '错误策略', '并发与幂等', '数据与事务', 'API / 事件', '配置', '兼容与迁移', '权限与安全', '可观测性', '参考实现'];
 
 function parseArguments(argv) {
@@ -363,6 +372,10 @@ function emptySections(document, sections) {
   return sections.filter((section) => sectionBody(document.content, section) === '');
 }
 
+function usesEnhancedChangeSchema(document) {
+  return Number(document.metadata.schema_version) >= ENHANCED_CHANGE_SCHEMA_VERSION;
+}
+
 function contractIds(content) {
   return [...new Set(content.match(CONTRACT_ID_PATTERN) || [])];
 }
@@ -400,7 +413,10 @@ function validatePlanTasks(document, errors, warnings, requiredFields) {
     target.push(`Plan 没有任务: ${document.relativePath}`);
     return;
   }
-  const fields = requiredFields || (/(?:^|\n)-\s+implementation:/m.test(document.content) ? PLAN_TASK_FIELDS : LEGACY_PLAN_TASK_FIELDS);
+  const fields = requiredFields
+    || (usesEnhancedChangeSchema(document) || /(?:^|\n)-\s+file_actions:/m.test(document.content)
+      ? EXECUTION_PLAN_TASK_FIELDS
+      : (/(?:^|\n)-\s+implementation:/m.test(document.content) ? PLAN_TASK_FIELDS : LEGACY_PLAN_TASK_FIELDS));
   for (const [index, task] of tasks.entries()) {
     for (const field of fields) {
       const match = task[1].match(new RegExp(`^-\\s+${field}:[ \\t]*(.*)$`, 'm'));
@@ -470,13 +486,26 @@ function validateProject(root, jsonOutput) {
     if (document.kind !== 'brief' && /\{\{[A-Z_]+\}\}/.test(document.content)) {
       errors.push(`未替换模板变量: ${document.relativePath}`);
     }
-    for (const section of REQUIRED_SECTIONS[document.kind] || []) {
-      if (!sectionExists(document.content, section)) errors.push(`缺少章节「${section}」: ${document.relativePath}`);
-    }
     const gate = CONTENT_GATES[document.kind];
-    if (gate && gate.statuses.includes(status)) {
-      const empty = emptySections(document, gate.sections);
+    const mature = Boolean(gate && gate.statuses.includes(status));
+    const enhanced = usesEnhancedChangeSchema(document);
+    const structureTarget = document.kind === 'brief' || mature ? errors : warnings;
+    for (const section of REQUIRED_SECTIONS[document.kind] || []) {
+      if (!sectionExists(document.content, section)) structureTarget.push(`缺少章节「${section}」: ${document.relativePath}`);
+    }
+    const enhancedStructureTarget = enhanced && mature ? errors : warnings;
+    for (const section of AUTHORING_SECTIONS[document.kind] || []) {
+      if (!(REQUIRED_SECTIONS[document.kind] || []).includes(section) && !sectionExists(document.content, section)) {
+        enhancedStructureTarget.push(`缺少增强章节「${section}」: ${document.relativePath}`);
+      }
+    }
+    if (mature) {
+      const empty = emptySections(document, enhanced ? AUTHORING_SECTIONS[document.kind] : gate.sections);
       if (empty.length > 0) errors.push(`状态 ${status} 仍有空章节 ${empty.join('、')}: ${document.relativePath}`);
+    }
+    if (enhanced && document.kind === 'proposal' && mature) {
+      if ((document.content.match(EVIDENCE_ID_PATTERN) || []).length === 0) errors.push(`Proposal 缺少 EVD-## 证据编号: ${document.relativePath}`);
+      if ((document.content.match(DECISION_ID_PATTERN) || []).length === 0) errors.push(`Proposal 缺少 DEC-## 冻结决定: ${document.relativePath}`);
     }
     if (document.kind === 'plan') {
       validatePlanTasks(document, errors, warnings);
@@ -547,11 +576,13 @@ function transitionDocument(root, target, nextStatus, kind) {
 
   if (document.kind === 'proposal' && nextStatus === 'accepted') {
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Proposal 接受前必须移除模板占位符和 TODO/TBD');
-    const empty = emptySections(document, ['背景与问题', '期望结果', '包含', '不包含', '影响范围', '决定', '未决问题']);
+    const empty = emptySections(document, AUTHORING_SECTIONS.proposal);
     if (empty.length > 0) throw new Error(`${target} 进入 accepted 前必须填写: ${empty.join('、')}`);
     for (const section of ['已确认选择', '未采用方向与原因']) {
       if (subsectionBody(document.content, section) === '') throw new Error(`Proposal 接受前必须填写「${section}」`);
     }
+    if ((document.content.match(EVIDENCE_ID_PATTERN) || []).length === 0) throw new Error('Proposal 接受前至少需要一个 EVD-## 证据编号');
+    if ((document.content.match(DECISION_ID_PATTERN) || []).length === 0) throw new Error('Proposal 接受前至少需要一个 DEC-## 已冻结决定');
     if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Proposal 接受前「未决问题」必须为“无”');
   }
   if (document.kind === 'proposal' && nextStatus === 'completed') {
@@ -566,7 +597,7 @@ function transitionDocument(root, target, nextStatus, kind) {
     if (APPROVAL_PLACEHOLDER_PATTERN.test(document.content)) throw new Error('Spec 批准前必须移除模板占位符和 TODO/TBD');
     const variantIds = [...new Set(document.content.match(CONTRACT_ID_VARIANT_PATTERN) || [])];
     if (variantIds.length > 0) throw new Error(`非法契约编号（字母后缀变体）: ${variantIds.join('、')}`);
-    const empty = emptySections(document, ['术语与业务对象', '问题与依据', '目标', '用户流程', '范围', '输入与输出', '业务规则', '失败与边界情况', '禁止事项', '验收标准', '未决问题']);
+    const empty = emptySections(document, AUTHORING_SECTIONS.spec);
     if (empty.length > 0) throw new Error(`Spec 批准前必须填写: ${empty.join('、')}`);
     const ids = contractIds(document.content);
     for (const prefix of ['REQ-', 'BR-', 'AC-']) {
@@ -593,9 +624,9 @@ function transitionDocument(root, target, nextStatus, kind) {
     if (variantIds.length > 0) throw new Error(`非法契约编号（字母后缀变体）: ${variantIds.join('、')}`);
     if (MACHINE_ABSOLUTE_PATH_PATTERN.test(document.content)) throw new Error('Plan 批准前不得含机器绝对路径（跨机器无法复现）');
     const taskErrors = [];
-    validatePlanTasks(document, taskErrors, [], PLAN_TASK_FIELDS);
+    validatePlanTasks(document, taskErrors, [], EXECUTION_PLAN_TASK_FIELDS);
     if (taskErrors.length > 0) throw new Error(taskErrors.join('\n'));
-    const empty = emptySections(document, ['实施目标', '实现策略', '技术设计', '全局不变量', '条件技术设计', 'Tasks', '验收标准映射', 'Constitution 规范映射清单', '最终验证', '非目标', '未决问题']);
+    const empty = emptySections(document, AUTHORING_SECTIONS.plan);
     if (empty.length > 0) throw new Error(`Plan 批准前必须填写: ${empty.join('、')}`);
     for (const section of ['当前技术现状', '目标技术设计']) {
       if (!sectionExists(document.content, section)) throw new Error(`Plan 批准前必须填写「${section}」`);
@@ -606,6 +637,14 @@ function transitionDocument(root, target, nextStatus, kind) {
     const contractMapping = sectionBody(document.content, '验收标准映射');
     const missingIds = contractIds(spec.content).filter((id) => !contractMapping.includes(id));
     if (missingIds.length > 0) throw new Error(`Plan 未覆盖 Spec 契约: ${missingIds.join('、')}`);
+    const proposal = documents.find((item) => item.kind === 'proposal' && item.metadata.id === document.metadata.change);
+    const binding = sectionBody(document.content, 'Implementation Binding');
+    const missingBoundContracts = contractIds(spec.content).filter((id) => !binding.includes(id));
+    if (missingBoundContracts.length > 0) throw new Error(`Plan Implementation Binding 未绑定 Spec 契约: ${missingBoundContracts.join('、')}`);
+    const missingDecisions = proposal
+      ? [...new Set(proposal.content.match(DECISION_ID_PATTERN) || [])].filter((id) => !binding.includes(id))
+      : [];
+    if (missingDecisions.length > 0) throw new Error(`Plan 未绑定 Proposal 决定: ${missingDecisions.join('、')}`);
     if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Plan 批准前「未决问题」必须为“无”');
   }
   if (document.kind === 'plan' && nextStatus === 'completed') {

@@ -2,14 +2,15 @@
 
 Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,用于把项目意图逐层转化为边界明确、可追踪、可实施、可验证的工作单元。**所有需求按风险分流为 Quick(零文档)与 Full(三件套)两档,文档数量从 0 起步,风险越大文档越多。**
 
-对于 Full Change，proposal/spec/plan 是完整且唯一的需求与实施上下文：只读这三份文档即可确定为什么改、最终业务行为、当前代码如何工作、具体修改位置、实施约束和验收方法，不需要原始对话补充。
+对于 Full Change，proposal/spec/plan 是完整且唯一的需求与实施上下文：没有原始对话的执行 AI 只读三件套，即可确定为什么改、最终业务行为、当前代码如何工作、具体修改位置、停止条件和验收方法。CLI 只创建无指导注释、无示例、无待填占位符的 `schema_version: 2` 最小骨架；技能负责从空正文生成并自检完整文档，历史 completed 文档保持兼容读取。
 
 ## 设计原则
 
-- **两档路径**:小改动(Quick)不产生任何文档,直接实现 + git + 本地 state 一行;复杂改动(Full)原子创建 proposal/spec/plan 三件套
+- **两档路径**:小改动(Quick)不产生任何文档,直接实现 + git + 本地 state 一行;复杂改动(Full)原子创建 proposal/spec/plan 最小骨架
+- **文档即交接**:三件套不得依赖原始对话；Proposal 冻结范围和 DEC，Spec 冻结唯一业务契约，Plan 提供可直接执行的技术绑定
+- **从空正文生成**:持久化骨架不含指导注释、示例契约或示例 Task，技能根据真实需求构建文档
 - **技能自包含**:每个技能写全可独立执行的流程(前置条件、步骤、校验清单、停止条件),触发即用,不依赖共享文档
-- **围绕 docs 约定**:所有技能围绕统一的项目文档结构工作(`init` 技能创建,脚本校验)
-- **渐进式**:每个技能只负责生命周期中的一环,通过 Handoff Rule 交接下一技能
+- **单一事实来源**:同一事实只在职责对应文档定义一次，Plan 通过 DEC/REQ/BR/AC 引用，不复制 Spec
 - **脚本承载机械门禁**:`scripts/project-docs.cjs` 负责确定性操作与校验,不替 AI 做语义判断
 
 ## 安装
@@ -82,17 +83,17 @@ claude plugin install github:xiaochonzi/project-kit
 | **Full** | 多模块 / 架构 / 数据模型变化 / 多迭代 / 跨边界 / 高风险 | proposal + spec + plan 三件套 |
 
 - **Quick 流程**:澄清 → 用户同轮确认 → 直接实现 + 测试 + commit → 本地 state 记一行
-- **Full 流程**:`change` 原子创建三件套并确认 proposal → `spec` 设计业务契约与验收标准 → `plan` 设计技术实现并拆解任务 → 执行勾选 → 独立验收 → 更新本地 state
+- **Full 流程**:`change` 原子创建最小三件套并从空正文完成 proposal → `spec` 构建唯一业务契约 → `plan` 绑定当前代码并生成可执行任务 → 执行勾选 → 独立验收 → 更新本地 state
 
 ### Full 三件套的职责
 
 | 文档 | 必须完整回答 |
 |---|---|
-| `proposal.md` | 背景与证据、期望结果、包含/不包含、影响范围、已确认选择、未采用方向与原因 |
-| `spec.md` | 术语与业务对象、Current/Target、用户流程、输入输出、REQ/BR/AC、失败边界和禁止事项 |
-| `plan.md` | 系统入口与调用链、关键文件与 Symbol、Current/Target Behavior、接口、不变量、条件技术设计、实施任务和验证 |
+| `proposal.md` | 背景、EVD 证据快照、期望结果、包含/不包含、影响范围、DEC 冻结决定与未采用方向 |
+| `spec.md` | 术语与对象、数据权威、适用契约块、REQ/BR/AC、失败边界和唯一可验收行为 |
+| `plan.md` | 代码基线、调用链、文件与 Symbol、Implementation Binding、执行环境、任务、停止条件和验证 |
 
-Plan 的每个 Task 必须包含 `files`、`symbols`、`read_first`、`depends_on`、`interfaces`、`current_behavior`、`target_behavior`、`implementation`、`invariants`、`verify`、`acceptance` 和 `done`。状态机、错误、并发幂等、数据事务、API/事件、配置、兼容迁移、权限安全、可观测性和参考实现必须逐项判断是否适用并说明原因。
+Plan 的每个 Task 必须包含 `files`、`file_actions`、`symbols`、`read_first`、`depends_on`、`interfaces`、`current_behavior`、`target_behavior`、`implementation`、`outputs`、`decisions`、`invariants`、`prerequisites`、`stop_if`、`verify`、`acceptance` 和 `done`。状态机、错误、并发幂等、数据事务、API/事件、配置、兼容迁移、权限安全、可观测性和参考实现必须逐项判断是否适用并说明原因。
 
 ## 常用命令
 
@@ -130,10 +131,10 @@ node scripts/project-docs.cjs next --root <project>
 | 3 | 把模糊想法固化为存档 | `brief` | `docs/briefs/BRIEF-001.md` |
 | 4 | 设计系统架构 | `blueprint` | `docs/blueprint.md` |
 | 5 | 拆成可交付阶段 | `roadmap` | `docs/roadmap.md` |
-| 6 | 新需求入口与分流 | `change` | Quick:零文档 / Full:原子创建 `changes/CR-001-<slug>/` 三件套 |
-| 7 | 填写 proposal 并确认 | `change` | `proposal.md`(为什么+边界) |
-| 8 | 设计业务契约与验收标准 | `/project-kit/spec CR-001` | `spec.md`(做什么、规则与边界) |
-| 9 | 制定实现计划 | `/project-kit/plan CR-001` | `plan.md`(怎么做,逐步验证) |
+| 6 | 新需求入口与分流 | `change` | Quick:零文档 / Full:原子创建 `changes/CR-001-<slug>/` 最小三件套 |
+| 7 | 从空正文生成 Proposal 并确认 | `change` | `proposal.md`(EVD 证据+边界+DEC 决定) |
+| 8 | 从空正文生成唯一业务契约 | `/project-kit/spec CR-001` | `spec.md`(数据权威+REQ/BR/AC) |
+| 9 | 绑定代码并生成执行计划 | `/project-kit/plan CR-001` | `plan.md`(代码基线+Implementation Binding+Tasks) |
 | 10 | 按计划实施 | `execute-plan` | 代码 + 测试 + plan 勾选 |
 | 11 | 独立验收 | `verify-plan` | 重跑验收标准,写回 plan + 本地 state |
 | 随时 | 查看状态 | `/project-kit/status` | — |

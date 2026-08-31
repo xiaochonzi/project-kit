@@ -7,9 +7,9 @@ description: Use when a Full change is implemented and needs independent accepta
 
 ## Overview
 
-用**新鲜证据**独立核对 Spec、Plan 实施情况与 Constitution 代码规范——每条验收标准和规范检查重新运行证据命令,不引用执行阶段的历史输出。只在全部检查满足时宣布完成。
+用**新鲜证据**独立核对 Proposal 决定、Spec 契约、Plan 实施情况与 Constitution 代码规范。验收只依赖落盘三件套、当前代码和本轮证据，不使用原始对话解释目标，也不引用执行阶段的历史输出。
 
-**"执行者说完成了"不是证据。** 本技能独立于 execute-plan,不信任实现者的自述。
+**“执行者说完成了”不是证据。** 每条验收标准和规范检查必须重新运行；只有全部满足才能宣布完成。
 
 **不产出独立验收文档**——验收证据写回 `plan.md` 的「最终验证」区,结论同步 `.project-kit/state.md`,并把 roadmap 中对应任务状态更新为 `已完成`。
 
@@ -48,7 +48,9 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 - [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`(验收标准是核对清单)
 - [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: completed`(任务全部勾选)
 - [ ] `docs/constitution.md` 或 Plan 指定的项目等效编码规则（如 `AGENTS.md`），在读取实现前完整阅读
-- [ ] `plan.md` 的「Constitution 规范映射清单」表存在且已映射到任务
+- [ ] `plan.md` 的「代码基线」「执行环境」「Implementation Binding」「Constitution 规范映射清单」均存在
+- [ ] 每个 Task 的 `outputs` 已记录实际产物，`file_actions` 可与实际 diff 对照
+- [ ] Proposal 全部 DEC 和 Spec 全部 REQ / BR / AC 已映射
 - [ ] 若存在 `docs/changes/CR-###-<slug>/diagrams.md`，读取作为数据实现核对依据
 
 ## Process
@@ -68,10 +70,12 @@ node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项�
 1. 选择直接证据:自动测试、CLI 命令、静态检查、数据断言
 2. **重新运行证据命令**,记录命令+输出(不引用 execute 阶段的旧日志)
 3. 判定:`pass`(证据满足) / `fail`(证据不满足) / `blocked`(无法运行证据)
-4. 检查 Plan 每项任务是否勾选、实际文件是否越界(超出 Plan `files`)
-5. 核对实现与 Plan 的 Target Behavior、interfaces、全局不变量和 Task invariants 一致
-6. 核对每个适用的条件技术设计已实现，不适用项没有被实际改动推翻
-7. 核对全部 REQ/BR/AC 的契约映射都有实现与新鲜验证证据
+4. 检查代码基线是否漂移；漂移时确认 Plan 依赖的文件、Symbol、调用链和 Current Behavior 仍成立
+5. 检查 Plan 每项任务是否勾选，实际 diff 是否符合 `file_actions`，声明的 `outputs` 是否真实存在
+6. 核对实现与 Plan 的 Target Behavior、interfaces、decisions、全局不变量和 Task invariants 一致
+7. 核对每个适用的条件技术设计已实现，不适用项没有被实际改动推翻
+8. 核对全部 DEC / REQ / BR / AC 的绑定都有实现与新鲜验证证据
+9. 确认实现不需要原始对话才能解释，且没有执行阶段自行补出的产品决定
 
 **如果 execute 阶段的测试已经通过,仍然重新运行**——验证的是"当前代码是否满足验收标准",不是"以前是否满足过"。
 
@@ -96,7 +100,7 @@ node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项�
 
 ### Step 5: 记录验收证据
 
-把 Spec/Plan 每条验收标准和 Constitution 每条规范的命令+输出/审查依据+结论追加到 `plan.md` 的「最终验证」区,并更新两个映射表的最终验证列。
+把 Proposal/Spec/Plan 每条决定、契约和 Constitution 规范的命令、输出/审查依据与结论追加到 `plan.md` 的「最终验证」区，并更新 Implementation Binding、验收标准映射和规范映射的最终验证列。
 
 ### Step 6: 判定与状态推进
 
@@ -139,7 +143,8 @@ Constitution 规范检查出现 `fail` 或 `blocked` 时,不得推进 `spec veri
 | **Plan 未 completed** | 路由到 execute-plan |
 | **全部 pass** | spec verified → change completed;roadmap 任务状态置为已完成,更新本地 state |
 | **任一必需标准 fail** | 记录,回 execute-plan 修复或转 bug |
-| **Spec 本身错误** | 停止,重新评审需求,不通过修改验收标准掩盖 |
+| **Proposal 决定或 Spec 本身错误** | 停止,重新评审需求,不通过修改验收标准掩盖 |
+| **实现依赖原始对话才能解释** | fail，返回 plan/spec 补齐持久化契约 |
 | **验收中发现新期望行为** | 创建新 Change(走 change 技能),不混入当前验收 |
 
 ## 脚本/AI 分工

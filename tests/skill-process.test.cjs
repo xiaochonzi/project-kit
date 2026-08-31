@@ -9,90 +9,88 @@ function readSkill(name) {
   return fs.readFileSync(path.join(root, 'skills', name, 'SKILL.md'), 'utf8');
 }
 
-test('plan requires constitution-first constraints mapping', () => {
-  const skill = readSkill('plan');
-  const template = fs.readFileSync(path.join(root, 'assets', 'templates', 'plan.md'), 'utf8');
-  assert.match(skill, /完整读取.*constitution\.md/);
-  assert.match(skill, /适用规范清单/);
-  assert.match(skill, /规范.*验证/);
-  assert.match(template, /## Constitution 规范映射清单/);
+function readTemplate(name) {
+  return fs.readFileSync(path.join(root, 'assets', 'templates', `${name}.md`), 'utf8');
+}
+
+test('change spec and plan templates are minimal scaffolds', () => {
+  for (const name of ['proposal', 'spec', 'plan']) {
+    const template = readTemplate(name);
+    assert.match(template, /status:/);
+    assert.match(template, /schema_version: 2/);
+    assert.match(template, /^# /m);
+    assert.doesNotMatch(template, /^## /m);
+    assert.doesNotMatch(template, /<!--|TODO|TBD|<任务名>|由 (?:change|spec|plan) 技能填写/);
+  }
 });
 
-test('execute-plan requires a code-standards preflight before implementation', () => {
+test('change routes risk and writes a context-free proposal from scratch', () => {
+  const skill = readSkill('change');
+  assert.match(skill, /Quick[\s\S]*全部满足|以下全部满足/);
+  assert.match(skill, /Full[\s\S]*任一命中/);
+  assert.match(skill, /最小骨架/);
+  assert.match(skill, /从空正文/);
+  assert.match(skill, /EVD-##/);
+  assert.match(skill, /DEC-##/);
+  assert.match(skill, /没有原始对话/);
+  assert.match(skill, /Proposal accepted → `spec`/);
+  assert.doesNotMatch(skill, /高级模型|低级模型/);
+});
+
+test('spec builds a single-source business contract for context-free execution', () => {
+  const skill = readSkill('spec');
+  for (const concept of ['术语与业务对象', '数据权威表', '核心契约', '条件契约块', 'REQ-##', 'BR-##', 'AC-##', '单一事实来源', '第二种合理']) {
+    assert.match(skill, new RegExp(concept));
+  }
+  assert.match(skill, /Normative/);
+  assert.match(skill, /Illustrative/);
+  assert.match(skill, /内部类名.*文件路径|文件路径.*内部类名/s);
+  assert.match(skill, /Spec approved.*`plan`/);
+  assert.doesNotMatch(skill, /高级模型|低级模型/);
+});
+
+test('plan creates an executable handoff with baseline bindings and complete tasks', () => {
+  const skill = readSkill('plan');
+  for (const concept of ['代码基线', '系统入口与技术调用链', 'Current Behavior', '全局不变量', '执行环境', 'Implementation Binding', '条件技术设计', '原始对话']) {
+    assert.match(skill, new RegExp(concept));
+  }
+  for (const field of ['files', 'file_actions', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'outputs', 'decisions', 'invariants', 'prerequisites', 'stop_if', 'verify', 'acceptance', 'done']) {
+    assert.match(skill, new RegExp(`- ${field}:`));
+  }
+  assert.match(skill, /全部 DEC \/ REQ \/ BR \/ AC/);
+  assert.match(skill, /Plan approved → `execute-plan`/);
+  assert.doesNotMatch(skill, /new plan --change/);
+  assert.doesNotMatch(skill, /高级模型|低级模型/);
+});
+
+test('plan requires constitution constraints and machine-independent verification', () => {
+  const skill = readSkill('plan');
+  assert.match(skill, /Constitution/);
+  assert.match(skill, /适用规范清单/);
+  assert.match(skill, /机器无关/);
+  assert.match(skill, /用户主目录和盘符绝对路径/);
+});
+
+test('execute-plan treats persisted documents as the only requirement input', () => {
   const skill = readSkill('execute-plan');
+  for (const concept of ['唯一需求与实施上下文', '代码基线', 'file_actions', 'outputs', 'prerequisites', 'stop_if', 'Implementation Binding']) {
+    assert.match(skill, new RegExp(concept));
+  }
   assert.match(skill, /代码规范预检/);
   assert.match(skill, /写代码前/);
   assert.match(skill, /constitution\.md/);
+  assert.doesNotMatch(skill, /高级模型|低级模型/);
 });
 
-test('verify-plan independently audits constitution compliance', () => {
+test('verify-plan audits decisions contracts outputs and constitution with fresh evidence', () => {
   const skill = readSkill('verify-plan');
-  assert.match(skill, /代码规范符合性/);
-  assert.match(skill, /规范.*清单/);
+  for (const concept of ['新鲜证据', 'DEC \/ REQ \/ BR \/ AC', 'file_actions', 'outputs', 'Implementation Binding', '代码规范符合性']) {
+    assert.match(skill, new RegExp(concept));
+  }
   assert.match(skill, /规范.*fail.*blocked|fail.*blocked.*规范/s);
   assert.match(skill, /不得.*verified|不得.*completed/);
   assert.match(skill, /transition 脚本只负责/);
   assert.match(skill, /不替 AI 判断代码规范/);
-});
-
-test('change routes from explicit user intent before risk inference', () => {
-  const skill = readSkill('change');
-  assert.match(skill, /用户意图优先/);
-  assert.match(skill, /Quick.*全部满足|全部满足.*Quick/s);
-  assert.match(skill, /Full.*任一命中|任一命中.*Full/s);
-  assert.match(skill, /使用 change.*Full|Full.*使用 change/s);
-  assert.match(skill, /多个模块|多个独立结果/);
-  assert.match(skill, /意图.*不明确.*澄清|澄清.*意图/s);
-  assert.match(skill, /Full.*proposal.*spec.*plan/s);
-  assert.doesNotMatch(skill, /new spec --change/);
-  assert.match(skill, /Spec.*→.*spec|spec.*技能/);
-});
-
-test('spec owns business design and hands off implementation planning', () => {
-  const skill = readSkill('spec');
-  assert.match(skill, /代码现实/);
-  assert.match(skill, /REQ-##|REQ-\d/);
-  assert.match(skill, /BR-##|BR-\d/);
-  assert.match(skill, /AC-##|AC-\d/);
-  assert.match(skill, /必填核心/);
-  assert.match(skill, /按适用性/);
-  assert.match(skill, /文件路径.*函数名.*代码步骤|禁止.*文件路径/s);
-  assert.match(skill, /plan.*技能/);
-});
-
-test('plan fills the existing placeholder and maps all spec contracts', () => {
-  const skill = readSkill('plan');
-  const template = fs.readFileSync(path.join(root, 'assets', 'templates', 'plan.md'), 'utf8');
-  assert.doesNotMatch(skill, /new plan --change/);
-  assert.match(skill, /已有.*plan\.md|plan\.md.*已存在/s);
-  assert.match(skill, /REQ-##|REQ.*BR.*AC/s);
-  for (const concept of ['系统入口与调用链', '关键文件与符号', 'Current Behavior', 'Target Behavior', '全局不变量', '条件技术设计']) {
-    assert.match(skill, new RegExp(concept));
-  }
-  for (const field of ['files', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'invariants', 'verify', 'acceptance', 'done']) {
-    assert.match(template, new RegExp(`- ${field}:`));
-  }
-});
-
-test('full change skills persist complete context and reject ambiguous references', () => {
-  const change = readSkill('change');
-  const spec = readSkill('spec');
-  assert.match(change, /已确认.*决定|决定.*取舍/s);
-  assert.match(change, /未采用.*原因/);
-  assert.match(spec, /术语与业务对象/);
-  assert.match(spec, /按之前讨论|模糊引用/);
-  assert.doesNotMatch(spec, /跨模型|跨 AI|跨AI|交接自检/);
-});
-
-test('execution and verification audit the plan technical baseline', () => {
-  const execute = readSkill('execute-plan');
-  const verify = readSkill('verify-plan');
-  for (const concept of ['路径', 'Symbol', '调用链', 'Current Behavior', 'interfaces']) {
-    assert.match(execute, new RegExp(concept));
-  }
-  for (const concept of ['Target Behavior', '不变量', '条件技术设计', '契约映射']) {
-    assert.match(verify, new RegExp(concept));
-  }
 });
 
 test('lifecycle commands are thin skill routers', () => {
@@ -104,19 +102,15 @@ test('lifecycle commands are thin skill routers', () => {
 });
 
 test('current lifecycle guidance does not require spec hash', () => {
-  const spec = readSkill('spec');
-  const plan = readSkill('plan');
-  const verify = readSkill('verify-plan');
-  const verifyCommand = fs.readFileSync(path.join(root, 'commands', 'project-kit', 'verify.md'), 'utf8');
-  const lifecycle = fs.readFileSync(path.join(root, 'project-lifecycle.md'), 'utf8');
-  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
-
-  for (const content of [spec, plan, verify, verifyCommand, lifecycle, agents]) {
-    assert.doesNotMatch(content, /spec_hash/);
-  }
-  assert.match(spec, /缺少 REQ\/BR\/AC|REQ\/BR\/AC/);
-  assert.match(plan, /Spec.*approved/);
-  assert.match(plan, /全部.*REQ.*BR.*AC|REQ.*BR.*AC.*全部/s);
-  assert.match(verify, /Plan.*completed/);
-  assert.match(verify, /代码规范/);
+  const contents = [
+    readSkill('spec'),
+    readSkill('plan'),
+    readSkill('verify-plan'),
+    fs.readFileSync(path.join(root, 'commands', 'project-kit', 'verify.md'), 'utf8'),
+    fs.readFileSync(path.join(root, 'project-lifecycle.md'), 'utf8'),
+    fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'),
+  ];
+  for (const content of contents) assert.doesNotMatch(content, /spec_hash/);
+  assert.match(readSkill('plan'), /Spec.*approved/);
+  assert.match(readSkill('verify-plan'), /Plan.*completed/);
 });

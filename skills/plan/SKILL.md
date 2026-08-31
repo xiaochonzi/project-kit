@@ -1,60 +1,47 @@
 ---
 name: plan
-description: Use when a Full change has an approved business Spec and its existing draft plan.md needs technical design and executable task decomposition. If the Spec is not approved, use spec; if the Plan is already approved, use execute-plan.
+description: Use when a Full change has an approved Spec and its draft plan.md must become an executable technical handoff. If Spec is not approved, use spec; if Plan is approved, use execute-plan.
 ---
 
 # Plan
 
 ## Overview
 
-把已批准业务 Spec 转化为当前代码库中的技术设计和可逐步执行计划，填写已存在的 `docs/changes/CR-###-<slug>/plan.md`。Plan 必须把代码探查结论完整落盘，使三件套本身即可明确当前技术现实、目标设计、修改位置、实施步骤、不变量和验证方法。
+把 approved Spec 绑定到当前代码库，完整写入既有 `docs/changes/CR-###-<slug>/plan.md`，生成可以直接交给没有原始对话上下文的执行 AI 的技术实施契约。Plan 回答：当前代码如何工作、目标技术结构是什么、精确修改哪里、按什么顺序实施、何时停止、怎样验证。
+
+Plan 必须让执行者从 Task 1 开始工作，而不是在执行阶段重新完成需求设计和代码研究。
 
 **开始前宣布：**“我正在使用 plan 技能制定实现计划。”
 
-## The Iron Law
+## Iron Laws
 
-```
+```text
 NO PLAN WITHOUT AN APPROVED SPEC
+THE PLAN MUST BE EXECUTABLE WITHOUT THE AUTHOR'S CONVERSATION
 ```
 
-Plan 可以选择技术方案，但不得新增、改变或删除 Spec 中的业务行为。Spec 有歧义、与代码现实冲突或缺少契约时，停止并返回 `spec`。
+Plan 可以选择技术方案，但不得新增、删除或改变 Spec 的业务行为。Spec 有歧义、与代码现实冲突或缺少契约时，停止并返回 `spec` / `change`。
 
-**单一事实来源**：一条信息只写一次。Plan 引用 Spec 契约用编号（REQ/BR/AC），不得复制 Spec 的契约正文；重复书写会引入漂移，破坏跨工具无歧义执行。
+## Single Source of Truth
 
-## Plan 的定位与细节度
+一条信息只写一次：
 
-Plan 是三件套中**唯一记录技术现实与实施路径**的文档。它的读者是执行 AI 工具，读完必须能：
+- Proposal 冻结原因、范围和 `DEC-##`
+- Spec 冻结 REQ / BR / AC、字段、状态和外部协议
+- Plan 只写代码现实、技术绑定和执行任务
 
-1. 直接改代码，不用重新探查代码现实；
-2. 不用依赖原始对话或生成者补充。
-
-**细节度双向判据**：
-
-- **下限**：消除歧义——换一台新机器、一个陌生 AI，拿到 Plan 就能直接开始改并跑通验证。
-- **上限**：不越界到 Spec 的职责——不发明 Spec 之外的业务行为。
-
-**分层归属**：Plan 承接 Spec，但只写 Spec 不写的那一面。
-
-| 信息 | 写在哪 |
-|---|---|
-| 业务流程图（参与者=角色） | Spec |
-| **技术调用链**（参与者=类名/Symbol） | **Plan** |
-| 业务状态机（迁移规则） | Spec |
-| **状态机技术实现**（表/锁/幂等） | **Plan** |
-| 对外 API 字段 + 语义 | Spec |
-| **内部 DTO/VO 类名、方法签名** | **Plan** |
-
-**结论必须落盘**：引用外部（代码/规则/研究/工具结果）必须摘要其结论，不能只写“去读 X 结果”。正确写法是“`<方法名>`：高风险，存在接口级调用方和未解析调用点”；错误写法是“`read_first: 去跑依赖分析看结果`”。
+Plan 通过编号引用 Proposal / Spec，不复制业务契约正文。复制会制造漂移并让执行者无法判断应信哪一份。
 
 ## Required Inputs
 
 - [ ] `proposal.md` 存在且 `status: accepted`
 - [ ] `spec.md` 存在且 `status: approved`
-- [ ] 同目录已有 `plan.md` 且 `status: draft`
-- [ ] 已完整读取 `docs/constitution.md` 或项目等效编码规则、`docs/blueprint.md`（如有）、`.project-kit/state.md`
-- [ ] 已读取可选 `diagrams.md`、相关代码和测试模式
+- [ ] 同目录 `plan.md` 存在且 `status: draft`，正文可以只有最小骨架
+- [ ] 已完整读取 Constitution 或等效项目规则、Blueprint、`.project-kit/state.md`
+- [ ] 已读取可选 `diagrams.md`、相关代码、测试和配置
+- [ ] 已确认 Proposal 的全部 `DEC-##` 及 Spec 的全部 REQ / BR / AC
 
-Plan 已 approved 时不重写，直接交接 `execute-plan`。
+Plan 已 approved → 不重写，交接 `execute-plan`。
 
 ## Process
 
@@ -64,47 +51,64 @@ Plan 已 approved 时不重写，直接交接 `execute-plan`。
 node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 ```
 
-读取三件套、项目规则、Blueprint、state 和可选 diagrams。确认 Spec 的全部 `REQ-##`、`BR-##`、`AC-##`。
+完整读取三件套和适用项目规则。只以落盘文档为需求来源；原始对话不能补充或覆盖 approved 契约。
 
-### Step 2：探索代码现实
+### Step 2：记录代码基线
 
-找到真实文件、接口、调用关系和测试入口，确认现有模式与集成点。把结论写入 Plan 的「技术设计 / 当前技术现状」：
+在探查前写入「代码基线」：
 
-- 系统入口与调用链：从触发入口到修改点逐层列出 Symbol 和职责
-- 关键文件与符号：文件、Symbol、当前职责、相关行为和本 Change 使用原因
-- Current Behavior：当前如何运行，以及代码、测试或配置证据
+```markdown
+## 代码基线
 
-**结论必须落盘**：引用外部必须摘要结论（见上文正反例）。若 Spec 假设和代码冲突，报告具体冲突并停止，不通过改 Plan 偷换业务语义。
+- repository：<仓库标识>
+- branch：<分支>
+- commit：<提交>
+- inspected_at：<日期时间>
+- worktree：<clean 或已知变更摘要>
+```
 
-### Step 3：建立适用规范清单
+执行时如果基线与当前代码不同，必须重新核对文件、Symbol、调用链和 Current Behavior；不得把过期 Plan 当成事实。
 
-从 Constitution、AGENTS 或项目等效规则中只提取本 change 适用的规则：
+### Step 3：探索并写下当前技术现实
 
-- 规则来源和原文要点
-- 影响文件和任务
+找到真实入口、调用关系、数据流、接口、测试和现有模式。把结论写入「技术设计 / 当前技术现状」：
+
+- 系统入口与技术调用链：从入口到修改点逐层列出文件、Symbol、职责
+- 关键文件与符号：当前职责、相关行为、本 Change 使用原因
+- Current Behavior：代码、测试或配置证据
+- 影响分析：调用方、被调用方、兼容和风险结论
+
+外部研究、代码图或命令结果必须摘要结论。禁止只写“去运行分析”“参考某文档”。执行者可以复核，但不应重新完成作者的研究。
+
+若 Spec 对 Current 的假设与代码冲突，写明冲突并停止；不得在 Plan 中偷换业务语义。
+
+### Step 4：建立适用规范清单
+
+从 Constitution、AGENTS 或等效规则中提取本 Change 适用的规则：
+
+- 来源和规则要点
+- 影响文件和 Task
 - lint、format、type、test 或人工审查方式
-- 最终由 `verify-plan` 复核的证据
+- 最终验收证据
 
-无法确定适用规则或验证方式时停止，不先写任务。
+无法确定规则或验证方式时停止，不先写任务。
 
-### Step 4：设计技术实现
+### Step 5：设计唯一技术方案
 
-选择最小满足 Spec 的方案，并在已有 `plan.md` 填写：
+在 Plan 中完整写入：
 
-- 实施目标和实现策略，以及未采用方案的原因
+- 实施目标
+- 实现策略及未采用方案原因
 - 目标调用链、模块职责、接口签名、数据流和依赖方向
-- Current Behavior → Target Behavior 逐项对照
-- 全局不变量：所有 Task 都不得破坏的业务与技术约束
-- 需要创建、修改、测试的精确文件
-- Spec 契约到任务和最终验证的映射
+- Current → Target 对照
+- 全局不变量
+- 非目标
 
-引用规则、代码或参考实现时必须说明其职责、相关行为和采用原因，不能只列路径或名称。
+技术方案必须是满足 Spec 的最小方案。不得把未来能力、顺手重构或 Spec 未授权的抽象带入 Plan。
 
-技术设计不得把 Spec 未授权的重构、抽象或未来能力带入计划。
+### Step 6：完成条件技术设计
 
-### Step 5：完成条件技术设计
-
-逐项填写适用性、原因和对应章节或 Task。适用项必须展开到可实施程度；不适用项写明真实原因：
+逐项填写适用性、真实原因和对应章节 / Task：
 
 1. 状态机
 2. 错误策略
@@ -117,106 +121,144 @@ node scripts/project-docs.cjs context plan --target <CR-###> --root <项目根>
 9. 可观测性
 10. 参考实现
 
-### Step 6：拆解 Tasks
+适用项必须展开到接口、顺序、状态、事务或错误级；不适用项必须说明为什么与当前需求和代码无关。
 
-每个任务是可独立验证、可独立审查的最小交付单元。任务必须包含：
+### Step 7：写明执行环境
+
+「执行环境」必须列出每项前置依赖、检查方式和缺失时行为：
+
+```markdown
+| 依赖 | 检查方式 | 缺失时行为 |
+| --- | --- | --- |
+```
+
+包括适用的运行时、包管理器、服务、数据库、测试数据、凭据和分析工具。不得让执行者自行决定跳过缺失门禁；必须明确“停止”“允许替代及替代命令”或“由谁提供”。
+
+命令必须相对仓库、机器无关，禁止用户主目录和盘符绝对路径。
+
+### Step 8：建立 Implementation Binding
+
+用一张绑定表将冻结决定和契约映射到技术位置：
+
+```markdown
+## Implementation Binding
+
+| DEC / REQ / BR / AC | 文件与 Symbol | 修改类型 | 验证 |
+| --- | --- | --- | --- |
+```
+
+- 每个 `DEC-##` 必须被遵守
+- 每个 REQ / BR / AC 必须绑定到 Task 和最终验证
+- 不复制 Spec 正文，只引用编号
+- 对外名称与内部 Symbol 必须明确区分
+
+### Step 9：拆解可执行 Tasks
+
+每个 Task 是可独立验证、可独立审查的最小交付单元，必须包含：
 
 ```markdown
 ### Task N: <任务名>
 
-- files: <精确文件路径>
-- symbols: <修改或验证的 Symbol；纯文档任务说明定位对象>
-- read_first: <执行前必须读取的文件和 Symbol，按顺序列出；并摘要本 Task 依赖的结论（“X 的结论是 Y”），不能只写“去读 X 结果”>
+- files: <本 Task 涉及的精确相对路径>
+- file_actions: <每个文件的 create / modify / delete / verify>
+- symbols: <修改或验证的 Symbol；纯文档任务写定位对象>
+- read_first: <按顺序读取的文件和 Symbol，并摘要依赖结论>
 - depends_on: <前置 Task 或“无”>
-- interfaces: <本 Task 消费和产出的接口、数据或文档契约>
-- current_behavior: <当前行为和证据>
+- interfaces: <消费和产出的接口、数据或文档契约>
+- current_behavior: <当前行为与证据>
 - target_behavior: <完成后的唯一目标行为>
-- implementation: <可直接执行的实现步骤>
-- invariants: <本 Task 不得破坏的约束>
-- verify: <任务后立即运行的真实命令；机器无关，禁用户主目录路径或盘符路径；引用的脚本必须已由某 Task 创建或已存在>
-- acceptance: <可观察通过条件，并引用 REQ/BR/AC>
+- implementation: <可直接执行的步骤；RED → GREEN → CHECK>
+- outputs: <完成后必须存在的代码、类型、接口、脚本、测试或文档>
+- decisions: <本 Task 遵守的 DEC-##；无则写“无”>
+- invariants: <不得破坏的业务与技术约束>
+- prerequisites: <环境、数据和前置产物>
+- stop_if: <出现什么偏差必须停止，不得现场猜测>
+- verify: <任务后立即运行的真实、机器无关命令>
+- acceptance: <可观察结果，引用 REQ / BR / AC>
 - done: <何时可以勾选>
 
 - [ ] Task N
 ```
 
-TDD 工作按 RED → GREEN → CHECK 排序。不要把“写测试、实现、验证、提交”机械拆成没有独立审查价值的空任务；每个任务必须产生一个可验证交付物。
+规则：
 
-任务间使用的接口、名称和数据结构必须前后一致；`depends_on` 必须形成无环顺序。
+- `files` 不得写“相关文件”“所有页面”
+- 新文件或脚本必须在 `file_actions` 标记 `create`
+- `verify` 引用的脚本必须已存在，或由当前 / 前置 Task 的 `outputs` 创建
+- `read_first` 不能只写“去读/去跑结果”，必须写下已确认结论
+- Task 间名称、类型、字段和接口必须一致
+- `depends_on` 必须无环
+- TDD 按 RED → GREEN → CHECK，不把测试/实现/验证机械拆成无独立价值的空任务
 
-### Step 7：契约与规范映射
+### Step 10：契约与规范映射
 
-在「验收标准映射」中逐项列出全部 `REQ-##`、`BR-##`、`AC-##`，对应覆盖任务和最终验证。任何编号不得只出现在背景文字中而没有任务与验证。
+「验收标准映射」逐项列出全部 REQ / BR / AC 的覆盖 Task 和最终验证。
 
-在「Constitution 规范映射清单」中写清规则来源、适用任务、验证方式和最终验收。
+「Constitution 规范映射清单」逐项列出规则来源、适用文件 / Task、验证方式和最终验收。
 
-### Step 8：No Placeholders 自审
+任何编号不得只出现在背景文字中。
 
-以下任一出现都表示 Plan 未完成：
+### Step 11：执行交接自检
 
-- 模板注释、`<任务名>`、TBD、TODO、稍后补充
-- “按之前讨论”“同上”“相关逻辑”“适当处理”“根据实际情况”“后续再定”
-- 只有动作名称，没有具体目标状态、接口或验证命令
-- 使用未在任何任务定义的函数、类型或字段
-- Spec 编号没有任务或验证覆盖
-- 任务引用不存在的旧文件、命令或接口
-- 调用链、Symbol、Current Behavior 或接口只存在于探查过程，没有写入 Plan
-- **“去读/去跑 X 结果”式未落盘引用**（`read_first: 去跑依赖分析看结果` = 未完成，必须写出结论）
-- **机器绝对路径**（用户主目录路径、盘符路径）
-- **verify/read_first 引用的脚本或路径在仓库内不存在**，且没有任务负责创建它们
-- **复制了 Spec 的契约正文**（违反单一事实来源，应改为引用编号）
+重新只读落盘三件套，假设执行者没有原始对话，模拟从 Task 1 开始：
 
-再检查任务依赖、类型和命名前后一致，验证命令能在目标仓库执行。
+1. 能否确定代码基线是否仍有效？
+2. 每个文件是 create、modify、delete 还是 verify？
+3. 每个 Symbol、接口和调用链能否精确定位？
+4. `read_first` 是否已经包含关键结论？
+5. 每个新脚本是否在使用前被创建？
+6. 环境缺失时是否有唯一处理方式？
+7. 代码现实与 Plan 不同是否有明确 `stop_if`？
+8. 每个 Task 的输入、输出和依赖是否闭合？
+9. 是否需要原始对话或作者补充任何产品 / 技术决定？
+10. Proposal、Spec、Plan 是否定义了冲突事实？
 
-### Step 9：用户批准
+只要执行者仍需猜测，就直接修正 Plan；涉及业务契约则返回 `spec`，涉及范围则返回 `change`。
 
-向用户展示技术策略、任务边界、Spec 覆盖和规范映射。用户明确批准后：
+### Step 12：用户批准
+
+展示代码基线、技术策略、Implementation Binding、任务边界、执行环境和验证计划。用户明确批准后：
 
 ```bash
 node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root <项目根>
 ```
 
-脚本会拒绝占位符、空章节、字段不完整、机器绝对路径或遗漏任一 Spec 契约编号的 Plan。
+CLI 只检查章节、字段、编号覆盖、机器路径和状态；技术结论真实性与可执行性由文档作者负责。
 
-## 校验清单
+## Quality Checklist
 
-- [ ] Spec 为 approved
-- [ ] 已有 `plan.md` 被完整填写，没有再次创建
-- [ ] 技术设计记录系统入口与调用链、关键文件与符号、Current/Target Behavior 和全局不变量
-- [ ] 十类条件技术设计均有适用性、原因和对应设计或 Task
-- [ ] 每个任务有 files/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/invariants/verify/acceptance/done
-- [ ] read_first 里无“去读/去跑 X 结果”式未落盘引用，依赖结论已写出
-- [ ] verify 命令机器无关，引用的脚本已存在或已由某 Task 创建；无机器绝对路径
-- [ ] 全部 REQ/BR/AC 和适用编码规范均已映射
-- [ ] Plan 未复制 Spec 契约正文（引用用编号）
-- [ ] 用户明确批准，状态迁移成功
+- [ ] Spec approved，Plan 原状态为 draft
+- [ ] 代码基线、入口、调用链、文件、Symbol 和 Current Behavior 已落盘
+- [ ] 目标设计、全局不变量、非目标和十类条件设计完整
+- [ ] 执行环境明确检查方式和缺失行为
+- [ ] Implementation Binding 覆盖全部 DEC / REQ / BR / AC
+- [ ] 每个 Task 包含全部 17 个执行字段
+- [ ] 新文件和脚本在使用前由 `file_actions` / `outputs` 声明创建
+- [ ] read_first 有结论，verify 机器无关且可运行
+- [ ] stop_if 阻止执行者现场补决定
+- [ ] Plan 不复制 Spec 正文、不扩大范围
+- [ ] 仅凭落盘三件套可以从 Task 1 开始，无需原始对话
+- [ ] 用户明确批准并成功迁移状态
 
-## 脚本/AI 分工
+## Script / Author Responsibility
 
-| 脚本 | AI |
-|---|---|
-| `context plan` 输出上下文路径 | 探索代码、选择技术实现 |
-| `transition` 校验任务字段、占位符、机器绝对路径和契约覆盖 | 填写已有 Plan、建立任务和规范映射 |
-| `validate` 校验结构与状态 | 不引入 Spec 外能力，不开始实施 |
+| CLI | 文档作者 |
+| --- | --- |
+| 输出上下文、校验结构和状态 | 探索代码、记录基线和真实 Current |
+| 校验 Task 字段、路径模式、契约覆盖 | 选择技术方案、建立绑定、拆解任务 |
+| 执行状态迁移 | 模拟执行交接并消除猜测点 |
 
-## 停止条件
+CLI 不判断技术方案是否正确，也不替执行者研究代码。
 
-- Spec 未 approved 或仍有业务歧义 → 返回 `spec`。
-- Spec 与代码现实冲突 → 报告冲突，返回 `spec` 或 `change`。
-- 需要修改 Blueprint、扩大范围或新增业务能力 → 返回 `change`。
-- 无法给出真实文件路径、接口或验证命令 → 停止，不猜测。
-- 缺少项目编码规则或无法建立验证方式 → 先补齐规则。
+## Stop Conditions
+
+- Spec 未 approved 或仍有业务歧义 → 返回 `spec`
+- Spec 与代码现实冲突 → 报告并返回 `spec` / `change`
+- 需要扩大范围、改变 Blueprint 或新增业务能力 → 返回 `change`
+- 无法给出真实路径、Symbol、接口或验证命令 → 停止，不猜测
+- 环境或项目规范无法确定 → 先补齐
+- 任何 Task 仍需要作者口头补充 → 不 approved
 
 ## Handoff Rule
 
-Plan approved → `execute-plan`。本技能只写计划，不修改代码。
-
-## Common Rationalizations
-
-| 借口 | 现实 |
-|---|---|
-| “已有骨架不完整，重新 new plan” | Full 创建时已生成唯一 Plan，直接填写它 |
-| “Spec 没写，Plan 顺便决定” | Plan 不能成为隐形业务契约 |
-| “写大步骤，执行时再探索” | 可执行 Plan 必须提前记录精确文件、Symbol、接口、现状和验证 |
-| “只映射 AC 就够了” | REQ 和 BR 也可能在拆解中被静默遗漏 |
-| “把 Spec 的契约正文抄过来更完整” | 违反单一事实来源，Spec 一改 Plan 就漂移 |
+Plan approved → `execute-plan`。本技能只写技术实施契约，不修改代码。

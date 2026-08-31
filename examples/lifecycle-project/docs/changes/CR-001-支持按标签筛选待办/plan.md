@@ -2,10 +2,19 @@
 change: CR-001
 title: 支持按标签筛选待办
 status: completed
+schema_version: 2
 created_at: 2026-08-12
 ---
 
 # 支持按标签筛选待办 实现计划
+
+## 代码基线
+
+- repository：示例待办项目
+- branch：示例基线
+- commit：示例固定提交
+- inspected_at：2026-08-12
+- worktree：clean
 
 ## 实施目标
 
@@ -70,19 +79,37 @@ created_at: 2026-08-12
 | 可观测性 | 否 | 不新增后台任务或运行指标 | 无 |
 | 参考实现 | 是 | 沿用现有 `listTodos` 纯函数和 CLI 参数解析模式 | Task 1、Task 2 |
 
+## 执行环境
+
+| 依赖 | 检查方式 | 缺失时行为 |
+| --- | --- | --- |
+| Node.js | `node --version` | 停止并报告，不跳过测试 |
+| 示例源码与测试 | 检查 Plan 声明的文件 | 文件或 Symbol 不符时返回 Plan 修订 |
+
+## Implementation Binding
+
+| DEC / REQ / BR / AC | 文件与 Symbol | 修改类型 | 验证 |
+| --- | --- | --- | --- |
+| DEC-01；REQ-01；BR-01；BR-02；BR-03；AC-01；AC-02；AC-03 | `src/list.js#listTodos`；`src/cli.js` list 分支；对应 tests | modify | AC-01～AC-03 对应测试 |
+
 ## Tasks
 
 ### Task 1: 实现列表函数的可选标签筛选
 
 - files: `src/list.js`, `test/list.test.js`
+- file_actions: modify `src/list.js`；modify `test/list.test.js`
 - symbols: `listTodos`；list unit tests
-- read_first: `src/list.js` 的 `listTodos`；`test/list.test.js` 的完整列表与顺序测试
+- read_first: `src/list.js` 的 `listTodos` 当前只返回完整数组；`test/list.test.js` 已固定完整列表与顺序行为
 - depends_on: 无
 - interfaces: Consumes `todos` 和可选 `{ tagId }`；Produces 保序待办数组
 - current_behavior: `listTodos` 只接收待办数组并原样返回完整结果
 - target_behavior: 非空 `tagId` 精确筛选；省略或空值返回完整有序列表；未知 ID 返回空数组
 - implementation: 先增加 AC-01～AC-03 的失败测试，再给 `listTodos` 增加可选参数并使用 `tagIds.includes(tagId)` 过滤
+- outputs: 支持可选标签的 `listTodos`；覆盖三种输入的自动测试
+- decisions: DEC-01
 - invariants: 不修改输入数组；不改变未筛选顺序；没有 `tagIds` 的待办视为不匹配
+- prerequisites: Node.js 与声明的源码、测试文件存在
+- stop_if: `listTodos` 的真实签名或调用关系与代码基线不一致
 - verify: `node --test test/list.test.js`
 - acceptance: REQ-01、BR-01、BR-02、BR-03、AC-01、AC-02、AC-03 全部通过
 - done: list tests 0 failures，三种输入得到 Spec 定义的唯一结果
@@ -92,14 +119,19 @@ created_at: 2026-08-12
 ### Task 2: 把 CLI 标签参数接入列表函数
 
 - files: `src/cli.js`, `test/cli.test.js`
+- file_actions: modify `src/cli.js`；modify `test/cli.test.js`
 - symbols: `parseArgs`；list command branch；CLI list tests
-- read_first: `src/cli.js` 的参数解析和 list 分支；Task 1 完成后的 `listTodos` 接口；`test/cli.test.js`
+- read_first: `src/cli.js` 当前 list 分支不读取标签；Task 1 产出的 `listTodos(todos, { tagId })`；`test/cli.test.js` 当前固定未筛选输出
 - depends_on: Task 1
 - interfaces: Consumes CLI 可选 `--tag <tag-id>`；Produces `listTodos(todos, { tagId })` 调用和现有渲染输出
 - current_behavior: list 分支不读取标签参数，始终调用未筛选列表
 - target_behavior: `--tag` 值原样传入；省略参数时保持原调用结果；未知 ID 正常显示空态
 - implementation: 增加 CLI 三种输入的失败测试，扩展参数解析并把 `tagId` 传给 `listTodos`
+- outputs: `--tag` 参数接线；CLI 三种输入的回归测试
+- decisions: DEC-01
 - invariants: 不改变其他命令或列表渲染；不在 CLI 重复实现筛选
+- prerequisites: Task 1 完成；Node.js 与 CLI 测试文件存在
+- stop_if: 参数解析接口或 list 分支与代码基线不一致
 - verify: `node --test test/cli.test.js test/list.test.js`
 - acceptance: REQ-01、BR-01、BR-02、BR-03、AC-01、AC-02、AC-03 从 CLI 入口全部可观察
 - done: CLI 与 list tests 0 failures，调用参数和输出符合接口契约

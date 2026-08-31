@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+- **三件套改为最小骨架生成**：`new change` 仍分配稳定 ID 并原子创建 proposal/spec/plan，但三个持久化文件只含 frontmatter（含 `schema_version: 2`）、标题和初始状态；移除 HTML 指导注释、示例契约、示例 Task 与尖括号占位符。draft/proposed 缺少正文结构只产生提醒，accepted/approved/completed 继续执行严格门禁。
+- **change/spec/plan 从头重写**：技能不依赖模板填空；Proposal 从空正文生成 EVD 证据和 DEC 冻结决定，Spec 按需求生成核心与条件契约块并保证单一事实来源，Plan 记录代码基线、执行环境和 Implementation Binding，面向没有原始对话上下文的执行 AI。
+- **Plan 执行契约扩展**：Task 从十二字段扩展为十七字段，新增 `file_actions`、`outputs`、`decisions`、`prerequisites`、`stop_if`；`execute-plan` 与 `verify-plan` 同步核对代码基线、产物、决定绑定和实际 diff。
+- **历史文档兼容**：`schema_version: 2` 的成熟文档与新 accepted/approved 迁移强制执行增强章节和十七字段门禁；`validate` 对未声明该版本、缺少新增章节的历史 completed 三件套只给 warning，并继续按旧核心章节与十二字段 Task 校验，避免要求回写已冻结历史契约。
 - **三件套写入规范强化**：Proposal 明确证据可定位、细节度上限；Spec 增加“对外契约 vs 内部实现”判定表、数据权威表、响应变体覆盖与规范关键词（必须/不得/应该）；Plan 铁律新增单一事实来源，`read_first` 改为“摘要依赖结论”而非“去读 X 结果”，自审新增未落盘引用、机器绝对路径、不存在脚本、复制 Spec 正文四项。
-- **脚本新增确定性门禁**：`validate` 拒绝契约编号字母后缀变体（如 AC-09a）；Plan 含机器绝对路径时告警；spec/plan 批准动作同步拒绝字母后缀编号与机器绝对路径。
+- **脚本新增确定性门禁**：`validate` 拒绝契约编号字母后缀变体（如 AC-09a）；Plan 含机器绝对路径时告警；proposal/spec/plan 批准动作同步拒绝缺失 EVD/DEC、遗漏 Implementation Binding、字母后缀编号与机器绝对路径。
 
 ## 0.3.4 - 2026-08-27
 

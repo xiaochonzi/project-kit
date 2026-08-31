@@ -32,7 +32,7 @@ description: 定义项目从初始讨论、蓝图拆解到变更实施的两档�
 | spec | 最终业务行为、规则、失败边界与验收契约 | approved 后冻结 |
 | plan | 当前技术现实、目标设计、实施任务、不变量与验证 | approved 后按任务勾选和追加证据 |
 
-**spec(契约)与 plan(技术实施依据)是两种本质不同的文档,不可合并**。三件套共同构成 Full Change 完整且唯一的上下文，必要决定、业务规则和实施约束不能只留在原始对话中。
+**spec(契约)与 plan(技术实施依据)是两种本质不同的文档,不可合并**。三件套共同构成 Full Change 完整且唯一的上下文；没有原始对话的执行 AI 必须仅凭三件套理解和实施。CLI 只创建最小骨架，正文由对应技能从空白生成并自检。
 
 ### 2.3 单一事实来源
 
@@ -46,7 +46,7 @@ description: 定义项目从初始讨论、蓝图拆解到变更实施的两档�
 | 是否完成、证据 | plan 勾选 + STATE |
 | 阶段规划、任务清单与完成情况(表格) | roadmap |
 | 当前焦点、下一动作(动态状态) | STATE |
-| 当前焦点、下一动作、接力 | STATE.md |
+| 当前焦点、下一动作、接力 | `.project-kit/state.md` |
 | 系统边界 | blueprint |
 | 原始意图 | brief(一次性) |
 | 开发准则 | constitution |
@@ -74,7 +74,6 @@ docs/
 ├── constitution.md      # 开发准则
 ├── blueprint.md         # 系统边界:能力地图/模块职责/数据流/明确不做
 ├── roadmap.md           # 阶段规划 + 任务表格(状态列)
-├── STATE.md             # 当前焦点/下一动作/阻塞(接力入口)
 ├── briefs/              # BRIEF-### 原始讨论存档(一次性,不重写)
 ├── changes/             # CR-###-<slug>/{proposal,spec,plan}.md(Full 变更)
 └── research/
@@ -89,23 +88,25 @@ docs/
   → 澄清:改什么/为什么/影响哪些文件/怎么验证
   → 用户同轮确认
   → 直接实现 + 测试 + commit
-  → STATE.md 记一行
+  → .project-kit/state.md 记一行
 ```
 
-记录 = git commit + STATE 一行。不创建任何文档文件。验证责任由 git 与 STATE 承担。
+记录 = git commit + 本地 state 一行。不创建任何变更文档。验证责任由 git 与 `.project-kit/state.md` 承担。
 
 ### 3.3 Full 变更(三件套)
 
 ```text
 changes/CR-###-<slug>/
-├── proposal.md   # 为什么 + 边界 + 影响
-├── spec.md       # 契约 + 验收标准
-└── plan.md       # 步骤 + 验证命令
+├── proposal.md   # 为什么 + 证据 + 边界 + DEC
+├── spec.md       # 唯一业务契约 + 验收标准
+└── plan.md       # 代码基线 + 技术绑定 + 可执行任务
 ```
+
+`new change` 原子创建的三个文件只有 frontmatter（含 `schema_version: 2`）、标题和初始状态，不含 HTML 指导注释、示例契约、示例 Task 或尖括号占位符。`change` / `spec` / `plan` 技能分别从空正文生成完整内容；未声明该版本的历史 completed 文档继续按旧核心门禁兼容读取。
 
 #### proposal(需求)
 
-最低内容:背景与问题及证据 / 期望结果 / 包含 / 不包含 / 影响范围 / 决定（已确认选择、未采用方向与原因）/ 未决问题。
+最低内容:背景与问题 / EVD-## 证据快照 / 期望结果 / 包含 / 不包含 / 影响范围 / DEC-## 已冻结决定 / 未采用方向与原因 / 未决问题。
 
 proposal 的状态即 change 目录的状态:
 
@@ -114,11 +115,11 @@ proposed → accepted → completed
                  ↘ deferred | rejected
 ```
 
-accepted 前固定核心必须完整、无模板标记，未决问题精确为“无”；completed 前 spec 必须 verified 且 plan 必须 completed。
+accepted 前固定核心、EVD 证据和 DEC 冻结决定必须完整、无模板标记，未决问题精确为“无”；completed 前 spec 必须 verified 且 plan 必须 completed。
 
 #### spec(契约)
 
-最低内容:术语与业务对象 / 问题与依据 / 目标 / 用户流程 / 范围(包含/不包含)/ 输入与输出 / REQ/BR / 失败与边界情况 / 禁止事项 / **AC 验收标准** / 未决问题。
+最低内容:术语与业务对象 / 数据权威表 / 问题与依据 / 目标 / 用户流程 / 范围(包含/不包含)/ 输入与输出 / 适用契约块 / REQ/BR / 失败与边界情况 / 禁止事项 / **AC 验收标准** / 未决问题。一个事实只定义一次，协议型需求使用适用的 Field/Event/Action/State Registry。
 
 状态:`draft → approved → verified`。
 
@@ -128,13 +129,13 @@ accepted 前固定核心必须完整、无模板标记，未决问题精确为�
 
 #### plan(步骤)
 
-最低内容:实施目标 / 实现策略 / 当前技术现状 / 目标技术设计 / 全局不变量 / 条件技术设计 / Tasks / 验收与规范映射 / 最终验证 / 非目标 / 未决问题。
+最低内容:代码基线 / 实施目标 / 实现策略 / 当前技术现状 / 目标技术设计 / 全局不变量 / 条件技术设计 / 执行环境 / Implementation Binding / Tasks / 验收与规范映射 / 最终验证 / 非目标 / 未决问题。
 
 状态:`draft → approved → completed`。
 
 - 当前技术现状必须记录系统入口与调用链、关键文件与 Symbol、Current Behavior 及证据；目标技术设计必须给出 Target Behavior、接口和 Current → Target 对照。
 - 条件技术设计逐项判断状态机、错误策略、并发幂等、数据事务、API/事件、配置、兼容迁移、权限安全、可观测性和参考实现；不适用时说明原因。
-- 每个任务包含 files/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/invariants/verify/acceptance/done 十二字段。
+- 每个任务包含 files/file_actions/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/outputs/decisions/invariants/prerequisites/stop_if/verify/acceptance/done 十七字段。
 - 禁止 TBD、TODO、“按之前讨论”“同上”“相关逻辑”“适当处理”“根据实际情况”“后续再定”。
 - 每条 Spec 验收标准映射到至少一个任务和最终验证。
 - completed 前全部任务必须勾选(无 `- [ ]` 残留)。
@@ -173,7 +174,7 @@ accepted 前固定核心必须完整、无模板标记，未决问题精确为�
 
 ### 4.4 多迭代能力
 
-一项需求需要多个可独立发布阶段时,在 roadmap 列出每个阶段(阶段名 + 任务清单),每个任务由一个 change 承接。只细化当前阶段,远期保持粗粒度,避免过早细化制造大量失效文档。动态状态(当前做哪个阶段/任务)归 STATE.md。
+一项需求需要多个可独立发布阶段时,在 roadmap 列出每个阶段(阶段名 + 任务清单),每个任务由一个 change 承接。只细化当前阶段,远期保持粗粒度,避免过早细化制造大量失效文档。动态状态(当前做哪个阶段/任务)归 `.project-kit/state.md`。
 
 ## 5. 状态模型
 
@@ -186,7 +187,7 @@ Plan:            draft → approved → completed
 Brief:           captured
 ```
 
-**roadmap 无状态机**——它是静态规划文档,任务完成情况用 checkbox 就地标记;进行中的状态(active/next)在 STATE.md。
+**roadmap 无状态机**——它是静态规划文档,任务完成情况用 checkbox 就地标记;进行中的状态(active/next)在 `.project-kit/state.md`。
 
 | 状态 | 含义 |
 | --- | --- |
@@ -207,7 +208,7 @@ Brief:           captured
 实施会话不应读取所有历史文档，按顺序建立上下文：
 
 1. 仓库 `AGENTS.md`:稳定开发约束。
-2. `docs/STATE.md`:当前焦点、阻塞和下一动作。
+2. `.project-kit/state.md`:当前人员的焦点、阻塞和下一动作。
 3. `docs/roadmap.md`:阶段规划与任务清单(按需)。
 4. 当前 change 目录:`changes/CR-###-<slug>/` 三件套(如进行中)。
 5. 与当前任务直接相关的 blueprint 章节和代码。
@@ -243,7 +244,7 @@ Brief:           captured
 ```text
 必读:
 - AGENTS.md
-- STATE.md
+- .project-kit/state.md
 - 当前 change 三件套(如进行中)
 
 按需:
@@ -285,7 +286,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 - Roadmap 任务状态列是否与 change 完成情况一致。
 - 是否存在已完成 change 仍有阻断性未决问题。
 - 是否存在失效 plan 仍标记为 approved。
-- `STATE.md` 是否指向真实的当前工作。
+- `.project-kit/state.md` 是否指向真实的当前工作。
 - 相对链接是否有效。
 
 ## 8. 常用提示词
@@ -295,7 +296,7 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 ```text
 这是针对现有系统的新需求。请先用 change 技能判定 Quick 还是 Full:
 - Quick(不触碰契约/API/数据模型/权限,改动小):对话确认后直接实现,零文档。
-- Full:创建 changes/CR-###-<slug>/,先写 proposal(背景与问题/期望结果/包含/不包含/影响范围/决定/未决问题),用户确认后再进入 spec。
+- Full:原子创建只有 frontmatter/标题/状态的最小三件套,再从空正文写 proposal(背景与问题/EVD 证据快照/期望结果/包含/不包含/影响范围/DEC 冻结决定/未决问题),用户确认后进入 spec。
 不要直接修改已 verified 的 spec。
 ```
 
@@ -303,23 +304,23 @@ Roadmap 不复制 spec 验收标准,spec 不复制 plan 文件列表。文档之
 
 ```text
 现在只处理 CR-### 的 spec。
-根据 proposal 和蓝图生成 spec,包含:问题与依据/目标/用户流程/范围/输入与输出/业务规则/失败与边界情况/验收标准/未决问题。
-验收标准必须可验证。不要生成代码步骤,不要扩大范围。
+根据 proposal、蓝图和当前业务现实从空正文生成 spec，包含术语与业务对象/数据权威表/问题与依据/目标/用户流程/范围/输入与输出/适用契约块/业务规则/失败与边界/禁止事项/验收标准/未决问题。
+同一事实只定义一次，验收标准必须可 PASS/FAIL；不要生成内部代码步骤，不要扩大范围。
 ```
 
 ### 8.3 生成 Plan
 
 ```text
 基于已批准 Spec 和当前代码事实生成 CR-### 的 plan。
-每个任务必须包含 files/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/invariants/verify/acceptance/done。
-Plan 必须记录系统入口与调用链、关键文件与 Symbol、Current/Target Behavior、全局不变量和十类条件技术设计。
+每个任务必须包含 files/file_actions/symbols/read_first/depends_on/interfaces/current_behavior/target_behavior/implementation/outputs/decisions/invariants/prerequisites/stop_if/verify/acceptance/done。
+Plan 必须记录代码基线、系统入口与调用链、关键文件与 Symbol、Current/Target Behavior、执行环境、Implementation Binding、全局不变量和十类条件技术设计。
 如果代码事实与 Spec 冲突,或需要扩大范围,停止并报告,不要自行调整需求。
 ```
 
 ### 8.4 开始实施
 
 ```text
-请先阅读 AGENTS.md、STATE.md 和当前 change 三件套。
+请先阅读 AGENTS.md、.project-kit/state.md 和当前 change 三件套。
 在采取行动前复述:当前目标/包含范围/不包含范围/依赖和阻塞/当前事实来源/下一步动作。
 发现文档冲突、范围变化或需要用户决策时停止,不要猜测。
 ```
@@ -374,11 +375,11 @@ Discussion → Brief → Blueprint → Roadmap → change(首个需求)
 
 后续继续开发:
 新需求 → change 判定
-  ├── Quick → 对话确认 → 实现 + 测试 + commit → STATE 一行
-  └── Full → proposal → 用户确认 → spec → plan → 执行勾选 → 独立验收 → STATE
+  ├── Quick → 对话确认 → 实现 + 测试 + commit → 本地 state 一行
+  └── Full → proposal → 用户确认 → spec → plan → 执行勾选 → 独立验收 → 本地 state
 
 实施上下文:
-AGENTS.md → STATE.md → 当前 change 三件套 → 核对范围后继续
+AGENTS.md → .project-kit/state.md → 当前 change 三件套 → 核对范围后继续
 ```
 
 整套方法的核心:Quick 零文档,Full 三件套(proposal 保存需求决策、spec 冻结功能契约、plan 固化技术现实并指导实施),Blueprint 保存系统边界,Roadmap 安排交付顺序,代码和 Git 保存实施事实,本地 state 保存当前结果和下一动作。
