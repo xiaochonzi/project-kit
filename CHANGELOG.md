@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Spec 技能架构师与自包含契约强化**：注入资深系统架构师视角，澄清“不规定内部实现”不等于放弃技术严密性，强制将对外/核心数据模型 Schema、枚举、状态机转移矩阵锁死至机器可解析级别；确立“自包含契约铁律”，严禁将目标模型定义“甩锅”给外部或前序 CR，必须就地提供 Normative Schema；确立复杂流转可视化规范，凡涉及图装配、指针回填与多分支合流，强制提供 ASCII 拓扑图或决策矩阵表。
+- **Plan 技能工序流水线与任务原子性强化**：注入交付总工/施工队长视角，强制梳理自底向上流水线工序分期（基础类型/DTO → 核心纯逻辑与状态机 → 复杂拓扑与指针回填 → 服务集成与调用链 → 最终验收与清理），彻底解决“第一步干嘛、第二步干嘛”的时序问题；确立“任务原子性铁律”，单个 Task 核心修改的生产文件原则上控制在 1~3 个，严禁大包揽巨型任务；`implementation` 强制编写代码级操作步骤指令（1. 2. 3.），严厉禁止“实现装配”“完成逻辑”等空洞偷懒动词。
 - **三件套改为最小骨架生成**：`new change` 仍分配稳定 ID 并原子创建 proposal/spec/plan，但三个持久化文件只含 frontmatter（含 `schema_version: 2`）、标题和初始状态；移除 HTML 指导注释、示例契约、示例 Task 与尖括号占位符。draft/proposed 缺少正文结构只产生提醒，accepted/approved/completed 继续执行严格门禁。
 - **change/spec/plan 从头重写**：技能不依赖模板填空；Proposal 从空正文生成 EVD 证据和 DEC 冻结决定，Spec 按需求生成核心与条件契约块并保证单一事实来源，Plan 记录代码基线、执行环境和 Implementation Binding，面向没有原始对话上下文的执行 AI。
 - **Plan 执行契约扩展**：Task 从十二字段扩展为十七字段，新增 `file_actions`、`outputs`、`decisions`、`prerequisites`、`stop_if`；`execute-plan` 与 `verify-plan` 同步核对代码基线、产物、决定绑定和实际 diff。
