@@ -24,7 +24,7 @@ Plan 必须清晰回答：**第一步要干嘛（改哪些文件/Symbol、具体
 3. TASKS MUST BE ATOMIC AND BOTTOM-UP PHASED — NO MEGA-TASKS, NO VAGUE IMPLEMENTATION
 ```
 
-1. **契约忠实铁律**：Plan 是 Spec 的技术实现映射，严格覆盖全部 DEC / REQ / BR / AC。Plan 可以选择技术方案，但绝不新增、删除或改变 Spec 的业务行为。代码冲突或契约缺失时立即停止，返回 `spec` / `change`。
+1. **契约忠实铁律**：Plan 是 Spec 的技术实现映射，严格覆盖全部 DEC / BR / AC。Plan 可以选择技术方案，但绝不新增、删除或改变 Spec 的业务行为。代码冲突或契约缺失时立即停止，返回 `spec` / `change`。
 2. **零上下文可执行铁律**：Plan 必须让没有原始对话的执行 AI 从 Task 1 开始闭环工作。禁止“按之前讨论”“自行决定”“适当处理”等需要现场脑补的表述。
 3. **任务原子性与流水线工序铁律**：任务必须按依赖自底向上分期推进；单个 Task 核心修改的生产文件严格控制在 1~3 个，严禁大包揽；`implementation` 必须写成代码级的保姆操作指令（`1. ...; 2. ...; 3. ...`），严厉禁止“实现装配”“完成逻辑”等空洞偷懒动词。
 
@@ -33,7 +33,7 @@ Plan 必须清晰回答：**第一步要干嘛（改哪些文件/Symbol、具体
 ## 单一事实来源 (Single Source of Truth)
 
 - Proposal 冻结动机、边界与 `DEC-##`
-- Spec 冻结 REQ / BR / AC、字段权威、状态表与外部协议
+- Spec 冻结 BR / AC、字段权威、状态表与外部协议
 - Plan 只承载代码现实、技术绑定与工序任务，通过编号引用契约，**绝不复制 Spec 正文**。
 
 ---
@@ -86,13 +86,13 @@ Plan 已 approved → 不重写，交接 `execute-plan`。
 - **Constitution 适用规范清单**：提取 Constitution 适用规则，映射到文件、Task 与自动化验证命令。
 
 ### 6. Implementation Binding 表
-用表格将全部 DEC / REQ / BR / AC 唯一绑定到物理代码位置：
+用表格将全部 DEC / BR / AC 唯一绑定到物理代码位置：
 ```markdown
 ## Implementation Binding
 
-| DEC / REQ / BR / AC | 文件与 Symbol | 修改类型 | 验证 |
+| DEC / BR / AC | 文件与 Symbol | 修改类型 | 验证 |
 |---|---|---|---|
-| REQ-01, BR-01, AC-01 | `<相对路径>` `<Symbol>` | modify | `<定点测试命令>` |
+| BR-01, AC-01 | `<相对路径>` `<Symbol>` | modify | `<定点测试命令>` |
 ```
 
 ### 7. 原子任务拆解（17 字段交付单元）
@@ -115,7 +115,7 @@ Plan 已 approved → 不重写，交接 `execute-plan`。
 - prerequisites: <环境、数据和前置产物>
 - stop_if: <出现什么偏差必须停止，不得现场猜测>
 - verify: <任务后立即运行的真实、机器无关命令>
-- acceptance: <可观察结果，引用 REQ / BR / AC>
+- acceptance: <可观察结果，引用 BR / AC>
 - done: <何时可以勾选>
 
 - [ ] Task N
@@ -165,7 +165,7 @@ node scripts/project-docs.cjs transition CR-### --to approved --kind plan --root
 - [ ] 任务颗粒度原子化，核心生产文件单任务控制在 1~3 个，无大包揽巨型 Task
 - [ ] 每个 Task 完整具备 17 个执行字段
 - [ ] implementation 写明具体操作步骤（1. 2. 3.），无“实现XXX”等抽象动词
-- [ ] Implementation Binding 覆盖全部 DEC / REQ / BR / AC
+- [ ] Implementation Binding 覆盖全部 DEC / BR / AC
 - [ ] 验证命令机器无关，无用户主目录和盘符绝对路径
 - [ ] 用户明确批准并成功迁移至 approved
 

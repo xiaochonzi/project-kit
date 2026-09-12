@@ -50,7 +50,7 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 - [ ] `docs/constitution.md` 或 Plan 指定的项目等效编码规则（如 `AGENTS.md`），在读取实现前完整阅读
 - [ ] `plan.md` 的「代码基线」「执行环境」「Implementation Binding」「Constitution 规范映射清单」均存在
 - [ ] 每个 Task 的 `outputs` 已记录实际产物，`file_actions` 可与实际 diff 对照
-- [ ] Proposal 全部 DEC 和 Spec 全部 REQ / BR / AC 已映射
+- [ ] Proposal 全部 DEC 和 Spec 全部 BR / AC 已映射
 - [ ] 若存在 `docs/changes/CR-###-<slug>/diagrams.md`，读取作为数据实现核对依据
 
 ## Process
@@ -74,7 +74,7 @@ node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项�
 5. 检查 Plan 每项任务是否勾选，实际 diff 是否符合 `file_actions`，声明的 `outputs` 是否真实存在
 6. 核对实现与 Plan 的 Target Behavior、interfaces、decisions、全局不变量和 Task invariants 一致
 7. 核对每个适用的条件技术设计已实现，不适用项没有被实际改动推翻
-8. 核对全部 DEC / REQ / BR / AC 的绑定都有实现与新鲜验证证据
+8. 核对全部 DEC / BR / AC 的绑定都有实现与新鲜验证证据
 9. 确认实现不需要原始对话才能解释，且没有执行阶段自行补出的产品决定
 
 **如果 execute 阶段的测试已经通过,仍然重新运行**——验证的是"当前代码是否满足验收标准",不是"以前是否满足过"。

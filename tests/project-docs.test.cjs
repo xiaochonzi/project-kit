@@ -403,3 +403,24 @@ test('validate warns on machine absolute paths in plan', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('spec approval succeeds with pure BR and AC contracts without REQ', () => {
+  const tmp = makeTmpProject();
+  try {
+    run(['new', 'change', '--title', '纯契约门禁', '--root', tmp]);
+    const changeDir = path.join(tmp, 'docs', 'changes', 'CR-001-纯契约门禁');
+    fs.writeFileSync(
+      path.join(changeDir, 'proposal.md'),
+      '---\nid: CR-001\ntitle: 纯契约门禁\nstatus: accepted\n---\n\n# 纯契约门禁\n\n## 背景与问题\n\n背景。\n\n## 证据快照\n\nEVD-01：依据。\n\n## 期望结果\n\n结果。\n\n## 包含\n\n包含。\n\n## 不包含\n\n不包含。\n\n## 影响范围\n\n影响。\n\n## 决定\n\n### 已确认选择\n\n- DEC-01：选择。\n\n### 未采用方向与原因\n\n无。\n\n## 未决问题\n\n无\n',
+      'utf8'
+    );
+    const pureSpec = '---\nchange: CR-001\ntitle: 纯契约门禁\nstatus: draft\n---\n\n# 纯契约门禁\n\n## 术语与业务对象\n\n术语。\n\n## 数据权威表\n\n权威。\n\n## 问题与依据\n\n依据。\n\n## 目标\n\n目标。\n\n## 用户流程\n\n流程。\n\n## 范围\n\n### 包含\n\n包含。\n\n### 不包含\n\n不包含。\n\n## 输入与输出\n\n输入输出。\n\n## 业务规则\n\n- BR-01：纯业务规则，无 REQ 包装。\n\n## 失败与边界情况\n\n失败。\n\n## 禁止事项\n\n禁止。\n\n## 验收标准\n\n- [ ] AC-01：可执行验收。\n\n## 未决问题\n\n无\n';
+    const specPath = path.join(changeDir, 'spec.md');
+    fs.writeFileSync(specPath, pureSpec, 'utf8');
+    run(['transition', 'CR-001', '--to', 'approved', '--kind', 'spec', '--root', tmp]);
+    assert.match(fs.readFileSync(specPath, 'utf8'), /status: approved/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+

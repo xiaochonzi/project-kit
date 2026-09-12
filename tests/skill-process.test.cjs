@@ -39,7 +39,7 @@ test('change routes risk and writes a context-free proposal from scratch', () =>
 
 test('spec builds a single-source business contract for context-free execution', () => {
   const skill = readSkill('spec');
-  for (const concept of ['术语与业务对象', '数据权威表', '核心契约', '条件契约块', 'REQ-##', 'BR-##', 'AC-##', '单一事实来源', '第二种合理']) {
+  for (const concept of ['术语与业务对象', '数据权威表', '核心契约', '条件契约块', 'BR-##', 'AC-##', '单一事实来源', '第二种合理']) {
     assert.match(skill, new RegExp(concept));
   }
   assert.match(skill, /Normative/);
@@ -57,7 +57,7 @@ test('plan creates an executable handoff with baseline bindings and complete tas
   for (const field of ['files', 'file_actions', 'symbols', 'read_first', 'depends_on', 'interfaces', 'current_behavior', 'target_behavior', 'implementation', 'outputs', 'decisions', 'invariants', 'prerequisites', 'stop_if', 'verify', 'acceptance', 'done']) {
     assert.match(skill, new RegExp(`- ${field}:`));
   }
-  assert.match(skill, /全部 DEC \/ REQ \/ BR \/ AC/);
+  assert.match(skill, /全部 DEC \/ BR \/ AC/);
   assert.match(skill, /Plan approved → `execute-plan`/);
   assert.doesNotMatch(skill, /new plan --change/);
   assert.doesNotMatch(skill, /高级模型|低级模型/);
@@ -84,7 +84,7 @@ test('execute-plan treats persisted documents as the only requirement input', ()
 
 test('verify-plan audits decisions contracts outputs and constitution with fresh evidence', () => {
   const skill = readSkill('verify-plan');
-  for (const concept of ['新鲜证据', 'DEC \/ REQ \/ BR \/ AC', 'file_actions', 'outputs', 'Implementation Binding', '代码规范符合性']) {
+  for (const concept of ['新鲜证据', 'DEC \/ BR \/ AC', 'file_actions', 'outputs', 'Implementation Binding', '代码规范符合性']) {
     assert.match(skill, new RegExp(concept));
   }
   assert.match(skill, /规范.*fail.*blocked|fail.*blocked.*规范/s);

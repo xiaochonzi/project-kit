@@ -600,15 +600,8 @@ function transitionDocument(root, target, nextStatus, kind) {
     const empty = emptySections(document, AUTHORING_SECTIONS.spec);
     if (empty.length > 0) throw new Error(`Spec 批准前必须填写: ${empty.join('、')}`);
     const ids = contractIds(document.content);
-    for (const prefix of ['REQ-', 'BR-', 'AC-']) {
+    for (const prefix of ['BR-', 'AC-']) {
       if (!ids.some((id) => id.startsWith(prefix))) throw new Error(`Spec 批准前至少需要一个 ${prefix}## 契约编号`);
-    }
-    const requirements = [...document.content.matchAll(/^###\s+(REQ-\d{2,})[^\r\n]*\r?\n([\s\S]*?)(?=^###\s+|^##\s+|(?![\s\S]))/gm)];
-    if (requirements.length === 0) throw new Error('Spec 批准前至少需要一个 REQ-## 需求章节');
-    for (const requirement of requirements) {
-      if (!/\bBR-\d{2,}\b/.test(requirement[2]) || !/\bAC-\d{2,}\b/.test(requirement[2])) {
-        throw new Error(`${requirement[1]} 必须关联 BR-## 和 AC-##`);
-      }
     }
     if (sectionBody(document.content, '未决问题') !== '无') throw new Error('Spec 批准前「未决问题」必须为“无”');
   }

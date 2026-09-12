@@ -91,7 +91,7 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 - [ ] Plan 的 Current Behavior 有代码、测试或配置证据，未被代码变化推翻
 - [ ] 每个 Task 的 `interfaces`、`depends_on`、`outputs` 和前后任务名称/数据结构一致
 - [ ] `prerequisites` 已满足；`verify` 命令和本地脚本在使用时存在
-- [ ] 每个 DEC / REQ / BR / AC 在 Implementation Binding 和任务中有一致绑定
+- [ ] 每个 DEC / BR / AC 在 Implementation Binding 和任务中有一致绑定
 - [ ] 任务依赖顺序无环，所有 `stop_if` 均可判断
 - [ ] Plan 只覆盖本 Spec 范围,没有相邻问题/未来设计混入
 
@@ -106,7 +106,7 @@ node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项
 3. **按 `file_actions` 操作**：只创建、修改、删除或验证声明的 `files`；范围外文件不碰
 4. **RED**：写/运行该任务的失败测试，确认因目标行为尚未实现而 FAIL
 5. **GREEN**：按 `implementation` 写最小实现，运行确认 PASS
-6. **CHECK**：核对 `outputs` 已真实产生，`acceptance` 中的 REQ/BR/AC 可观察满足
+6. **CHECK**：核对 `outputs` 已真实产生，`acceptance` 中的 BR/AC 可观察满足
 7. **记录**：在 plan.md 勾选 `- [x] Task N`，把命令、输出摘要和产物追加到「最终验证」区
 8. **提交**：按项目约定小步提交，描述该任务的实际产物
 

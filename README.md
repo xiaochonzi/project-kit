@@ -10,7 +10,7 @@ Project Kit 是一个面向团队内部复用的 Claude Code 多 skill 插件,�
 - **文档即交接**:三件套不得依赖原始对话；Proposal 冻结范围和 DEC，Spec 冻结唯一业务契约，Plan 提供可直接执行的技术绑定
 - **从空正文生成**:持久化骨架不含指导注释、示例契约或示例 Task，技能根据真实需求构建文档
 - **技能自包含**:每个技能写全可独立执行的流程(前置条件、步骤、校验清单、停止条件),触发即用,不依赖共享文档
-- **单一事实来源**:同一事实只在职责对应文档定义一次，Plan 通过 DEC/REQ/BR/AC 引用，不复制 Spec
+- **单一事实来源**:同一事实只在职责对应文档定义一次，Plan 通过 DEC/BR/AC 引用，不复制 Spec
 - **脚本承载机械门禁**:`scripts/project-docs.cjs` 负责确定性操作与校验,不替 AI 做语义判断
 
 ## 安装
@@ -90,7 +90,7 @@ claude plugin install github:xiaochonzi/project-kit
 | 文档 | 必须完整回答 |
 |---|---|
 | `proposal.md` | 背景、EVD 证据快照、期望结果、包含/不包含、影响范围、DEC 冻结决定与未采用方向 |
-| `spec.md` | 术语与对象、数据权威、适用契约块、REQ/BR/AC、失败边界和唯一可验收行为 |
+| `spec.md` | 术语与对象、数据权威、适用契约块、BR/AC、失败边界和唯一可验收行为 |
 | `plan.md` | 代码基线、调用链、文件与 Symbol、Implementation Binding、执行环境、任务、停止条件和验证 |
 
 Plan 的每个 Task 必须包含 `files`、`file_actions`、`symbols`、`read_first`、`depends_on`、`interfaces`、`current_behavior`、`target_behavior`、`implementation`、`outputs`、`decisions`、`invariants`、`prerequisites`、`stop_if`、`verify`、`acceptance` 和 `done`。状态机、错误、并发幂等、数据事务、API/事件、配置、兼容迁移、权限安全、可观测性和参考实现必须逐项判断是否适用并说明原因。
@@ -133,7 +133,7 @@ node scripts/project-docs.cjs next --root <project>
 | 5 | 拆成可交付阶段 | `roadmap` | `docs/roadmap.md` |
 | 6 | 新需求入口与分流 | `change` | Quick:零文档 / Full:原子创建 `changes/CR-001-<slug>/` 最小三件套 |
 | 7 | 从空正文生成 Proposal 并确认 | `change` | `proposal.md`(EVD 证据+边界+DEC 决定) |
-| 8 | 从空正文生成唯一业务契约 | `/project-kit/spec CR-001` | `spec.md`(数据权威+REQ/BR/AC) |
+| 8 | 从空正文生成唯一业务契约 | `/project-kit/spec CR-001` | `spec.md`(数据权威+BR/AC) |
 | 9 | 绑定代码并生成执行计划 | `/project-kit/plan CR-001` | `plan.md`(代码基线+Implementation Binding+Tasks) |
 | 10 | 按计划实施 | `execute-plan` | 代码 + 测试 + plan 勾选 |
 | 11 | 独立验收 | `verify-plan` | 重跑验收标准,写回 plan + 本地 state |
