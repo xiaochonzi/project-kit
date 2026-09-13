@@ -7,13 +7,12 @@ description: Use when a Full change is implemented and needs independent accepta
 
 ## Overview
 
-用**新鲜证据**独立核对 Proposal 决定、Spec 契约、Plan 实施情况与 Constitution 代码规范。验收只依赖落盘三件套、当前代码和本轮证据，不使用原始对话解释目标，也不引用执行阶段的历史输出。
+使用**新鲜证据**独立核对 Proposal 冻结决定、Spec 业务契约、Plan 实施事实与 Constitution 代码规范。
 
-**“执行者说完成了”不是证据。** 每条验收标准和规范检查必须重新运行；只有全部满足才能宣布完成。
+验收者只依赖落盘三件套、当前代码基线和本轮重新采集的命令证据，不使用原始对话解释目标，也不引用执行阶段的历史输出。
 
-**不产出独立验收文档**——验收证据写回 `plan.md` 的「最终验证」区,结论同步 `.project-kit/state.md`,并把 roadmap 中对应任务状态更新为 `已完成`。
-
-**开始前宣布:** "我正在使用 verify-plan 技能进行独立验收。"
+- **“执行者声称完成了”绝不是证据**：每条验收标准（`AC-##`）与 Constitution 规范检查必须在本轮重新运行命令；只有全部客观满足，才能判定通过。
+- **不产出独立验收文档**：验收证据直接写回 `plan.md` 的「最终验证」区，结论同步更新至本地 `.project-kit/state.md`，并将 `docs/roadmap.md` 中的对应任务状态更新为 `已完成`。
 
 ## The Iron Law
 
@@ -21,149 +20,132 @@ description: Use when a Full change is implemented and needs independent accepta
 NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 ```
 
-**Violating the letter of this rule is violating the spirit of verification.** 如果你没有在此轮消息中重新运行验证命令,就不能声称它通过。不得引用 execute 阶段的旧输出、不得凭"看起来正确"宣称通过、不得通过修改验收标准来掩盖失败。
+**严禁在没有本轮可复核命令输出的情况下声称验收通过。严禁引用 execute 阶段的历史日志，严禁凭“代码看起来正确”宣称完成，严禁通过降低或篡改验收标准来掩盖失败。**
 
-## Red Flags — STOP immediately
+**开始前宣布：**“我正在使用 verify-plan 技能进行独立验收。”
 
-在声明任何结果前,如果出现以下信号,**立刻停止,不要继续**:
+## Red Flags（出现任一信号，立刻停止）
 
-- 想说"应该没问题"、"看起来正确"、"之前测过了"
-- 想表达满意("Perfect!"、"Done!")但没跑过验证命令
-- 相信 execute 阶段的测试输出("那次是通过的")——那次不是这次
-- 验收标准失败了,但想把它写成"限制"或"已知问题"来过关
-- 想顺手修个范围外的 bug 再回来验收
-- **任何在没有运行证据命令的情况下暗示通过的措辞**
+- 想说“应该没问题”“看起来正确”“之前测试跑过了”；
+- 想在未重新执行验证命令的情况下表达满意（如“完美”“通过”）；
+- 采信 execute 阶段的历史输出（“刚才那次是通过的” —— 那次不是这次）；
+- 验收命令执行失败，但试图在文档中写成“已知限制”或“遗留问题”强行放行；
+- 试图在验收过程中直接动手修改代码“顺手修一下”；
+- 任何在没有真实验证命令输出支撑下暗示通过的表述。
 
-## Common Failures
+## Required Inputs（不满足即停止）
 
-| 声明 | 必须要 | 不算数 |
-|---|---|---|
-| 测试通过 | 本轮 `node --test` 输出:0 failures | 上一轮通过、"应该能过" |
-| Spec 验收满足 | 逐条 AC 证据命令+本轮输出 | "代码看起来实现了" |
-| 没有越界修改 | `git diff --stat` vs Plan files | "感觉没改别的" |
-| Change 可标记完成 | 全部 AC pass + spec verified + plan completed | "差不多了,标完成吧" |
-
-## Required Inputs(不满足即停止)
-
-- [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`(验收标准是核对清单)
-- [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: completed`(任务全部勾选)
-- [ ] `docs/constitution.md` 或 Plan 指定的项目等效编码规则（如 `AGENTS.md`），在读取实现前完整阅读
-- [ ] `plan.md` 的「代码基线」「执行环境」「Implementation Binding」「Constitution 规范映射清单」均存在
-- [ ] 每个 Task 的 `outputs` 已记录实际产物，`file_actions` 可与实际 diff 对照
-- [ ] Proposal 全部 DEC 和 Spec 全部 BR / AC 已映射
-- [ ] 若存在 `docs/changes/CR-###-<slug>/diagrams.md`，读取作为数据实现核对依据
+- [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`（业务验收基准）
+- [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: completed`（全部任务已完成勾选）
+- [ ] `docs/constitution.md`（或 Plan 指定的项目等效编码规则如 `AGENTS.md`）在核对代码前已完整阅读
+- [ ] `plan.md` 的「代码基线」「执行环境」「Implementation Binding」「Constitution 规范映射清单」均完整存在
+- [ ] 每个 Task 的 `outputs` 已真实产生，`file_actions` 可与真实 `git diff` 精确对照
+- [ ] Proposal 全部 DEC、Spec 全部 BR / AC 在 Plan 中已具备映射
+- [ ] 若存在 `docs/changes/CR-###-<slug>/diagrams.md`，已读取作为数据架构核对依据
 
 ## Process
 
-### Step 1: 确认上下文
+### Step 1：加载上下文与规范预备
+
+运行上下文载入命令：
 
 ```bash
 node scripts/project-docs.cjs context verify-plan --target <CR-###> --root <项目根>
 ```
 
-读取该 change 三件套。**先完整读取 `docs/constitution.md` 或 Plan 指定的项目等效编码规则，再读取 Plan 的「Constitution 规范映射清单」表，然后才开始查看变更代码。**
+**严格遵循顺序**：先完整读取 `docs/constitution.md`（或项目等效编码规则），再读取 Plan 的「Constitution 规范映射清单」，最后才开始核对变更代码。
 
-### Step 2: 逐条核对 Spec 与 Plan 实施情况
+### Step 2：逐条核对 Spec 契约与 Plan 落地事实
 
-对 Spec 的**每条**验收标准:
+对 Spec 的**每一条**验收标准（`AC-##`）与业务规则（`BR-##`）：
+1. 选取直接客观证据：自动化测试、CLI 命令输出、静态断言或数据校验；
+2. **重新运行证据命令**，捕获真实的命令输出（严禁粘贴 execute 历史输出）；
+3. 给出客观判定：`pass`（证据充分满足）/ `fail`（证据不满足）/ `blocked`（环境阻塞无法验证）；
+4. 核查代码基线：确认 Plan 依赖的 Symbol、入口调用链和 Current Behavior 依然成立；
+5. 核查文件范围：实际 `git diff --stat` 是否完全符合 `file_actions` 声明范围，有无越界文件；
+6. 核实产物真实性：声明的 `outputs` 是否真实存在于磁盘；
+7. 核实绑定完备性：全部 DEC / BR / AC 的 Implementation Binding 均有实现与新鲜证据支撑；
+8. 确认实现无需原始对话即可解释，无开发人员自行臆造的未经批准决定。
 
-1. 选择直接证据:自动测试、CLI 命令、静态检查、数据断言
-2. **重新运行证据命令**,记录命令+输出(不引用 execute 阶段的旧日志)
-3. 判定:`pass`(证据满足) / `fail`(证据不满足) / `blocked`(无法运行证据)
-4. 检查代码基线是否漂移；漂移时确认 Plan 依赖的文件、Symbol、调用链和 Current Behavior 仍成立
-5. 检查 Plan 每项任务是否勾选，实际 diff 是否符合 `file_actions`，声明的 `outputs` 是否真实存在
-6. 核对实现与 Plan 的 Target Behavior、interfaces、decisions、全局不变量和 Task invariants 一致
-7. 核对每个适用的条件技术设计已实现，不适用项没有被实际改动推翻
-8. 核对全部 DEC / BR / AC 的绑定都有实现与新鲜验证证据
-9. 确认实现不需要原始对话才能解释，且没有执行阶段自行补出的产品决定
+### Step 3：独立审查 Constitution 代码规范符合性
 
-**如果 execute 阶段的测试已经通过,仍然重新运行**——验证的是"当前代码是否满足验收标准",不是"以前是否满足过"。
+对 Plan「Constitution 规范映射清单」中的**每条规则**：
+1. 对照 Constitution 原文核实规则意图，不自行脑补或扩大解释；
+2. 运行规则指定的 lint、format、typecheck 或测试命令，捕获实际输出；
+3. 对无法机械验证的规范执行人工代码审查，记录审查的具体文件与逻辑依据；
+4. 独立判定：`pass` / `fail` / `blocked`。
+5. **规范审查铁律**：Constitution 代码规范符合性检查如果出现 `fail` 或 `blocked`，**绝对不得推进 `spec verified` 或 `change completed`**！
 
-### Step 3: 独立审查 Constitution 代码规范符合性
+### Step 4：全局回归与边界防线
 
-对 Plan 的「Constitution 规范映射清单」中的**每条规则**:
+- 运行相关模块既有测试套件，确认未引发意外回归；
+- 验证关键失败路径（空参数、异常数据、非法租户/权限边界）；
+- 确认系统安全与数据权威边界未被破坏。
 
-1. 对照 Constitution 原文确认规则含义,不自行扩大解释
-2. 检查 Plan 声明的变更文件、实际 `git diff` 和相关调用方
-3. 运行规则映射的 lint、format、type、test 或静态检查命令
-4. 对无法机械验证的规则执行针对性代码审查,记录文件和判断依据
-5. 判定:`pass` / `fail` / `blocked`
+### Step 5：写回真实验证证据
 
-规范审查不是“代码看起来不错”;必须有命令输出或明确的文件级审查证据。
+将所有测试命令、最新输出摘要、审查依据追加写回 `plan.md` 的「最终验证」区，更新各检查条目的最终判定。
 
-### Step 4: 回归与边界检查
+### Step 6：判定与状态收口
 
-- 运行受影响模块的回归测试
-- 检查 Constitution 约束(编码门禁/测试要求)
-- 检查关键失败路径(空输入/损坏数据/权限边界)
-- 检查安全与数据边界
-
-### Step 5: 记录验收证据
-
-把 Proposal/Spec/Plan 每条决定、契约和 Constitution 规范的命令、输出/审查依据与结论追加到 `plan.md` 的「最终验证」区，并更新 Implementation Binding、验收标准映射和规范映射的最终验证列。
-
-### Step 6: 判定与状态推进
-
-**全部 pass**:
+#### 全部项为 pass 时：
 
 ```bash
 node scripts/project-docs.cjs transition CR-### --to verified --kind spec --root <项目根>
 node scripts/project-docs.cjs transition CR-### --to completed --root <项目根>
 ```
 
-transition 脚本只负责核对 Spec 状态和 Plan 状态;它不替 AI 判断当前契约，也不替 AI 判断代码规范。**在调用 transition 前,本技能必须确认 Spec 与 Constitution 规范检查全部 `pass`**。change completed 前还必须满足 Spec verified 和 Plan completed。
+> **门禁边界**：`transition 脚本只负责`机械检查文档状态与字段完整性；`不替 AI 判断代码规范`，也不替 AI 判断契约是否达成。AI 必须在调用 transition 前亲自确认所有规范与契约全部 pass。
 
-把 `docs/roadmap.md` 中该 change 对应任务的状态更新为 `已完成`,更新 `.project-kit/state.md`(完成记录、下一动作、最近完成)。
+推进完成后：
+1. 将 `docs/roadmap.md` 中对应任务的状态更新为 `已完成`；
+2. 在 `.project-kit/state.md` 记录完成事实。
 
-**任一 Spec/Plan 标准或 Constitution 规范检查 `fail`**:不标记完成。给出最小下一动作(回 execute-plan 修复 / 转 bug)。
+#### 任一项为 fail 或 blocked 时：
+**严禁推进任何完成状态**：
+- `fail`：记录失败原因与偏差，路由至 `execute-plan`（代码修复）或 `bug`（根因排查）；
+- `blocked`：记录环境或依赖阻塞事实，保持当前状态，通知用户协助解除。
 
-**任一检查 `blocked`**:记录阻塞原因,不标记完成。
+### Step 7：同步本地 state
 
-Constitution 规范检查出现 `fail` 或 `blocked` 时,不得推进 `spec verified` 或 `change completed`。
+更新 `.project-kit/state.md`：
+- 更新 `last_completed` 或记录遗留阻塞；
+- 更新 `active_change` 与推荐的 `next_action`。
 
-### Step 7: 更新本地 state
+## Quality Checklist
 
-记录验收结论、下一动作、任何残留风险。更新 frontmatter 的 `active_change` / `next_action`。
+- [ ] 所有验收判定均基于本轮运行获取的**新鲜证据**，未复用 execute 历史日志
+- [ ] 覆盖了 Proposal 全部 DEC、Spec 全部 BR / AC 以及 Plan 全部 Implementation Binding
+- [ ] 逐条完成 Constitution 代码规范符合性审查，并记录了命令输出或代码审查依据
+- [ ] 规范检查无 fail 或 blocked；若有，已严格阻断推进
+- [ ] `git diff --stat` 严格与 `file_actions` 一致，确认无越界修改
+- [ ] 验收事实已全部持久化写回 `plan.md` 的「最终验证」区
+- [ ] 通过 CLI 成功将 Spec 迁移为 `verified`、Change 迁移为 `completed`
+- [ ] `docs/roadmap.md` 对应任务状态已更新为 `已完成`
 
-## 禁止
+## Script / Author Responsibility
 
-| 禁止的行为 | 为什么 |
-|---|---|
-| 引用 execute 阶段的旧输出当证据 | 那不是新鲜证据,无法证明当前代码满足验收 |
-| "应该可以""看起来正确"代替证据 | 验收结论只能由命令输出支持 |
-| 因实现者声称完成而跳过复验 | 本技能独立于 execute-plan |
-| 在验收过程中顺手修范围外问题 | 验收不是修复——失败就标记失败 |
-| 修改验收标准来掩盖失败 | Spec 错误→停止重新评审需求,不静默改标准 |
-| 通过修改代码来"修复"验收失败 | 失败就是失败,记录,交给 execute-plan 或 bug |
+| CLI (`project-docs.cjs`) | 验收审查者 (AI) |
+| --- | --- |
+| `context verify-plan` 输出三件套与关联信息 | 逐条重新运行验证命令，捕获新鲜事实输出 |
+| `transition` 执行机械门禁检查与状态跃迁 | 独立审查代码规范符合性与契约满足度，判定 pass/fail/blocked |
+| — | **禁止**：使用旧日志、动手改代码、“看起来正确”、降低验收标准 |
 
-## 场景路由
+## Stop Conditions
 
-| 场景 | 处理 |
-|---|---|
-| **Plan 未 completed** | 路由到 execute-plan |
-| **全部 pass** | spec verified → change completed;roadmap 任务状态置为已完成,更新本地 state |
-| **任一必需标准 fail** | 记录,回 execute-plan 修复或转 bug |
-| **Proposal 决定或 Spec 本身错误** | 停止,重新评审需求,不通过修改验收标准掩盖 |
-| **实现依赖原始对话才能解释** | fail，返回 plan/spec 补齐持久化契约 |
-| **验收中发现新期望行为** | 创建新 Change(走 change 技能),不混入当前验收 |
-
-## 脚本/AI 分工
-
-| 脚本 | AI |
-|---|---|
-| `context verify-plan` 输出上下文 | 逐条运行 Spec/Plan 与 Constitution 证据命令 |
-| `transition` 核对状态并执行迁移 | 判定 pass/fail/blocked |
-| — | 检查越界/回归/Constitution 代码规范 |
-| — | **禁止**:引用旧输出、手修代码、"看起来正确" |
+- Plan 尚未处于 `status: completed` → 停止，路由至 `execute-plan`
+- 任一验收标准或规范检查判定为 `fail` → 严禁标记完成，记录证据后交由 `execute-plan` 或 `bug`
+- 关键验证环境损坏或命令受阻（`blocked`）→ 停止推进状态，报告阻塞项
+- 发现实现严重偏离已批准 Spec，必须大改设计 → 停止，提示重新评审需求或立项新 Change
 
 ## Handoff Rule
 
-Change completed 后 → `status`(查看下一动作)或进入下一个 change 的 `change`/`plan`。验收失败 → `execute-plan`(修复)或 `bug`(根因分析)。
+- 验收全部通过并 completed → `status`（推导下一阶段焦点）或启动下一个任务的 `change`
+- 验收发现实现缺陷（fail）→ `execute-plan`（按计划修复）或 `bug`（复杂缺陷排查）
 
-## Common Rationalizations
+## Anti-Patterns 负面清单
 
-| 借口 | 现实 |
-| --- | --- |
-| "执行阶段测过了,不用重跑" | 没有新鲜证据就不是独立验收 |
-| "失败的验收标准写成限制就行" | 失败就是失败,不能用表述掩盖 |
-| "顺手修掉这个越界问题再验收" | 验收不是修复入口,失败→标记,交给 execute-plan |
+1. **严禁引用执行阶段历史输出**：必须在当前会话重新运行命令，旧输出不代表当前代码状态。
+2. **严禁在验收中动手修改业务代码**：验收者是裁判而非实施者，发现错误必须判 `fail` 并交回实施技能。
+3. **严禁将失败粉饰为已知限制**：凡与 Spec 不符或规范报错，一律不得放行。
+4. **严禁在规范检查失败时完成变更**：Constitution 规范检查未 pass 时，严禁迁移为 `verified` 或 `completed`。

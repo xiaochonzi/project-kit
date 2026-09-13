@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **全量 12 个技能深度审校与提示词精炼**：对 `skills/` 下全部 12 个技能（`change`、`spec`、`plan`、`execute-plan`、`verify-plan`、`bug`、`constitution`、`brief`、`blueprint`、`roadmap`、`init`、`status`）进行全量精细润色与逻辑重构。剔除冗长陈述与历史残留用语（如 `brief` 中残留的“requirements 表(已删除)”、`init` 中遗留的“4 个根文档”校正为 3 个）；消除 Markdown 语法缺陷（如 `constitution` 中 `**## The Iron Law`）；全量规范每个技能的自包含结构（Prerequisites / Process / Quality Checklist / Script vs Author Responsibility / Stop Conditions / Handoff Rule / Anti-Patterns）；强化二级标题与状态机门禁规范，严禁数字序号前缀，严禁手动修改状态为 `ready`/`approved` 等非法状态，确保无上下文 AI 工具能零歧义精准执行。
+- **Spec / Plan 法定大纲锁定与反模式负面清单**：在 `skills/spec/SKILL.md`（12 章节）与 `skills/plan/SKILL.md`（14 章节）中显式锁死法定 Markdown 二级标题目录，严禁增加数字编号前缀导致门禁提取失败；设立四大反模式禁令，严禁手动修改 status 为 ready/approved（必须由 CLI transition 推进）、严禁使用 ASCII 树或自然语言替代 Normative Schema、严禁使用“## 实施步骤”替代“## Tasks”；Spec 新增统计计算类的除零防御、时区与有效状态过滤等 BR 必答清单；Plan 强制全集覆盖十类条件技术设计。
 - **全面移除 Spec 中的 REQ-## 伪需求层**：彻底剔除传统 PRD 视角的 `REQ-##` 包装层（现状/触发/目标已在 Proposal 阶段定义），Spec 直接聚焦于**模块/接口契约**、**代码级不变量（BR-##）**与**自动化断言（AC-##）**；Plan 的 Implementation Binding 与任务验收直接精准绑定 `[BR-##, AC-##]`（并兼容历史 REQ）；`scripts/project-docs.cjs` 移除对 `REQ-## 需求章节` 的机械校验，改为严格校验 `BR-##` 与 `AC-##`。
 - **Spec 技能架构师与自包含契约强化**：注入资深系统架构师视角，澄清“不规定内部实现”不等于放弃技术严密性，强制将对外/核心数据模型 Schema、枚举、状态机转移矩阵锁死至机器可解析级别；确立“自包含契约铁律”，严禁将目标模型定义“甩锅”给外部或前序 CR，必须就地提供 Normative Schema；确立复杂流转可视化规范，凡涉及图装配、指针回填与多分支合流，强制提供 ASCII 拓扑图或决策矩阵表。
 - **Plan 技能工序流水线与任务原子性强化**：注入交付总工/施工队长视角，强制梳理自底向上流水线工序分期（基础类型/DTO → 核心纯逻辑与状态机 → 复杂拓扑与指针回填 → 服务集成与调用链 → 最终验收与清理），彻底解决“第一步干嘛、第二步干嘛”的时序问题；确立“任务原子性铁律”，单个 Task 核心修改的生产文件原则上控制在 1~3 个，严禁大包揽巨型任务；`implementation` 强制编写代码级操作步骤指令（1. 2. 3.），严厉禁止“实现装配”“完成逻辑”等空洞偷懒动词。

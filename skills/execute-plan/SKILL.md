@@ -7,13 +7,12 @@ description: Use when a Full change's Plan is approved and needs execution — i
 
 ## Overview
 
-严格按已批准三件套实施，勾选 `plan.md` 任务并把验证结果写回。执行者把落盘 proposal/spec/plan 视为唯一需求与实施上下文，不使用原始对话补充决定，也不在执行阶段重新设计业务。
+严格按已批准三件套实施变更，按任务逐项进行 TDD 落地，并在 `plan.md` 中勾选任务并写回验证事实证据。
 
-**“代码写完了”不等于“任务完成”**——每个任务必须产生 `outputs` 并有可验证的命令与输出证据。
+执行者把落盘的 `proposal.md` / `spec.md` / `plan.md` 视为**唯一需求与实施上下文**。严禁依赖原始对话口头补充决定，严禁在执行阶段擅自重新设计业务，严禁绕过任务清单直接写代码。
 
-**不产出独立执行文档**——执行事实记录在 plan.md 的勾选与「最终验证」区,结论同步到 `.project-kit/state.md`。
-
-**开始前宣布:** "我正在使用 execute-plan 技能执行此计划。"
+- **“代码写完”不等于“任务完成”**：每个 Task 必须真实产生 `outputs`，并通过可验证的命令输出证实满足 `acceptance`。
+- **不产出独立执行文档**：执行记录直接写回 `plan.md` 的勾选框与「最终验证」区，结论同步更新至本地 `.project-kit/state.md`。
 
 ## The Iron Law
 
@@ -21,161 +20,149 @@ description: Use when a Full change's Plan is approved and needs execution — i
 NO IMPLEMENTATION WITHOUT AN APPROVED AND VALID PLAN
 ```
 
-**Violating the letter of this rule is violating the spirit of execution discipline.** 没有 approved Plan 或 Plan 与代码现实冲突→禁止修改任何文件。Plan 过期→回 plan 修订,不边执行边改。
+**没有经过 CLI 批准（status 严格为 `approved`）且格式完备的 Plan，严禁触碰或修改任何项目代码文件。执行中遇到 Plan 假设与代码现实冲突，必须停止并返回 `plan` 修订，严禁边执行边现场篡改契约。**
 
-## When to Use ESPECIALLY
+**开始前宣布：**“我正在使用 execute-plan 技能执行此计划。”
 
-- Plan 有 5+ 任务、涉及多个文件时
-- 执行过程中发现了 Plan 没提到的问题时
-- 想"顺手把这个也改了"时
-- 测试失败了,想注释掉继续时
+## Required Inputs（不满足即停止执行）
 
-## Don't Skip When
-
-- "这个任务很简单,不用 TDD"——每个任务遵守 RED→GREEN→CHECK
-- "只改一行,不用记录"——每步都记录执行事实(勾选 + 验证命令)
-- "功能差不多了"——本技能不产生独立验收;独立验收是 verify-plan 的职责
-
-## Required Inputs(不满足即停止,逐项核对)
-
-- [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
-- [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`
 - [ ] `docs/changes/CR-###-<slug>/proposal.md` 存在且 `status: accepted`
-- [ ] 已读 `.project-kit/state.md`、`docs/constitution.md` 或项目等效编码规则（如 `AGENTS.md`），以及 Plan 的「Constitution 规范映射清单」；若存在 `diagrams.md`，一并读取
-- [ ] 已读取 Plan 的「代码基线」「执行环境」「Implementation Binding」
-- [ ] 每个 Task 包含 `file_actions`、`outputs`、`decisions`、`prerequisites` 和 `stop_if`
-- [ ] 目标仓库满足执行环境；缺失项按 Plan 指定动作处理，不自行跳过
+- [ ] `docs/changes/CR-###-<slug>/spec.md` 存在且 `status: approved`
+- [ ] `docs/changes/CR-###-<slug>/plan.md` 存在且 `status: approved`（若为 `draft`、`ready` 等非法或未批准状态，必须先通过 `plan` 技能完成审批）
+- [ ] 已完整读取 `docs/constitution.md`（或项目等效编码规则 `AGENTS.md`），以及 Plan 中的「Constitution 规范映射清单」；若存在 `diagrams.md`，一并读取
+- [ ] 已核对 Plan 的「代码基线」「执行环境」「Implementation Binding」
+- [ ] 每个 Task 完整具备 17 个关键字段（特别是 `file_actions`、`outputs`、`decisions`、`prerequisites`、`stop_if`）
+- [ ] 当前环境满足 Plan 声明的「执行环境」，缺失项按 Plan 指定动作处理
 
-## TDD Iron Law(每任务严格执行)
+## TDD Iron Law（每任务强制执行）
 
 ```
-RED   → 写失败测试,运行确认 FAIL
-GREEN → 写最小实现,运行确认 PASS
-CHECK → 对照 acceptance,可观察结果满足才算完成
+RED   → 编写/运行失败测试，确认因目标行为未实现而真实 FAIL
+GREEN → 编写仅满足该测试的最小实现代码，运行确认 PASS
+CHECK → 对照 acceptance 与 outputs，确认可观察结果与产物完备
 ```
 
-**禁止**:
-
-- 在测试通过前写实现代码
-- 跳过 RED(直接写实现=`我猜它是对的`)
-- 测试失败时注释掉测试继续
-- 把测试失败标记为"已知问题"后推进
+**严禁**：在测试前直接写实现；跳过 RED 阶段；测试失败时注释测试；将测试失败当作“后续再修的已知问题”强行推进。
 
 ## Process
 
-### Step 1: 确认 Plan 可执行
+### Step 1：前置门禁与上下文核对
+
+运行上下文检查命令：
 
 ```bash
 node scripts/project-docs.cjs context execute-plan --target <CR-###> --root <项目根>
 ```
 
-确认上下文文件齐全,Plan 状态为 approved。
+确认上下文文件完整，且 Plan 状态严格为 `approved`。若 Plan 处于 `ready` 或缺少必备章节，立刻停止并交回 `plan` 技能补齐。
 
-### Step 1.1: 代码规范预检(写代码前)
+### Step 1.1：代码规范预检（写代码前）
 
-在读取目标实现文件和执行第一个 Task 前:
+在读取目标实现文件和执行第一个 Task 前：
+1. 完整读取 `docs/constitution.md`；不存在时读取 Plan 指定的项目等效编码规则（如 `AGENTS.md`）；
+2. 读取 Plan 的「Constitution 规范映射清单」表；
+3. 为本次变更列出适用规则、影响文件和验证命令；
+4. 确认每条规则已映射到 Task 和最终验证。
 
-1. 完整读取 `docs/constitution.md`；不存在时读取 Plan 指定的项目等效编码规则（如 `AGENTS.md`）
-2. 读取 Plan 的「Constitution 规范映射清单」表
-3. 为本次变更列出适用规则、影响文件和验证命令
-4. 确认每条规则已映射到 Task 和最终验证
+缺少 Constitution、规范映射表或验证命令时立即停止，回 `plan` 补齐；**严禁直接写测试或实现**。
 
-缺少 Constitution、规范映射表或验证命令时立即停止,回 `plan` 补齐;不得先写测试或实现。
+### Step 2：批判性核对 Plan 与代码基线（改代码前最后一道防线）
 
-### Step 2: 批判性检查 Plan(改代码前,最后一次机会)
+1. **基线核对**：当前 Git commit、分支和未提交改动是否与 Plan 的「代码基线」一致；
+2. **文件真实性**：Plan 声明为 `modify`/`delete`/`verify` 的文件在磁盘上真实存在；声明为 `create` 的路径尚未被占用；
+3. **Symbol 对齐**：`symbols` 与 `read_first` 引用的类名、方法名真实存在且签名与描述一致；
+4. **调用链一致**：Plan 描述的系统入口与技术调用链与当前代码一致；
+5. **绑定一致**：每个 DEC / BR / AC 在 Implementation Binding 与任务中有明确对应。
 
-- [ ] 当前仓库、分支、commit 和 worktree 与「代码基线」一致；不一致时已重新核对全部受影响事实
-- [ ] `file_actions` 标记为 modify/delete/verify 的路径真实存在；标记 create 的路径尚未被错误占用
-- [ ] `symbols` 和 `read_first` 引用的 Symbol 存在，签名与 Plan 描述一致
-- [ ] Plan 的系统入口与调用链可由当前代码定位，各层职责一致
-- [ ] Plan 的 Current Behavior 有代码、测试或配置证据，未被代码变化推翻
-- [ ] 每个 Task 的 `interfaces`、`depends_on`、`outputs` 和前后任务名称/数据结构一致
-- [ ] `prerequisites` 已满足；`verify` 命令和本地脚本在使用时存在
-- [ ] 每个 DEC / BR / AC 在 Implementation Binding 和任务中有一致绑定
-- [ ] 任务依赖顺序无环，所有 `stop_if` 均可判断
-- [ ] Plan 只覆盖本 Spec 范围,没有相邻问题/未来设计混入
+任一条件不满足或触发 `stop_if`，**立即停止**，向用户报告偏差并返回 `plan` 修订，严禁擅自猜测推演。
 
-**任何一项不满足 → 按 `stop_if` 停止，记录偏差并回 plan/spec/change 修订。禁止使用原始对话补全、现场猜测或边执行边改批准语义。**
+### Step 3：逐任务 TDD 循环实施
 
-### Step 3: 逐任务执行(每个任务一个 TDD 循环)
+对 Plan 中的每个 Task N 按顺序独立执行：
+1. **核对前置与阻断**：核验 `prerequisites` 已满足，未触发 `stop_if`；
+2. **阅读只读材料**：阅读 `read_first` 指定文件与 Symbol，理清当前与目标行为差异；
+3. **文件操作隔离**：严格仅在 `file_actions` 声明的 `files` 范围内创建、修改或删除文件，**严禁修改声明范围外的任何文件**；
+4. **RED**：编写目标行为的自动化测试，运行并确认真实 FAIL；
+5. **GREEN**：编写最小满足测试的业务实现，运行确认测试 PASS；
+6. **CHECK**：核实声明的 `outputs` 真实生成，`acceptance` 中的规则完全兑现；
+7. **事实写回**：在 `plan.md` 中将该任务勾选为 `- [x] Task N`，将执行命令、输出关键摘要追加至「最终验证」区；
+8. **小步提交**：按项目规范进行 Git commit，说明该 Task 交付的成果。
 
-对 Plan 中每个 Task N:
+### Step 4：验证失败处理与阻断边界
 
-1. **检查 `prerequisites` 和 `stop_if`**；触发停止条件时不得修改代码
-2. **读 `read_first`** 指定文件、Symbol 和已落盘结论，再核对 Current/Target、interfaces、decisions 与 invariants
-3. **按 `file_actions` 操作**：只创建、修改、删除或验证声明的 `files`；范围外文件不碰
-4. **RED**：写/运行该任务的失败测试，确认因目标行为尚未实现而 FAIL
-5. **GREEN**：按 `implementation` 写最小实现，运行确认 PASS
-6. **CHECK**：核对 `outputs` 已真实产生，`acceptance` 中的 BR/AC 可观察满足
-7. **记录**：在 plan.md 勾选 `- [x] Task N`，把命令、输出摘要和产物追加到「最终验证」区
-8. **提交**：按项目约定小步提交，描述该任务的实际产物
+- 测试或验证失败时，首先排查是当前 Task 引入还是既有逻辑被破坏；
+- 严禁删除测试、注释断言或弱化验收要求；
+- **连续 3 次尝试仍无法 PASS**：说明 Plan 的底层技术假设可能存在错误，必须停止修改，回退本 Task 改动并返回 `plan` 修订。
 
-### Step 4: 验证失败处理
+### Step 5：整体验证与无越界检查
 
-- 定位是当前任务还是之前任务引入
-- **禁止**:删测试、扩大范围绕开、把失败标为"已知问题"
-- **禁止**:改 Spec/Plan 语义来掩盖失败
-- 连续 3 次修复无改善 → 停止:计划假设可能错了,回 plan 修订
-
-### Step 5: 整体验证与范围检查
+全部 Task 完成后，运行整体验证：
 
 ```bash
 node scripts/project-docs.cjs validate --root <项目根>
-git diff --stat    # 实际改动 vs Plan 声明的 files
+git diff --stat
 ```
 
-- [ ] 实际 diff 只覆盖 Plan 的 `files`
-- [ ] `validate` 无新增 error
-- [ ] Plan 的「最终验证」全部通过并记录在案
-- [ ] Constitution 约束与验证全部通过并记录在案
-- [ ] plan.md 无 `- [ ]` 残留
+核对清单：
+- `git diff --stat` 实际改动文件与 Plan 声明的 `files` 完全一致，绝无范围外文件被修改；
+- `validate` 无新增错误；
+- Plan 声明的「最终验证」命令全部通过，且事实记录已写回 `plan.md`；
+- Constitution 规范映射的所有检查全部通过；
+- `plan.md` 任务清单中已无任何 `- [ ]` 未勾选项。
 
-### Step 6: 状态收口
+### Step 6：状态收口与迁移
+
+运行 CLI 完成 Plan 状态迁移：
 
 ```bash
 node scripts/project-docs.cjs transition CR-### --to completed --kind plan --root <项目根>
 ```
 
-脚本要求:全部任务已勾选(无 `- [ ]` 残留)。
+> **注意**：脚本会机械核对是否所有 Task 均已勾选。
+> **严禁在 execute-plan 中标记 spec verified** —— 独立的业务契约验收与规范审查属于 `verify-plan` 的法定职责。
 
-**本技能不标记 spec verified**——独立验收是 verify-plan 的职责。
+### Step 7：同步本地 state
 
-### Step 7: 更新本地 state
+编辑 `.project-kit/state.md`：
+- 更新 `last_completed` 记录本次实施完成事实；
+- 更新 `next_action` 为推荐动作：`verify-plan CR-###`；
+- 更新 frontmatter 中的对应字段。
 
-在 `.project-kit/state.md` 中记录:完成内容、验证结果、计划偏差、下一动作:`verify-plan CR-###`。更新 frontmatter 的 `active_change` / `next_action` / `last_completed`。
+## Quality Checklist
 
-## Stop Conditions(出现任一立即停止并报告)
+- [ ] Plan 在执行前已处于 `status: approved` 状态，未从 `draft` 或 `ready` 违规开工
+- [ ] 完整执行代码规范预检，明确了 Constitution 规则与验证命令
+- [ ] 严格按顺序逐任务执行 TDD（RED → GREEN → CHECK），测试均真实经历从 FAIL 到 PASS
+- [ ] 实际修改的文件严格限制在 Plan 声明的 `file_actions` 范围内，`git diff --stat` 无越界
+- [ ] 每个 Task 的 `outputs` 真实生成，且在 `plan.md` 中勾选了 `- [x]`
+- [ ] 验证输出与事实已追加写回 `plan.md` 的「最终验证」区
+- [ ] 通过 CLI 成功将 Plan 迁移为 `completed`
+- [ ] 未越权标记 `spec verified` 或 `change completed`
 
-| 条件 | 动作 |
-|---|---|
-| Plan 未批准/代码基线过期/与代码现实冲突 | 回 plan 修订 |
-| `prerequisites` 不满足或触发 Task `stop_if` | 按 Plan 指定动作停止并报告 |
-| 需改 `file_actions` 范围外文件 | 停止;可能需要 change 或 plan 修订 |
-| 需改 Spec 语义/加功能/跨模块/新架构决定 | 转 change |
-| 需要未授权的外部写操作(删数据/推远端) | 停止,等用户授权 |
-| 连续修复无改善 | 停止:Plan 假设错误,回 plan |
-| 安全/数据迁移/高风险影响未被 Plan 覆盖 | 停止,先分析 |
-| 验证失败且根因不在当前范围 | 停止,定位根因 |
+## Script / Author Responsibility
 
-## 脚本/AI 分工
+| CLI (`project-docs.cjs`) | 文档作者 (AI) |
+| --- | --- |
+| `context execute-plan` 输出只读上下文 | 批判性核对代码基线，排查潜在假设偏差 |
+| `transition ... --to completed --kind plan` 机械核验任务勾选 | 严格执行 TDD 编码，杜绝无测试代码 |
+| `validate` 校验全库文档合法性 | 写回真实验证命令与输出，杜绝虚构证据 |
 
-| 脚本 | AI |
-|---|---|
-| `context execute-plan`、`validate` | 批判性检查 Plan |
-| `transition` 状态迁移 | TDD 逐任务执行 |
-| — | 记录执行事实(勾选 + 验证命令,不伪造) |
-| — | **禁止**:改 Spec/Plan 语义、扩大范围、"顺手重构"、标记 verified |
+## Stop Conditions
+
+- Plan 尚未批准（如处于 `draft` 或 `ready`）→ 严禁写代码，返回 `plan`
+- 触发 Task 声明的 `stop_if` 或前置 `prerequisites` 不满足 → 立即停止修改
+- 必须修改 `file_actions` 声明范围之外的文件 → 停止，回退并返回 `plan` 重新评估影响
+- 必须修改 Spec 契约、增减字段或调整产品决定 → 停止，返回 `spec` 或 `change`
+- 连续 3 次调试修复未能解决测试失败 → 停止盲目尝试，返回 `plan`
 
 ## Handoff Rule
 
-Plan `completed` 后 → `verify-plan`。本技能不接受"差不多完成了"——必须有勾选记录和验证证据。
+Plan 成功迁移为 `completed` 后 → `verify-plan`。本技能严禁自行声称“最终验收通过”，必须由 `verify-plan` 独立采集新鲜证据完成闭环。
 
-## Common Rationalizations
+## Anti-Patterns 负面清单
 
-| 借口 | 现实 |
-| --- | --- |
-| "Plan 有点旧,我按最新代码写" | Plan 过期=失效,回 plan 修订,不边执行边改 |
-| "这个文件顺手改,反正相关" | 只改 `files` 范围,越界破坏可审查性 |
-| "测试失败先注释掉,后面补" | 掩盖失败=伪造通过,根因留到验收爆炸 |
-| "功能差不多了,标 verified" | verified 只能来自 verify-plan 独立验收 |
-| "执行记录不重要,代码能跑就行" | 没执行事实,verify-plan 无法核对,闭环断裂 |
+1. **严禁在未批准的 Plan 上开工**：Plan 处于 `ready` 或 `draft` 时严禁执行，必须先经由 `plan` 技能通过门禁审批为 `approved`。
+2. **严禁跳过 TDD 盲写实现**：严禁直接编写业务代码后再补测试，必须遵循 RED → GREEN → CHECK 循环。
+3. **严禁越界修改范围外文件**：`git diff` 出现 Plan 未声明的文件属于严重事故，必须立即查明或回退。
+4. **严禁注释测试或掩盖错误**：测试失败严禁注释断言，连续 3 次失败必须停工回 `plan`。
+5. **严禁越权标记 spec verified**：execute-plan 只能推进 `plan completed`，严禁擅自推进 `spec verified` 或 `change completed`。
